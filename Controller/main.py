@@ -1,11 +1,20 @@
+import json
+
 from controller import Robot, Motor
 
 TIME_STEP = 64
 MAX_SPEED = 6.28
 
+def serialize(obj):
+    """Convert non-serializable objects into dictionaries."""
+    if hasattr(obj, '__dict__'):
+        return obj.__dict__  # Convert objects with __dict__ to dictionaries
+    return str(obj)  # Convert unknown objects to strings
+
 def main():
     # Create the Robot instance.
     robot = Robot()
+    print(json.dumps(robot.devices, indent=4, default=serialize))
     leftMotor = robot.getDevice('left wheel motor')
     rightMotor = robot.getDevice('right wheel motor')
 
