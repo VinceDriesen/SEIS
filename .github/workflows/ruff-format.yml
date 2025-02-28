@@ -9,9 +9,14 @@ jobs:
   ruff_format:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write  # Allow write access for pushing commits
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}  # Checkout the branch of the PR
 
       - name: Install ruff
         run: |
@@ -21,3 +26,10 @@ jobs:
       - name: Run ruff format
         run: |
           ruff format Controller
+
+      - name: Commit formatted code
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@users.noreply.github.com"
+          git add .
+          git diff --cached --exit-code || (git commit -m "Apply ruff formatting" && git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.head_ref }})

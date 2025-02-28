@@ -1,7 +1,8 @@
 from controller import Motor, Robot, PositionSensor, DistanceSensor
 import math
 
-class TurtleBot: 
+
+class TurtleBot:
     def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
         self.robot = robot
         self.timeStep = timeStep
@@ -35,7 +36,7 @@ class TurtleBot:
         self.rightDistSens: DistanceSensor = self.robot.getDevice('right distance sensor')
         self.leftMotorSens: PositionSensor = self.robot.getDevice('left wheel sensor')
         self.rightMotorSens: PositionSensor = self.robot.getDevice('right wheel sensor')
-        
+       
         self.frontDistSens.enable(self.timeStep)
         self.rearDistSens.enable(self.timeStep)
         self.leftDistSens.enable(self.timeStep)
