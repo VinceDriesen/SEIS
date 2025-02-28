@@ -1,16 +1,40 @@
 #VRML_SIM R2023b utf8
+
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/robotis/turtlebot/protos/TurtleBot3Burger.proto"
+
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.5773 0.5773 0.5773 2.0944
-  position 0 0 10
+  orientation -0.2247930669304929 0.1902176875834092 0.9556596195248619 1.7815957846369168
+  position 0.2054857889094538 -1.5330668052786094 0.7303599033743273
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
+}
+TurtleBot3Burger {
+  hidden position_0_0 4.923354310061829
+  hidden position_0_1 4.923354310045603
+  hidden position_0_2 -3.1415757130210467
+  hidden position2_0_2 0.31404729479404164
+  hidden position3_0_2 40.84070195951569
+  hidden linearVelocity_0 0.020724000001539476 1.042296590917693e-09 -2.026313106110106e-12
+  hidden angularVelocity_0 -1.4590238599392224e-08 -1.5333918936458228e-12 -1.0019138781632994e-08
+  hidden rotation_8 0 1 0 3.3525583100618292
+  hidden linearVelocity_8 0.02072399896939892 4.841476876987834e-10 1.1447598545234908e-09
+  hidden angularVelocity_8 -1.4688261825643272e-08 0.6279999999006582 -6.142429358436734e-06
+  hidden rotation_9 0.10528435048022114 1.4629195096724268e-06 0.9944421579668763 3.1415962723415114
+  hidden linearVelocity_9 0.02072400103041651 4.842935252487956e-10 -1.1438859809445492e-09
+  hidden angularVelocity_9 -1.4658411270232763e-08 0.6280000000363941 -6.142393774479256e-06
+  hidden rotation_10 7.249933651209401e-08 0.9999999999658056 8.269434505987598e-06 2.8275453587858754
+  hidden linearVelocity_10 0.02072399999994995 8.658152882557464e-10 4.817940267284541e-13
+  hidden angularVelocity_10 -2.164538223656697e-07 5.180999999987487 -5.176090387585115e-07
+  translation 0.16247638477293103 1.2417552278315772e-09 -0.00024773920696991025
+  rotation -0.002103689754066752 -0.9999977872303324 4.884405776718485e-06 0.004641946692421501
+  controller "<extern>"
 }
