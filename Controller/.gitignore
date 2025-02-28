@@ -12,3 +12,4 @@ uv.lock
 
 # Virtual environments
 .venv
+.vscode/
