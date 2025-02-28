@@ -17,6 +17,7 @@ def main():
     robot = Robot()
     
     print(json.dumps(robot.devices, indent=4, default=serialize))
+    
     bot = TurtleBot(robot, TIME_STEP, MAX_SPEED)
     
     test = False
