@@ -9,6 +9,9 @@ jobs:
   ruff_format:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write  # Allow write access for pushing commits
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
