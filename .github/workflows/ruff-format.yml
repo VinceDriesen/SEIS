@@ -21,3 +21,10 @@ jobs:
       - name: Run ruff format
         run: |
           ruff format Controller
+
+      - name: Commit formatted code
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@users.noreply.github.com"
+          git add .
+          git diff --cached --exit-code || (git commit -m "Apply ruff formatting" && git push)
