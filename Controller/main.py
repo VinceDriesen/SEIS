@@ -7,7 +7,7 @@ TIME_STEP = 64
 MAX_SPEED = 6.28
 
 def serialize(obj):
-    """Convert non-serializable objects into dictionaries."""
+    """Convert non-serializable objects into dictionaries.""" 
     if hasattr(obj, '__dict__'):
         return obj.__dict__  # Convert objects with __dict__ to dictionaries
     return str(obj)  # Convert unknown objects to strings
@@ -16,15 +16,18 @@ def serialize(obj):
 def main():
     robot = Robot()
     
-    print(json.dumps(robot.devices, indent=4, default=serialize))
-    bot = TurtleBot(robot, TIME_STEP, MAX_SPEED)
+    # print(json.dumps(robot.devices, indent=4, default=serialize))
+    bot: TurtleBot = TurtleBot(robot, TIME_STEP, MAX_SPEED)
+    # bot: TurtleBot = TurtleBot(TIME_STEP, MAX_SPEED)
+
     
-    test = False
-    while robot.step(TIME_STEP) != -1:
-        if test is False:
-            bot.turn(127)
-            test = True
-        pass
+    bot.walkDistance(0.25, 0.1)
+    # while robot.step(TIME_STEP) != -1:
+    #     if walked is False:
+    #         walked = True
+    #     pass  # De walkDistance functie voert de beweging uit
+        # In deze loop zou je eventueel andere robot acties kunnen toevoegen
+
     
     
 # def main():

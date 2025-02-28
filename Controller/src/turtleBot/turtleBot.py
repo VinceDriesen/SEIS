@@ -1,14 +1,20 @@
 from controller import Motor, Robot, PositionSensor, DistanceSensor
 import math
 
-class TurtleBot:
+class TurtleBot: 
     def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
         self.robot = robot
         self.timeStep = timeStep
         self.maxSpeed = maxSpeed
         self.leftMotor: Motor = self.robot.getDevice('left wheel motor')
         self.rightMotor: Motor = self.robot.getDevice('right wheel motor')
+        self.radius = 0.033
         self.enableSensors()
+        
+        self.rightMotor.setPosition(float('inf'))
+        self.leftMotor.setPosition(float('inf'))
+        self.leftMotor.setVelocity(0)
+        self.rightMotor.setVelocity(0)
   
 
     def enableSensors(self):
@@ -25,33 +31,24 @@ class TurtleBot:
         self.rightDistSens.enable(self.timeStep)
         self.leftMotorSens.enable(self.timeStep)
         self.rightMotorSens.enable(self.timeStep)
-      
-    def turn(self, degrees: float):
-        leftMotor = self.leftMotor
-        rightMotor = self.rightMotor
-        leftMotorSens = self.leftMotorSens
-        rightMotorSens = self.rightMotorSens
 
-        desiredRadians = math.radians(degrees)
 
-        wheelRadius = 0.02
-        wheelbase = 0.1
-
-        wheelRotation = (wheelbase / (2 * wheelRadius)) * desiredRadians
-
-        currentLeftRotation = leftMotorSens.getValue()
-        currentRightRotation = rightMotorSens.getValue()
-
-        newLeftRotation = currentLeftRotation + wheelRotation
-        newRightRotation = currentRightRotation - wheelRotation
-
-        leftMotor.setPosition(newLeftRotation)
-        rightMotor.setPosition(newRightRotation)
-        leftMotor.setVelocity(self.maxSpeed / 2)
-        rightMotor.setVelocity(self.maxSpeed / 2)
-
+    def walkDistance(self, targetDistance: int, speedMultipleyer: float):
+        velocity = self.radius * speedMultipleyer * self.maxSpeed
+        duration = targetDistance / velocity
+        startTime = self.robot.getTime()
+        
         while self.robot.step(self.timeStep) != -1:
-            leftCurrent = leftMotorSens.getValue()
-            rightCurrent = rightMotorSens.getValue()
-            if abs(leftCurrent - newLeftRotation) < 0.01 and abs(rightCurrent - newRightRotation) < 0.01:
+            currentTime = self.robot.getTime()
+            print("currentTime: ", currentTime, " duration: ", duration, " startTime ", startTime)
+            if currentTime >= duration + startTime:
                 break
+            self.leftMotor.setVelocity(speedMultipleyer * self.maxSpeed)
+            self.rightMotor.setVelocity(speedMultipleyer * self.maxSpeed)
+         
+        self.leftMotor.setVelocity(0)
+        self.rightMotor.setVelocity(0)
+        
+      
+    def turn(self, degrees: float, speedMultipleyer: float):
+        pass
