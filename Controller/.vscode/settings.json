@@ -1,8 +1,8 @@
 {
     "python.analysis.extraPaths": [
-        "/snap/webots/current/usr/share/webots/lib/controller/python"
+        "${env:PYTHONPATH}"
     ],
     "python.autoComplete.extraPaths": [
-        "/snap/webots/current/usr/share/webots/lib/controller/python"
+        "${env:PYTHONPATH}"
     ]
 }
