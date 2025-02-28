@@ -16,68 +16,9 @@ def serialize(obj):
 def main():
     robot = Robot()
     
-    # print(json.dumps(robot.devices, indent=4, default=serialize))
     bot: TurtleBot = TurtleBot(robot, TIME_STEP, MAX_SPEED)
-    # bot: TurtleBot = TurtleBot(TIME_STEP, MAX_SPEED)
-
-    
-    bot.walkDistance(0.25, 0.1)
-    # while robot.step(TIME_STEP) != -1:
-    #     if walked is False:
-    #         walked = True
-    #     pass  # De walkDistance functie voert de beweging uit
-        # In deze loop zou je eventueel andere robot acties kunnen toevoegen
-
-    
-    
-# def main():
-#     # Create the Robot instance.
-#     robot = Robot()
-#     # Print robot components
-#     print(json.dumps(robot.devices, indent=4, default=serialize))
-    
-#     # Get Devices
-#     leftMotor: Motor = robot.getDevice('left wheel motor')
-#     rightMotor: Motor = robot.getDevice('right wheel motor')
-#     frontDistSens: DistanceSensor = robot.getDevice('front distance sensor')
-#     rearDistSens: DistanceSensor = robot.getDevice('rear distance sensor')
-#     leftDistSens: DistanceSensor = robot.getDevice('left distance sensor')
-#     rightDistSens: DistanceSensor = robot.getDevice('right distance sensor')
-    
-#     #Enable Sensors
-#     frontDistSens.enable(TIME_STEP)
-#     rearDistSens.enable(TIME_STEP)
-#     leftDistSens.enable(TIME_STEP)
-#     rightDistSens.enable(TIME_STEP)
-    
-#     #Set Motor positions to infintie
-#     leftMotor.setPosition(float('inf'))
-#     rightMotor.setPosition(float('inf'))
-    
-#     #Set Motor Velocitity
-#     leftMotor.setVelocity(0.1 * MAX_SPEED)
-#     rightMotor.setVelocity(0.1 * MAX_SPEED)
-
-#     print("Connected to Webots simulation. Robot name:", robot.getName())
-
-#     movingForward = True
-    
-#     # Main control loop
-        
-        
-#         frontDistSensVal = frontDistSens.getValue()
-#         rearDistSensVal = rearDistSens.getValue()           
-        
-#         if(frontDistSensVal >= 900 and movingForward):
-#             leftMotor.setVelocity(-0.1 * MAX_SPEED)
-#             rightMotor.setVelocity(-0.1 * MAX_SPEED)
-#             movingForward = False
-        
-#         if(rearDistSensVal >= 900 and not movingForward):
-#             leftMotor.setVelocity(0.1 * MAX_SPEED)
-#             rightMotor.setVelocity(0.1 * MAX_SPEED)
-#             movingForward = True
-        
+    print(bot.getPosition())
+    bot.movePosition(0.25, 0.25, 30)
 
 if __name__ == '__main__':
     main()
