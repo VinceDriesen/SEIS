@@ -9,7 +9,7 @@ wheels/
 #Enviornments Files
 uv.lock
 .python-version
+.env
 
 # Virtual environments
 .venv
-.vscode/

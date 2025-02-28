@@ -1,0 +1,1 @@
+Copy the **.env.example** file, and edit the env variables as necessary
