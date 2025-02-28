@@ -1,6 +1,6 @@
 import json
 
-from controller import Robot, Motor
+from controller import Robot, Motor, DistanceSensor
 
 TIME_STEP = 64
 MAX_SPEED = 6.28
@@ -14,21 +14,52 @@ def serialize(obj):
 def main():
     # Create the Robot instance.
     robot = Robot()
+    # Print robot components
     print(json.dumps(robot.devices, indent=4, default=serialize))
-    leftMotor = robot.getDevice('left wheel motor')
-    rightMotor = robot.getDevice('right wheel motor')
-
+    
+    # Get Devices
+    leftMotor: Motor = robot.getDevice('left wheel motor')
+    rightMotor: Motor = robot.getDevice('right wheel motor')
+    frontDistSens: DistanceSensor = robot.getDevice('front distance sensor')
+    rearDistSens: DistanceSensor = robot.getDevice('rear distance sensor')
+    leftDistSens: DistanceSensor = robot.getDevice('left distance sensor')
+    rightDistSens: DistanceSensor = robot.getDevice('right distance sensor')
+    
+    #Enable Sensors
+    frontDistSens.enable(TIME_STEP)
+    rearDistSens.enable(TIME_STEP)
+    leftDistSens.enable(TIME_STEP)
+    rightDistSens.enable(TIME_STEP)
+    
+    #Set Motor positions to infintie
     leftMotor.setPosition(float('inf'))
     rightMotor.setPosition(float('inf'))
-
+    
+    #Set Motor Velocitity
     leftMotor.setVelocity(0.1 * MAX_SPEED)
     rightMotor.setVelocity(0.1 * MAX_SPEED)
 
     print("Connected to Webots simulation. Robot name:", robot.getName())
 
+    movingForward = True
+    
     # Main control loop
     while robot.step(TIME_STEP) != -1:
-        # Add your control logic here.
+        
+        
+        frontDistSensVal = frontDistSens.getValue()
+        rearDistSensVal = rearDistSens.getValue()           
+        
+        if(frontDistSensVal >= 900 and movingForward):
+            leftMotor.setVelocity(-0.1 * MAX_SPEED)
+            rightMotor.setVelocity(-0.1 * MAX_SPEED)
+            movingForward = False
+        
+        if(rearDistSensVal >= 900 and not movingForward):
+            leftMotor.setVelocity(0.1 * MAX_SPEED)
+            rightMotor.setVelocity(0.1 * MAX_SPEED)
+            movingForward = True
+        
         pass
 
 if __name__ == '__main__':
