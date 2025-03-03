@@ -1,7 +1,6 @@
 import numpy as np
 from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar
 import math
-from typing import Annotated
 
 class TurtleBot:
     """
@@ -27,16 +26,21 @@ class TurtleBot:
         self.radius = 0.033
         self.distanceBetweenWheels = 0.1775
         self._enableSensors()
-
         self.rightMotor.setPosition(float("inf"))
         self.leftMotor.setPosition(float("inf"))
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
         self.robot.step(self.timeStep)
+        
+        # Define occupancy map parameters.
+        self.map_size = 4000                    # Number of cells per dimension
+        self.map_resolution = 0.01              # Meters per cell
+        self.map_offset = self.map_size // 2    # Center index corresponding to (0,0)
+        self.occurancy_map = np.zeros((self.map_size, self.map_size))
 
         # X-waarde, Y-waarde, Hoek-waarde
         self.position = [0, 0, 0]
-
+        
         # Parameter om max velocity mee te vermenigvuldigen
         self.velocityNorm = 0.3
 
@@ -140,7 +144,7 @@ class TurtleBot:
             currentRightEncoder = self.rightMotorSens.getValue()
             frontSensorValue = self.frontDistSens.getValue()
             
-            if frontSensorValue > 1000 - (self.distanceBetweenWheels * 1000):
+            if frontSensorValue > 1000 - (self.distanceBetweenWheels * 1.1 * 1000):
                 print("Broken Off Movement!")
                 break
             
@@ -152,7 +156,6 @@ class TurtleBot:
             ) * self.radius
 
             currentDistance = (leftDistanceTravelled + rightDistanceTravelled) / 2.0
-            
             
             # print(currentDistance, targetDistance)
             if abs(currentDistance) >= abs(targetDistance):
@@ -229,3 +232,27 @@ class TurtleBot:
         transformed = np.roll(transformed, shift)
         
         return transformed
+    
+    
+    def add_to_occurancy_map(self, x_value: float, y_value: float, cell_value: float = 1) -> None:
+        """Adds the cell_value to the occurancy map at the specified position
+
+        Args:
+            x_value (float): x positions in m
+            y_value (float): y posittion in m
+            cell_value (float, optional): propability of cell having an object, default = 1 
+        """
+        self.occurancy_map[int(x_value * 100)][int(y_value * 100)] = cell_value
+        
+    def _scan_lidar_event(self):
+        lidar_data = self.__get_lidar_scan()
+        angles = angles = np.linspace(0, 2 * np.pi, len(lidar_data))
+        
+        robot_pos_x = self.position[0]
+        robot_pos_y = self.position[1]
+        robot_pos_theta = self.position[2]
+        
+        for dist, angle in zip(lidar_data, angles):
+            x_dest = robot_pos_x + dist * (math.cos(robot_pos_theta + angle))
+            y_dest = robot_pos_y + dist * (math.cos(robot_pos_theta + angle))
+            self.add_to_occurancy_map(x_dest, y_dest)

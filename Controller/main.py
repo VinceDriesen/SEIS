@@ -25,12 +25,10 @@ def main():
         device = robot.getDeviceByIndex(i)
         print(device.getName())
     
-    print(bot.getPosition())
-    bot.movePosition(0.25, 0.25, 30)
-    
         
     while robot.step(TIME_STEP) != -1:
         bot.movePosition(.25, .2, 45)
+        bot._scan_lidar_event()
         pass
 
 if __name__ == "__main__":
