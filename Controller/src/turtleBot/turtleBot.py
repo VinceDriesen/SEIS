@@ -3,7 +3,21 @@ import math
 
 
 class TurtleBot:
+    """
+    A class representing a TurtleBot robot in a Webots simulation.
+
+    The TurtleBot is equipped with two wheel motors and multiple distance sensors.
+    It can move, sense its environment, and update its position accordingly.
+    """
+    
     def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
+        """Initializes The TurtleBot
+
+        Args:
+            robot (Robot): Webots Turtlebot instance
+            timeStep (int): Simulation Timestep
+            maxSpeed (float): Maximun wheel speed 
+        """
         self.robot = robot
         self.timeStep = timeStep
         self.maxSpeed = maxSpeed
@@ -70,7 +84,7 @@ class TurtleBot:
         startLeftEncoder = self.leftMotorSens.getValue()
         startRightEncoder = self.rightMotorSens.getValue()
 
-        print(startLeftEncoder, startRightEncoder)
+        # print(startLeftEncoder, startRightEncoder)
 
         targetRotation = angleRadians
 
@@ -89,7 +103,7 @@ class TurtleBot:
                 * self.radius
                 / self.distanceBetweenWheels
             )
-            print(currentRotation, targetRotation)
+            # print(currentRotation, targetRotation)
             if abs(currentRotation) >= abs(targetRotation):
                 break
 
@@ -108,7 +122,7 @@ class TurtleBot:
         startLeftEncoder = self.leftMotorSens.getValue()
         startRightEncoder = self.rightMotorSens.getValue()
 
-        print(startLeftEncoder, startRightEncoder)
+        # print(startLeftEncoder, startRightEncoder)
 
         targetDistance = distance
 
@@ -118,7 +132,12 @@ class TurtleBot:
         while self.robot.step(self.timeStep) != -1:
             currentLeftEncoder = self.leftMotorSens.getValue()
             currentRightEncoder = self.rightMotorSens.getValue()
-
+            frontSensorValue = self.frontDistSens.getValue()
+            
+            if frontSensorValue > 1000 - (self.distanceBetweenWheels * 1000):
+                print("Broken Off Movement!")
+                break
+            
             leftDistanceTravelled = (
                 currentLeftEncoder - startLeftEncoder
             ) * self.radius
@@ -127,9 +146,14 @@ class TurtleBot:
             ) * self.radius
 
             currentDistance = (leftDistanceTravelled + rightDistanceTravelled) / 2.0
-            print(currentDistance, targetDistance)
+            
+            
+            # print(currentDistance, targetDistance)
             if abs(currentDistance) >= abs(targetDistance):
                 break
+
+            self.position[0] += currentDistance * math.cos(self.position[2])
+            self.position[1] += currentDistance * math.sin(self.position[2])
 
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
@@ -166,8 +190,8 @@ class TurtleBot:
             self._rotate(math.degrees(target_rotation))
             self._move(target_distance)
 
-        self.position[0] = target_x
-        self.position[1] = target_y
+        # self.position[0] = target_x
+        # self.position[1] = target_y
         self.position[2] = target_angle
 
     def normalizeAngle(self, angle):

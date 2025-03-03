@@ -19,6 +19,9 @@ def main():
     print(bot.getPosition())
     bot.movePosition(0.25, 0.25, 30)
 
+    while robot.step(TIME_STEP) != -1:
+        bot.movePosition(.25, .2, 45)
+        pass
 
 if __name__ == "__main__":
     main()
