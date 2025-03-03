@@ -64,6 +64,7 @@ class TurtleBot:
         self.rightDistSens.enable(self.timeStep)
         self.leftMotorSens.enable(self.timeStep)
         self.rightMotorSens.enable(self.timeStep)
+        self.lidarSens.enable(self.timeStep)
 
     def getPosition(self) -> dict[str, float]:
         return {
