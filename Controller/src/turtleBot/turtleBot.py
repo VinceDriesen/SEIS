@@ -1,14 +1,29 @@
 from controller import Motor, Robot, PositionSensor, DistanceSensor
 import math
-
+from typing import Annotated
 
 class TurtleBot:
     """
     A class representing a TurtleBot robot in a Webots simulation.
 
     The TurtleBot is equipped with two wheel motors and multiple distance sensors.
-    It can move, sense its environment, and update its position accordingly.
+    It can move, sense its environment, and update its position accordingly. 
     """
+
+    @property
+    def frontDistSens(self) -> DistanceSensor:
+        """Front Distance Sensor, scales linearly from 1000 to 0 (~0m to 1m)."""
+        return self._frontDistSens
+
+    @property
+    def leftDistSens(self) -> DistanceSensor:
+        """Left Distance Sensor, scales linearly from 1000 to 0 (~0m to 1m)."""
+        return self._leftDistSens
+
+    @property
+    def rightDistSens(self) -> DistanceSensor:
+        """Right Distance Sensor, scales linearly from 1000 to 0 (~0m to 1m)."""
+        return self._rightDistSens
     
     def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
         """Initializes The TurtleBot
