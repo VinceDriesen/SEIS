@@ -1,3 +1,4 @@
+import numpy as np
 from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar
 import math
 from typing import Annotated
@@ -205,7 +206,26 @@ class TurtleBot:
         while angle < -math.pi:
             angle += 2 * math.pi
         return angle
+        
+        
+    def __get_lidar_scan(self) -> np.ndarray:
+        """
+        Transform raw LIDAR data so that it is correctly sorted with angles 0 to 359 degrees (with 0° at the top/north).
 
-    
-    def printDevices(self) -> None:
-        print(self.robot.getLidar)
+        Returns:
+            np.ndarray: The transformed LIDAR data array.
+        """
+        lidar_array = np.array(self.lidarSens.getRangeImage(), dtype=float)
+        
+        # Replace infinite values with minRange
+        lidar_array[lidar_array == np.inf] = self.lidarSens.min_range
+        
+        # Reverse the order of the data (flip the scan)
+        transformed = lidar_array[::-1]
+        
+        # Circularly shift the reversed array by half its length (swap 0° with 180°)
+        n = len(transformed)
+        shift = n // 2  # For 360 values, shift by 180
+        transformed = np.roll(transformed, shift)
+        
+        return transformed

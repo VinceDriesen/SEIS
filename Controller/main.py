@@ -1,7 +1,10 @@
-import json
-
-from controller import Robot, Motor, DistanceSensor
+import numpy as np
+from controller import Robot
 from src.turtleBot import TurtleBot
+import matplotlib
+import matplotlib.pyplot as plt
+
+matplotlib.use('Agg')
 
 TIME_STEP = 64
 MAX_SPEED = 6.28
@@ -21,10 +24,11 @@ def main():
     for i in range(n):
         device = robot.getDeviceByIndex(i)
         print(device.getName())
-        
+    
     print(bot.getPosition())
     bot.movePosition(0.25, 0.25, 30)
-
+    
+        
     while robot.step(TIME_STEP) != -1:
         bot.movePosition(.25, .2, 45)
         pass
