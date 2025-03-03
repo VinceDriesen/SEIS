@@ -16,6 +16,12 @@ def serialize(obj):
 def main():
     robot = Robot()
     bot: TurtleBot = TurtleBot(robot, TIME_STEP, MAX_SPEED)
+    
+    n = robot.getNumberOfDevices()
+    for i in range(n):
+        device = robot.getDeviceByIndex(i)
+        print(device.getName())
+        
     print(bot.getPosition())
     bot.movePosition(0.25, 0.25, 30)
 

@@ -1,4 +1,4 @@
-from controller import Motor, Robot, PositionSensor, DistanceSensor
+from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar
 import math
 from typing import Annotated
 
@@ -9,21 +9,6 @@ class TurtleBot:
     The TurtleBot is equipped with two wheel motors and multiple distance sensors.
     It can move, sense its environment, and update its position accordingly. 
     """
-
-    @property
-    def frontDistSens(self) -> DistanceSensor:
-        """Front Distance Sensor, scales linearly from 1000 to 0 (~0m to 1m)."""
-        return self._frontDistSens
-
-    @property
-    def leftDistSens(self) -> DistanceSensor:
-        """Left Distance Sensor, scales linearly from 1000 to 0 (~0m to 1m)."""
-        return self._leftDistSens
-
-    @property
-    def rightDistSens(self) -> DistanceSensor:
-        """Right Distance Sensor, scales linearly from 1000 to 0 (~0m to 1m)."""
-        return self._rightDistSens
     
     def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
         """Initializes The TurtleBot
@@ -68,6 +53,10 @@ class TurtleBot:
         )
         self.leftMotorSens: PositionSensor = self.robot.getDevice("left wheel sensor")
         self.rightMotorSens: PositionSensor = self.robot.getDevice("right wheel sensor")
+        
+        self.lidarSens: Lidar = self.robot.getDevice("LDS-01")
+        self.lidarMotor1: Motor = self.robot.getDevice("LDS-01_main_motor")
+        self.lidarMotor2: Motor = self.robot.getDevice("LDS-01_secondary_motor")
 
         self.frontDistSens.enable(self.timeStep)
         self.rearDistSens.enable(self.timeStep)
@@ -215,3 +204,7 @@ class TurtleBot:
         while angle < -math.pi:
             angle += 2 * math.pi
         return angle
+
+    
+    def printDevices(self) -> None:
+        print(self.robot.getLidar)
