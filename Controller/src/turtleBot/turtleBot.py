@@ -2,7 +2,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar
 import math
-
+from .lidar import calculate_odometry_correction
+from typing import List
 
 class TurtleBot:
     """
@@ -12,7 +13,7 @@ class TurtleBot:
     It can move, sense its environment, and update its position accordingly.
     """
 
-    def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
+    def __init__(self, robot: Robot, timeStep: int, maxSpeed: float, initial_position: tuple[float, float, float] = (0, 0, 0)):
         """Initializes The TurtleBot
 
         Args:
@@ -33,16 +34,19 @@ class TurtleBot:
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
         self.robot.step(self.timeStep)
+        
+        self.prev_lidar_scan = np.array([])  # Initialize properly
 
         # Define occupancy map parameters.
-        self.map_size = 4  # Size of map in meters abs(-x, +x)
-        self.map_resolution = 20  # Amount of div per meter
+        self.map_size = 6  # Size of map in meters abs(-x, +x)
+        self.map_resolution = 50  # Amount of div per meter
         self.grid_size = self.map_size * self.map_resolution
         self.map_offset = self.grid_size // 2  # Center index corresponding to (0,0)
         self.occurancy_map = np.zeros((self.grid_size, self.grid_size))
 
         # X-waarde, Y-waarde, Hoek-waarde
-        self.position = [0, 0, 0]
+        self.prev_position = list(initial_position)
+        self.position = list(initial_position)
 
         # Parameter om max velocity mee te vermenigvuldigen
         self.velocityNorm = 0.3
@@ -122,12 +126,7 @@ class TurtleBot:
         self.rightMotor.setVelocity(0)
 
     def _move(self, distance: float):
-        """This is a help function, do not touch it. Thank you
-        This function moves the robots in meters. Use the movePosition function to move the robot
-
-        Args:
-            distance (float): Distance in meters
-        """
+        self.prev_position = self.position.copy()
         linearVelocity = self.velocityNorm * self.maxSpeed
 
         startLeftEncoder = self.leftMotorSens.getValue()
@@ -158,6 +157,7 @@ class TurtleBot:
 
             delta = currentDistance - prevDistance
 
+            # Update position using wheel odometry
             self.position[0] += delta * math.cos(self.position[2])
             self.position[1] += delta * math.sin(self.position[2])
 
@@ -168,8 +168,31 @@ class TurtleBot:
 
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
+        
+        self.robot.step(self.timeStep)
+        current_scan = np.array(self.lidarSens.getRangeImage(), dtype=float)
+        
+        if len(self.prev_lidar_scan) > 0:
+            # Calculate relative movement using ICP
+            dx, dy, dtheta = calculate_odometry_correction(current_scan, self.prev_lidar_scan)
+            
+            # Convert to global coordinates
+            theta_prev = self.prev_position[2]
+            dx_global = dx * math.cos(theta_prev) - dy * math.sin(theta_prev)
+            dy_global = dx * math.sin(theta_prev) + dy * math.cos(theta_prev)
+            
+            # Update position with LiDAR correction
+            self.position[0] = self.prev_position[0] + dx_global
+            self.position[1] = self.prev_position[1] + dy_global
+            self.position[2] = self.normalizeAngle(self.prev_position[2] + dtheta)
 
-    def movePosition(self, x: float, y: float, angle: float):
+        self.prev_lidar_scan = current_scan.copy()
+        self.prev_position = self.position.copy()
+
+        # Normalize angle
+        self.position[2] = self.normalizeAngle(self.position[2])
+    
+    def move_position(self, x: float, y: float, angle: float):
         """
         This is a relative move function, from the current position, move x meters, y meters and or a new angle position.
         These can be None, if you only want to move in the x direction. De angle operator wordt EERST uitgevoerd, NIET ER NA!!
@@ -202,9 +225,6 @@ class TurtleBot:
         distance = math.sqrt(dx**2 + dy**2)
 
         self._move(distance)
-
-        # self.position[0] = target_x
-        # self.position[1] = target_y
         self.position[2] = desired_heading
 
     def normalizeAngle(self, angle):
@@ -213,55 +233,6 @@ class TurtleBot:
         while angle < -math.pi:
             angle += 2 * math.pi
         return angle
-
-    def __get_lidar_scan(self) -> np.ndarray:
-        """
-        Transform raw LIDAR data so that it is correctly sorted with angles 0 to 359 degrees (with 0° at the top/north).
-
-        Returns:
-            np.ndarray: The transformed LIDAR data array.
-        """
-        lidar_array = np.array(self.lidarSens.getRangeImage(), dtype=float)
-
-        # Replace infinite values with minRange
-        lidar_array[lidar_array == np.inf] = np.nan
-
-        # Reverse the order of the data (flip the scan)
-        transformed = lidar_array[::-1]
-
-        return transformed
-
-    def _add_to_occurancy_map(
-        self, x_value: float, y_value: float, cell_value: float = 1
-    ) -> None:
-        """Adds the cell_value to the occurancy map at the specified position
-
-        Args:
-            x_value (float): x positions in m
-            y_value (float): y posittion in m
-            cell_value (float, optional): propability of cell having an object, default = 1
-        """
-        i = int(x_value * self.map_resolution) + self.map_offset  # Column index
-        j = int(y_value * self.map_resolution) + self.map_offset  # Row index
-        if 0 <= i < self.grid_size and 0 <= j < self.grid_size:
-            self.occurancy_map[j, i] = cell_value
-        else:
-            print(f"Warning: ({x_value}, {y_value}) is out of map bounds.")
-
-    def _scan_lidar_event(self):
-        lidar_data = self.__get_lidar_scan()
-        angles = np.linspace(0, 2 * np.pi, len(lidar_data), endpoint=False)
-
-        robot_pos_x = self.position[0]
-        robot_pos_y = self.position[1]
-        robot_pos_theta = self.position[2]
-
-        for dist, angle in zip(lidar_data, angles):
-            if np.isnan(dist):
-                continue
-            x_dest = robot_pos_x + dist * math.cos(robot_pos_theta + angle)
-            y_dest = robot_pos_y + dist * math.sin(robot_pos_theta + angle)
-            self._add_to_occurancy_map(x_dest, y_dest)
 
     def display_occupancy_map(self):
         """

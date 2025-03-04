@@ -7,20 +7,23 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.12365930506178502 -0.09920896386822084 -0.9873530056468309 4.670621823069223
-  position 0.02209011851915538 -1.1968243590960517 0.32491239545265366
-  follow "TurtleBot3Burger:right distance sensor"
+  orientation -0.4345112628808956 0.4421251374426784 0.7846816712979487 1.8269971463133545
+  position 0.17370587372382085 -1.1351624798963118 2.092551056879485
+  follow "rectangle arena"
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
-  translation 0.0112892 -0.0769577 1.11022e-16
+  translation 0.0112892 -0.0769577 -0.01
+  floorSize 3 1
+  wallThickness 0.05
+  wallHeight 0.3
 }
 Robot {
-  translation -0.1516047824016209 6.488527087112537e-05 -0.0002477392069279022
-  rotation -0.002111682589417849 -0.9999922790454056 -0.003314007576558545 0.004641972186215938
+  translation -0.09634406492124235 -0.03322700696606638 -0.010247663860592178
+  rotation -0.0023488280171415268 0.0033769980762467264 -0.9999915394096787 -1.2196686087877753
   children [
     DistanceSensor {
       translation 0.031 0 0.065
@@ -41,7 +44,7 @@ Robot {
     }
     DistanceSensor {
       translation -0.091 0 0.065
-      rotation 0 0 1 -3.010695001079161
+      rotation 0 0 1 -3.141592653589793
       children [
         Shape {
           geometry Cylinder {
@@ -95,12 +98,14 @@ Robot {
       children [
         Lidar {
           translation 0 0 0.02
+          rotation 0 0 -1 0
           children [
             Pose {
               rotation 0 0.7071032811764938 0.7071102811792772 3.141585
               children [
                 HingeJoint {
                   jointParameters HingeJointParameters {
+                    position 119.83743999999035
                     axis 0 1 0
                   }
                   device [
@@ -111,7 +116,7 @@ Robot {
                   ]
                   endPoint Solid {
                     translation 0 -0.01 0
-                    rotation 1 0 0 -1.5708
+                    rotation 0.9499585892436967 -0.22088268412850381 -0.2208834954773965 4.661070961081851
                     children [
                       Transform {
                         scale 0.001 0.001 0.001
@@ -155,6 +160,7 @@ Robot {
                 }
                 HingeJoint {
                   jointParameters HingeJointParameters {
+                    position 88.4774399999938
                     axis 0 1 0
                     anchor -0.046 0 0
                   }
@@ -165,8 +171,8 @@ Robot {
                     }
                   ]
                   endPoint Solid {
-                    translation 0 -0.01 0
-                    rotation 1 0 0 -1.5708
+                    translation -0.005917818578124456 -0.01 -0.022570306432652953
+                    rotation -0.9376178432956287 0.24583768623132415 0.2458385892452263 1.6351683264527448
                     children [
                       Transform {
                         scale 0.001 0.001 0.001
@@ -725,14 +731,14 @@ Robot {
           numberOfLayers 1
           near 0.07
           minRange 0.12
-          maxRange 3.5
+          maxRange 20
           noise 0.0043
         }
       ]
     }
     DEF RIGHT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
-        position 193.4773582530936
+        position 989.9480914989643
         axis 0 1 0
         anchor 0 -0.08 0.033
       }
@@ -749,7 +755,7 @@ Robot {
       ]
       endPoint Solid {
         translation 0 -0.08 0.033
-        rotation 0 1 0 3.411003037706007
+        rotation 0 -0.9999999999999999 0 4.365983035410315
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -847,13 +853,13 @@ Robot {
             0 0 0
           ]
         }
-        linearVelocity 0.020723999041353948 -3.1877358307514994e-07 1.1956418051648214e-09
-        angularVelocity 9.659789733298908e-06 0.627999999830025 -6.142209234271512e-06
+        linearVelocity 0.021391446534603013 0.05840844612106833 7.936658177100466e-09
+        angularVelocity -1.7699128154214379 0.648335153432588 5.8216067483445847e-05
       }
     }
     DEF LEFT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
-        position 193.47735744461653
+        position 1558.7620913025985
         axis 0 1 0
         anchor 0 0.08 0.033
       }
@@ -870,7 +876,7 @@ Robot {
       ]
       endPoint Solid {
         translation 0 0.08 0.033
-        rotation 0.13429481428267023 1.4094289604332648e-06 0.9909414225143669 3.1415963562831353
+        rotation -0.8681501918600117 6.118060859852909e-07 -0.4963015659586927 3.1415881637489034
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -896,18 +902,18 @@ Robot {
             0 0 0
           ]
         }
-        linearVelocity 0.02072400095348954 -3.187734534813351e-07 -1.1947371248457011e-09
-        angularVelocity 9.659817462482905e-06 0.6279999999559567 -6.142171967457367e-06
+        linearVelocity 0.021398108412720933 0.05840597931506188 2.2096270646821415e-07
+        angularVelocity -1.7699191005890316 0.6483179866845419 -8.763657470373623e-05
       }
     }
     DEF CASTER_JOINT BallJoint {
       jointParameters BallJointParameters {
-        position 153.9193715788941
+        position -3072.044222529322
         anchor -0.081 0 0.004
       }
       endPoint Solid {
-        translation -0.08099997135075981 -6.027820489929933e-11 0.0040061717851769
-        rotation 0.009001341738344264 0.999868085470866 -0.013519892889168347 2.0429787313914134
+        translation -0.08099363889183354 2.2188368426212524e-06 0.00401144300095844
+        rotation -0.10994064083748574 -0.9631050786280196 0.24564540096073315 -3.0098970802693685
         children [
           Shape {
             appearance PBRAppearance {
@@ -921,8 +927,8 @@ Robot {
         boundingObject USE CASTER_SPHERE
         physics Physics {
         }
-        linearVelocity 0.02072399999750451 -3.1849924917162066e-07 1.8210367560846498e-13
-        angularVelocity 7.962481229261081e-05 5.180999999376127 -0.00010362778183121612
+        linearVelocity 0.021420729050872923 0.05847913479576149 -1.0306252313109416e-06
+        angularVelocity -14.61977226702834 5.3551838424646805 0.030937610014367622
       }
     }
     DEF BODY Pose {
@@ -1137,6 +1143,16 @@ Robot {
     ]
   }
   controller "<extern>"
-  linearVelocity 0.020723999998862225 -3.182416927644986e-07 -2.158437034894698e-12
-  angularVelocity -1.5238790407389652e-08 -2.5317283094072916e-12 -8.927511089350258e-09
+  linearVelocity 0.021399959844404175 0.058421475356089395 3.073660943251708e-05
+  angularVelocity -0.0008650051057128781 0.00031829611382703593 8.829637675625212e-07
+}
+Transform {
+  translation 1 -0.1 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 0.2 0.2 0.4
+      }
+    }
+  ]
 }
