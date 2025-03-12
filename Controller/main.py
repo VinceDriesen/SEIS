@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from controller import Robot, Supervisor, Node
-from src.turtleBot import TurtleBot
+from src.turtleBot import TurtleBot, transform_lidar_scan
 import matplotlib
 import threading
 import time
@@ -30,7 +30,8 @@ def main():
     simulation_thread.start()
     
     # Start the visualization thread for the lidar scan.
-    visualization_thread = threading.Thread(target=visualization_loop, args=(bot,))
+    # visualization_thread = threading.Thread(target=visualization_loop, args=(bot, robotNode))
+    visualization_thread = threading.Thread(target=visualization_loop, args=(bot, robotNode))
     visualization_thread.daemon = True  # Daemonize so it shuts down with the main thread.
     visualization_thread.start()
     
@@ -38,62 +39,68 @@ def main():
 
 
 def robot_loop(robot: Robot, bot: TurtleBot):
-    """
-    Main simulation loop: issues move commands and updates the robot's pose.
-    The TurtleBot's _move() function internally uses the lidar scan for odometry correction.
-    """
+    """Modified movement pattern for better mapping"""
+    movements = [
+        (1.0, 0.0, 0),   # Move forward
+        (0.0, 0.0, 90),  # Rotate right
+        (1.0, 0.0, 0),   # Move forward
+        (0.0, 0.0, -90), # Rotate left
+    ]
+    
     while robot.step(TIME_STEP) != -1:
-        bot.move_position(0.25, 0.2, 45)
-        print(f'Position: X: {bot.position[0]:.2f}, Y: {bot.position[1]:.2f}, Theta: {bot.position[2]:.2f}')
-        # You can add a short sleep if needed to slow the simulation.
-        time.sleep(0.1)
+        for dx, dy, dtheta in movements:
+            bot.move_position(dx, dy, dtheta)
+            print(f"Position: {bot.position}")
+            time.sleep(0.5)
 
 
-def visualization_loop(bot: TurtleBot):
-    """
-    Continuously grabs the current lidar scan from the TurtleBot,
-    transforms it to world coordinates, and updates a live plot.
-    """
+def visualization_loop(bot: TurtleBot, supervisor_node: Node):
+    """Visualize using supervisor's ground truth positioning"""
     import matplotlib.pyplot as plt
-    plt.ion()  # Turn on interactive mode.
+    plt.ion()
     fig, ax = plt.subplots()
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
     
     while True:
-        # Retrieve the current lidar scan from the sensor.
-        current_scan = bot.lidarSens.getRangeImage()  # Returns a list of distances.
-        current_scan = np.array(current_scan, dtype=float)
+        # Get GROUND TRUTH position and orientation
+        true_pos = supervisor_node.getPosition()
+        true_ori = supervisor_node.getOrientation()
+        true_yaw = math.atan2(true_ori[3], true_ori[0])  # From 3x3 rotation matrix
         
-        # Import the transform function from your lidar module.
-        from src.turtleBot import transform_lidar_scan
-        
-        # Transform the scan into world coordinates using the robot's current pose.
+        # Transform using ground truth values
+        current_scan = np.array(bot.lidarSens.getRangeImage(), dtype=float)
         points_map = transform_lidar_scan(
             current_scan,
-            (bot.position[0], bot.position[1]),
-            (math.cos(bot.position[2]), math.sin(bot.position[2]))
+            (true_pos[0],  # World X
+            true_pos[1],),  # World Y
+            true_yaw      # World Yaw
         )
         
+        # Update plot with ground truth data
         ax.clear()
         if points_map.size > 0:
-            ax.scatter(points_map[:, 0], points_map[:, 1], s=2, c='blue', label="Lidar Points")
-        ax.scatter(bot.position[0], bot.position[1], s=50, c='red', marker='x', label="Robot Position")
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Y (m)")
-        ax.set_title("Lidar Map Visualization")
-        ax.legend()
-        ax.grid(True)
-        ax.axis('equal')
-        plt.pause(0.05)  # Pause briefly to update the plot.
+            ax.scatter(points_map[:, 0], points_map[:, 1], s=2, c='blue')
+        ax.scatter(true_pos[0], true_pos[1], s=50, c='red', marker='x')
+        ax.quiver(true_pos[0], true_pos[1], 
+                 math.cos(true_yaw), math.sin(true_yaw),
+                 color='red', scale=10)
+        plt.pause(0.05)
 
 
 def get_global_pose(node: Node):
     """
-    Returns the initial (x, y, yaw) in global coordinates for the given simulation node.
+    Returns the initial (x, y, yaw) in global coordinates.
+    Correctly handles Webots' 3x3 rotation matrix format.
     """
-    position = node.getPosition()
-    orientation = node.getOrientation()
-    yaw = math.atan2(orientation[3], orientation[0])
-    print("Initial position:", position, "Yaw:", yaw)
+    position = node.getPosition()  # [x, y, z]
+    orientation = node.getOrientation()  # 3x3 rotation matrix as list[9]
+    
+    R00, R01, R02, R10, R11, R12, R20, R21, R22 = orientation
+    
+    # Calculate yaw from rotation matrix (Z-axis rotation)
+    yaw = math.atan2(R10, R00)  # yaw = atan2(sinθ, cosθ)
+    
     return (position[0], position[1], yaw)
 
 

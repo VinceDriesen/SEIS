@@ -1,8 +1,9 @@
+import threading
 from matplotlib import pyplot as plt
 import numpy as np
 from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar
 import math
-from .lidar import calculate_odometry_correction
+from .lidar import calculate_odometry_correction, transform_lidar_scan
 from typing import List
 
 class TurtleBot:
@@ -36,13 +37,6 @@ class TurtleBot:
         self.robot.step(self.timeStep)
         
         self.prev_lidar_scan = np.array([])  # Initialize properly
-
-        # Define occupancy map parameters.
-        self.map_size = 6  # Size of map in meters abs(-x, +x)
-        self.map_resolution = 50  # Amount of div per meter
-        self.grid_size = self.map_size * self.map_resolution
-        self.map_offset = self.grid_size // 2  # Center index corresponding to (0,0)
-        self.occurancy_map = np.zeros((self.grid_size, self.grid_size))
 
         # X-waarde, Y-waarde, Hoek-waarde
         self.prev_position = list(initial_position)
@@ -171,9 +165,11 @@ class TurtleBot:
         
         self.robot.step(self.timeStep)
         current_scan = np.array(self.lidarSens.getRangeImage(), dtype=float)
+        points_map = transform_lidar_scan(current_scan, 
+                                (self.position[0], self.position[1]),
+                                self.position[2])
         
         if len(self.prev_lidar_scan) > 0:
-            # Calculate relative movement using ICP
             dx, dy, dtheta = calculate_odometry_correction(current_scan, self.prev_lidar_scan)
             
             # Convert to global coordinates
@@ -184,13 +180,14 @@ class TurtleBot:
             # Update position with LiDAR correction
             self.position[0] = self.prev_position[0] + dx_global
             self.position[1] = self.prev_position[1] + dy_global
-            self.position[2] = self.normalizeAngle(self.prev_position[2] + dtheta)
+            self.position[2] = self.normalizeAngle(self.position[2] + dtheta)
 
         self.prev_lidar_scan = current_scan.copy()
         self.prev_position = self.position.copy()
 
         # Normalize angle
         self.position[2] = self.normalizeAngle(self.position[2])
+
     
     def move_position(self, x: float, y: float, angle: float):
         """
@@ -228,11 +225,7 @@ class TurtleBot:
         self.position[2] = desired_heading
 
     def normalizeAngle(self, angle):
-        while angle > math.pi:
-            angle -= 2 * math.pi
-        while angle < -math.pi:
-            angle += 2 * math.pi
-        return angle
+        return (angle + math.pi) % (2 * math.pi) - math.pi
 
     def display_occupancy_map(self):
         """

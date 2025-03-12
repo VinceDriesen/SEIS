@@ -44,37 +44,29 @@ def angle_robot_to_world(ori: tuple) -> float:
     # Using atan2 is more robust than manually checking the sign of y.
     return math.atan2(ori[1], ori[0])
 
-def transform_lidar_scan(lidar_scan: np.ndarray, robot_pose: tuple, robot_ori: tuple) -> np.ndarray:
+def transform_lidar_scan(lidar_scan: np.ndarray, robot_position: tuple, robot_yaw: float) -> np.ndarray:
     """
-    Transforms lidar scan points from the robot's local coordinate system to the world (map) coordinates.
-    
-    This function adapts the transformation logic from the original video example:
-      - It first converts the raw lidar scan to (x, y) points (in the robot frame).
-      - It then rotates these points based on the robot's orientation.
-      - Finally, it translates them using the robot's position.
+    Transforms lidar scan points using direct yaw angle instead of orientation vector.
     
     Args:
-        lidar_scan (np.ndarray): The raw lidar scan data (array of distances).
-        robot_pose (tuple): The robot's position in the world as (x, y).
-        robot_ori (tuple): The robot's orientation vector (e.g. (cos(θ), sin(θ))).
+        lidar_scan: Raw lidar data
+        robot_position: (x, y) tuple
+        robot_yaw: Heading angle in radians
     
     Returns:
-        np.ndarray: Transformed lidar points in world coordinates.
+        Transformed points in world coordinates
     """
-    # Convert the lidar scan to points in the robot's frame.
     points = __lidar_scan_to_points(lidar_scan)
     
-    # Compute the robot's heading angle (θ) in the world coordinate system.
-    theta = angle_robot_to_world(robot_ori)
+    if len(points) == 0:
+        return np.empty((0, 2))
     
-    # Create the rotation matrix to convert points from robot frame to world frame.
-    rotMat = np.array([[np.cos(theta), -np.sin(theta)],
-                       [np.sin(theta),  np.cos(theta)]])
+    # Create rotation matrix from yaw angle
+    c, s = np.cos(robot_yaw), np.sin(robot_yaw)
+    rot_mat = np.array([[c, -s], [s, c]])
     
-    # Rotate the points and then add the robot's position to transform to world coordinates.
-    points_map = np.dot(points, rotMat.T) + np.array(robot_pose)
-    
-    return points_map
+    # Rotate and translate points
+    return points.dot(rot_mat.T) + np.array(robot_position)
 
 def calculate_odometry_correction(current_scan: np.ndarray, previous_scan: np.ndarray):
     """Estimate delta position and rotation using ICP on two scans."""
