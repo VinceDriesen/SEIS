@@ -191,14 +191,6 @@ class TurtleBot:
             self.position[0] = self.prev_position[0] + dx_global
             self.position[1] = self.prev_position[1] + dy_global
             self.position[2] = self.normalizeAngle(self.position[2] + dtheta)
-
-        points_map = transform_lidar_scan(
-            current_scan,
-            (self.position[0],
-            self.position[1],),
-            self.position[2]
-        )
-        self._update_occupancy_map(points_map)
         
         self.prev_lidar_scan = current_scan.copy()
         self.prev_position = self.position.copy()
@@ -245,60 +237,3 @@ class TurtleBot:
 
     def normalizeAngle(self, angle):
         return (angle + math.pi) % (2 * math.pi) - math.pi
-    
-    def _update_occupancy_map(self, points: np.ndarray):
-        """Update map with proper coordinate conversion"""
-        with self.map_lock:
-            for x, y in points:
-                # Convert world coordinates to grid indices
-                grid_x = int((x + self.map_size/2) * self.map_resolution)
-                grid_y = int((y + self.map_size/2) * self.map_resolution)
-                
-                print(f"World: ({x:.2f}, {y:.2f}) → Grid: ({grid_x}, {grid_y})")
-                if 0 <= grid_x < self.grid_size and 0 <= grid_y < self.grid_size:
-                    self.occupancy_map[grid_x, grid_y] = 1
-                
-    def display_occupancy_map(self):
-        """Visualization with proper updates and thread safety"""
-        import matplotlib.pyplot as plt
-        plt.ion()
-        
-        fig, ax = plt.subplots()
-        extent = [-self.map_size/2, self.map_size/2, 
-                -self.map_size/2, self.map_size/2]
-        
-        # Create initial plot with correct normalization
-        img = ax.imshow(self.occupancy_map.T,
-                    cmap='binary',
-                    origin='lower',
-                    extent=extent,
-                    interpolation='none',
-                    vmin=0,
-                    vmax=1)
-        
-        ax.set_title("Live Occupancy Map")
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Y (m)")
-        
-        # Store references for clean updates
-        fig.canvas.draw()
-        background = fig.canvas.copy_from_bbox(fig.bbox)
-        
-        try:
-            while True:
-                # Update data with thread-safe access
-                with self.map_lock:
-                    updated_data = self.occupancy_map.T.copy()
-                
-                # Efficiently update visualization
-                img.set_data(updated_data)
-                
-                # Restore background and redraw
-                fig.canvas.restore_region(background)
-                ax.draw_artist(img)
-                fig.canvas.blit(fig.bbox)
-                
-                plt.pause(0.05)  # Maintain UI responsiveness
-                
-        except KeyboardInterrupt:
-            plt.close('all')
