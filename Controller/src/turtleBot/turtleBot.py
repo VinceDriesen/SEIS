@@ -1,7 +1,7 @@
 import threading
 from matplotlib import pyplot as plt
 import numpy as np
-from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar
+from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass
 import math
 from .lidar import calculate_odometry_correction, transform_lidar_scan
 from typing import List
@@ -73,6 +73,8 @@ class TurtleBot:
         self.lidarSens: Lidar = self.robot.getDevice("LDS-01")
         self.lidarMotor1: Motor = self.robot.getDevice("LDS-01_main_motor")
         self.lidarMotor2: Motor = self.robot.getDevice("LDS-01_secondary_motor")
+        
+        self.compass: Compass = self.robot.getDevice("compass")
 
         self.frontDistSens.enable(self.timeStep)
         self.rearDistSens.enable(self.timeStep)
@@ -81,6 +83,15 @@ class TurtleBot:
         self.leftMotorSens.enable(self.timeStep)
         self.rightMotorSens.enable(self.timeStep)
         self.lidarSens.enable(self.timeStep)
+        self.compass.enable(self.timeStep)
+
+    
+    def get_heading_from_compass(self):
+        x, y, z = self.compass.getValues()
+        heading = math.atan2(y, x)
+        standard_heading = self.normalizeAngle(math.pi/2 - heading)
+        
+        return standard_heading
 
 
     def getPosition(self) -> dict[str, float]:
@@ -127,7 +138,9 @@ class TurtleBot:
 
             if abs(currentRotation) >= abs(targetRotation):
                 break
-
+        
+        self.position[2] = self.get_heading_from_compass()
+        
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
 
@@ -232,7 +245,6 @@ class TurtleBot:
         distance = math.sqrt(dx**2 + dy**2)
 
         self._move(distance)
-        self.position[2] = desired_heading
 
 
     def normalizeAngle(self, angle):

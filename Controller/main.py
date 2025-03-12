@@ -26,21 +26,18 @@ def main():
         print(device.getName())
         
     # Start the simulation (movement/odometry) thread.
-    simulation_thread = threading.Thread(target=robot_loop, args=(robot, bot))
+    simulation_thread = threading.Thread(target=robot_loop, args=(robot, bot, robotNode))
     simulation_thread.start()
     
     # Start the visualization thread for the lidar scan.
-    # visualization_thread = threading.Thread(target=bot.display_occupancy_map)
     visualization_thread = threading.Thread(target=visualization_loop, args=(bot, robotNode))
     visualization_thread.daemon = True  # Daemonize so it shuts down with the main thread.
     visualization_thread.start()
     
-    # bot.display_occupancy_map()
-    
     simulation_thread.join()
 
 
-def robot_loop(robot: Robot, bot: TurtleBot):
+def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     """Modified movement pattern for better mapping"""
     movements = [
         (1.0, 0.0, 0),   # Move forward
@@ -66,26 +63,26 @@ def visualization_loop(bot: TurtleBot, supervisor_node: Node):
     
     while True:
         # Get GROUND TRUTH position and orientation
-        true_pos = supervisor_node.getPosition()
-        true_ori = supervisor_node.getOrientation()
-        true_yaw = math.atan2(true_ori[3], true_ori[0])  # From 3x3 rotation matrix
+        # true_pos = supervisor_node.getPosition()
+        # true_ori = supervisor_node.getOrientation()
+        # true_yaw = math.atan2(true_ori[3], true_ori[0])  # From 3x3 rotation matrix
         
         # Transform using ground truth values
         current_scan = np.array(bot.lidarSens.getRangeImage(), dtype=float)
         points_map = transform_lidar_scan(
             current_scan,
-            (true_pos[0],  # World X
-            true_pos[1],),  # World Y
-            true_yaw      # World Yaw
+            (bot.position[0],  # World X
+            bot.position[1],),  # World Y
+            bot.position[2]      # World Yaw
         )
         
         # Update plot with ground truth data
         ax.clear()
         if points_map.size > 0:
             ax.scatter(points_map[:, 0], points_map[:, 1], s=2, c='blue')
-        ax.scatter(true_pos[0], true_pos[1], s=50, c='red', marker='x')
-        ax.quiver(true_pos[0], true_pos[1], 
-                 math.cos(true_yaw), math.sin(true_yaw),
+        ax.scatter(bot.position[0], bot.position[1], s=50, c='red', marker='x')
+        ax.quiver(bot.position[0], bot.position[1], 
+                 math.cos(bot.position[2]), math.sin(bot.position[2]),
                  color='red', scale=10)
         plt.pause(0.05)
 
