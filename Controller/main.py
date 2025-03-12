@@ -30,10 +30,12 @@ def main():
     simulation_thread.start()
     
     # Start the visualization thread for the lidar scan.
+    visualization_thread = threading.Thread(target=bot.display_occupancy_map)
     # visualization_thread = threading.Thread(target=visualization_loop, args=(bot, robotNode))
-    visualization_thread = threading.Thread(target=visualization_loop, args=(bot, robotNode))
     visualization_thread.daemon = True  # Daemonize so it shuts down with the main thread.
     visualization_thread.start()
+    
+    # bot.display_occupancy_map()
     
     simulation_thread.join()
 

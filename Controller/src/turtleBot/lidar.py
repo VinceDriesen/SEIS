@@ -1,6 +1,7 @@
 import math
 import numpy as np
 
+
 def __lidar_scan_to_points(lidar_scan: np.ndarray):
     """Generates an x,y array of points based on the raw lidar scan.
 
@@ -30,6 +31,7 @@ def __lidar_scan_to_points(lidar_scan: np.ndarray):
     
     return np.array(points)
 
+
 def angle_robot_to_world(ori: tuple) -> float:
     """
     Calculate the robot's heading angle (in radians) from its orientation vector.
@@ -43,6 +45,7 @@ def angle_robot_to_world(ori: tuple) -> float:
     """
     # Using atan2 is more robust than manually checking the sign of y.
     return math.atan2(ori[1], ori[0])
+
 
 def transform_lidar_scan(lidar_scan: np.ndarray, robot_position: tuple, robot_yaw: float) -> np.ndarray:
     """
@@ -67,6 +70,7 @@ def transform_lidar_scan(lidar_scan: np.ndarray, robot_position: tuple, robot_ya
     
     # Rotate and translate points
     return points.dot(rot_mat.T) + np.array(robot_position)
+
 
 def calculate_odometry_correction(current_scan: np.ndarray, previous_scan: np.ndarray):
     """Estimate delta position and rotation using ICP on two scans."""

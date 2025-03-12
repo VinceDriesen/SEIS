@@ -36,7 +36,16 @@ class TurtleBot:
         self.rightMotor.setVelocity(0)
         self.robot.step(self.timeStep)
         
-        self.prev_lidar_scan = np.array([])  # Initialize properly
+        self.prev_lidar_scan = np.array([])
+
+        # Parameters Occupany Map
+        self.map_size = 6 # Physical Map Size
+        self.map_resolution = 50 # Cells per meter
+        self.grid_size = int(self.map_size * self.map_resolution)
+        self.map_offset = self.grid_size // 2
+        self.map_lock = threading.Lock()
+        
+        self.occupancy_map = np.zeros((self.grid_size, self.grid_size), dtype=np.uint8)
 
         # X-waarde, Y-waarde, Hoek-waarde
         self.prev_position = list(initial_position)
@@ -44,6 +53,7 @@ class TurtleBot:
 
         # Parameter om max velocity mee te vermenigvuldigen
         self.velocityNorm = 0.3
+
 
     def _enableSensors(self):
         """This is a help function, do not touch it. Thank you
@@ -72,12 +82,14 @@ class TurtleBot:
         self.rightMotorSens.enable(self.timeStep)
         self.lidarSens.enable(self.timeStep)
 
+
     def getPosition(self) -> dict[str, float]:
         return {
             "x_value": self.position[0],
             "y_value": self.position[1],
             "theta_value": self.position[2],
         }
+
 
     def _rotate(self, angle: float):
         """This is a help function, do not touch it. Thank you
@@ -118,6 +130,7 @@ class TurtleBot:
 
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
+
 
     def _move(self, distance: float):
         self.prev_position = self.position.copy()
@@ -165,9 +178,6 @@ class TurtleBot:
         
         self.robot.step(self.timeStep)
         current_scan = np.array(self.lidarSens.getRangeImage(), dtype=float)
-        points_map = transform_lidar_scan(current_scan, 
-                                (self.position[0], self.position[1]),
-                                self.position[2])
         
         if len(self.prev_lidar_scan) > 0:
             dx, dy, dtheta = calculate_odometry_correction(current_scan, self.prev_lidar_scan)
@@ -182,6 +192,14 @@ class TurtleBot:
             self.position[1] = self.prev_position[1] + dy_global
             self.position[2] = self.normalizeAngle(self.position[2] + dtheta)
 
+        points_map = transform_lidar_scan(
+            current_scan,
+            (self.position[0],
+            self.position[1],),
+            self.position[2]
+        )
+        self._update_occupancy_map(points_map)
+        
         self.prev_lidar_scan = current_scan.copy()
         self.prev_position = self.position.copy()
 
@@ -224,39 +242,63 @@ class TurtleBot:
         self._move(distance)
         self.position[2] = desired_heading
 
+
     def normalizeAngle(self, angle):
         return (angle + math.pi) % (2 * math.pi) - math.pi
-
+    
+    def _update_occupancy_map(self, points: np.ndarray):
+        """Update map with proper coordinate conversion"""
+        with self.map_lock:
+            for x, y in points:
+                # Convert world coordinates to grid indices
+                grid_x = int((x + self.map_size/2) * self.map_resolution)
+                grid_y = int((y + self.map_size/2) * self.map_resolution)
+                
+                print(f"World: ({x:.2f}, {y:.2f}) → Grid: ({grid_x}, {grid_y})")
+                if 0 <= grid_x < self.grid_size and 0 <= grid_y < self.grid_size:
+                    self.occupancy_map[grid_x, grid_y] = 1
+                
     def display_occupancy_map(self):
-        """
-        Display the occupancy map in real time using Matplotlib's interactive mode.
-        The origin of the display is centered in physical units (meters).
-        """
-        plt.ion()  # Turn on interactive mode
+        """Visualization with proper updates and thread safety"""
+        import matplotlib.pyplot as plt
+        plt.ion()
+        
         fig, ax = plt.subplots()
-
-        # Set extent in physical units (meters): from -map_size/2 to map_size/2.
-        half_map_meters = self.map_size / 2  # e.g., 4/2 = 2
-        extent = [-half_map_meters, half_map_meters, -half_map_meters, half_map_meters]
-
-        # Display the occupancy map using imshow.
-        img = ax.imshow(
-            self.occurancy_map,
-            cmap="gray",
-            origin="lower",
-            interpolation="nearest",
-            extent=extent,
-        )
-
-        plt.title("Occupancy Map")
-        plt.xlabel("X (m)")
-        plt.ylabel("Y (m)")
-        plt.colorbar(img)
-        plt.show()
-
-        while True:
-            # Update the image data with the current occupancy map.
-            img.set_data(self.occurancy_map)
-            fig.canvas.draw()
-            fig.canvas.flush_events()
-            plt.pause(0.01)
+        extent = [-self.map_size/2, self.map_size/2, 
+                -self.map_size/2, self.map_size/2]
+        
+        # Create initial plot with correct normalization
+        img = ax.imshow(self.occupancy_map.T,
+                    cmap='binary',
+                    origin='lower',
+                    extent=extent,
+                    interpolation='none',
+                    vmin=0,
+                    vmax=1)
+        
+        ax.set_title("Live Occupancy Map")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+        
+        # Store references for clean updates
+        fig.canvas.draw()
+        background = fig.canvas.copy_from_bbox(fig.bbox)
+        
+        try:
+            while True:
+                # Update data with thread-safe access
+                with self.map_lock:
+                    updated_data = self.occupancy_map.T.copy()
+                
+                # Efficiently update visualization
+                img.set_data(updated_data)
+                
+                # Restore background and redraw
+                fig.canvas.restore_region(background)
+                ax.draw_artist(img)
+                fig.canvas.blit(fig.bbox)
+                
+                plt.pause(0.05)  # Maintain UI responsiveness
+                
+        except KeyboardInterrupt:
+            plt.close('all')
