@@ -1,10 +1,10 @@
 import threading
 from matplotlib import pyplot as plt
 import numpy as np
-from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass
+from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass, GPS
 import math
-from .lidar import calculate_odometry_correction, transform_lidar_scan
-from typing import List
+from .occupancy_map import update_occupancy_map
+
 
 class TurtleBot:
     """
@@ -35,8 +35,6 @@ class TurtleBot:
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
         self.robot.step(self.timeStep)
-        
-        self.prev_lidar_scan = np.array([])
 
         # Parameters Occupany Map
         self.map_size = 6 # Physical Map Size
@@ -47,8 +45,6 @@ class TurtleBot:
         
         self.occupancy_map = np.zeros((self.grid_size, self.grid_size), dtype=np.uint8)
 
-        # X-waarde, Y-waarde, Hoek-waarde
-        self.prev_position = list(initial_position)
         self.position = list(initial_position)
 
         # Parameter om max velocity mee te vermenigvuldigen
@@ -75,6 +71,7 @@ class TurtleBot:
         self.lidarMotor2: Motor = self.robot.getDevice("LDS-01_secondary_motor")
         
         self.compass: Compass = self.robot.getDevice("compass")
+        self.gps: GPS = self.robot.getDevice("gps")
 
         self.frontDistSens.enable(self.timeStep)
         self.rearDistSens.enable(self.timeStep)
@@ -84,17 +81,20 @@ class TurtleBot:
         self.rightMotorSens.enable(self.timeStep)
         self.lidarSens.enable(self.timeStep)
         self.compass.enable(self.timeStep)
+        self.gps.enable(self.timeStep)
 
     
     def get_heading_from_compass(self):
-        x, y, z = self.compass.getValues()
+        x, y, _ = self.compass.getValues()
         heading = math.atan2(y, x)
-        standard_heading = self.normalizeAngle(math.pi/2 - heading)
-        
-        return standard_heading
+        return self.normalizeAngle(heading)
 
 
-    def getPosition(self) -> dict[str, float]:
+    def get_gps_position(self):
+        return self.gps.getValues()
+
+
+    def get_position(self) -> dict[str, float]:
         return {
             "x_value": self.position[0],
             "y_value": self.position[1],
@@ -139,14 +139,11 @@ class TurtleBot:
             if abs(currentRotation) >= abs(targetRotation):
                 break
         
-        self.position[2] = self.get_heading_from_compass()
-        
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
-
+        
 
     def _move(self, distance: float):
-        self.prev_position = self.position.copy()
         linearVelocity = self.velocityNorm * self.maxSpeed
 
         startLeftEncoder = self.leftMotorSens.getValue()
@@ -167,12 +164,8 @@ class TurtleBot:
                 print("Broken Off Movement!")
                 break
 
-            leftDistanceTravelled = (
-                currentLeftEncoder - startLeftEncoder
-            ) * self.radius
-            rightDistanceTravelled = (
-                currentRightEncoder - startRightEncoder
-            ) * self.radius
+            leftDistanceTravelled = (currentLeftEncoder - startLeftEncoder) * self.radius
+            rightDistanceTravelled = (currentRightEncoder - startRightEncoder) * self.radius
             currentDistance = (leftDistanceTravelled + rightDistanceTravelled) / 2.0
 
             delta = currentDistance - prevDistance
@@ -188,28 +181,7 @@ class TurtleBot:
 
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
-        
-        self.robot.step(self.timeStep)
-        current_scan = np.array(self.lidarSens.getRangeImage(), dtype=float)
-        
-        if len(self.prev_lidar_scan) > 0:
-            dx, dy, dtheta = calculate_odometry_correction(current_scan, self.prev_lidar_scan)
-            
-            # Convert to global coordinates
-            theta_prev = self.prev_position[2]
-            dx_global = dx * math.cos(theta_prev) - dy * math.sin(theta_prev)
-            dy_global = dx * math.sin(theta_prev) + dy * math.cos(theta_prev)
-            
-            # Update position with LiDAR correction
-            self.position[0] = self.prev_position[0] + dx_global
-            self.position[1] = self.prev_position[1] + dy_global
-            self.position[2] = self.normalizeAngle(self.position[2] + dtheta)
-        
-        self.prev_lidar_scan = current_scan.copy()
-        self.prev_position = self.position.copy()
 
-        # Normalize angle
-        self.position[2] = self.normalizeAngle(self.position[2])
 
     
     def move_position(self, x: float, y: float, angle: float):
@@ -245,6 +217,13 @@ class TurtleBot:
         distance = math.sqrt(dx**2 + dy**2)
 
         self._move(distance)
+        
+        compass_heading = self.get_heading_from_compass()
+        x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
+        self.position[0] = x_gps
+        self.position[1] = y_gps  # Now using Y for vertical in 2D map
+        self.position[2] = self.get_heading_from_compass()  # Updated heading        
+        update_occupancy_map(self)
 
 
     def normalizeAngle(self, angle):

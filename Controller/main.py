@@ -1,7 +1,7 @@
 import math
-import numpy as np
+import os
 from controller import Robot, Supervisor, Node
-from src.turtleBot import TurtleBot, transform_lidar_scan
+from src.turtleBot import TurtleBot, visualize_map
 import matplotlib
 import threading
 import time
@@ -29,12 +29,12 @@ def main():
     simulation_thread = threading.Thread(target=robot_loop, args=(robot, bot, robotNode))
     simulation_thread.start()
     
-    # Start the visualization thread for the lidar scan.
-    visualization_thread = threading.Thread(target=visualization_loop, args=(bot, robotNode))
-    visualization_thread.daemon = True  # Daemonize so it shuts down with the main thread.
+    visualization_thread = threading.Thread(target=visualization_loop, args=(bot,))
+    visualization_thread.daemon = True
     visualization_thread.start()
     
     simulation_thread.join()
+    visualization_thread.join()
 
 
 def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
@@ -53,38 +53,17 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
             time.sleep(0.5)
 
 
-def visualization_loop(bot: TurtleBot, supervisor_node: Node):
-    """Visualize using supervisor's ground truth positioning"""
-    import matplotlib.pyplot as plt
-    plt.ion()
-    fig, ax = plt.subplots()
-    ax.set_xlim(-2, 2)
-    ax.set_ylim(-2, 2)
+def visualization_loop(bot: TurtleBot):
+    """Loop to periodically update the visualization"""
+    map_dir = "occupancy_maps"
+    os.makedirs(map_dir, exist_ok=True)
     
+    counter = 0
     while True:
-        # Get GROUND TRUTH position and orientation
-        # true_pos = supervisor_node.getPosition()
-        # true_ori = supervisor_node.getOrientation()
-        # true_yaw = math.atan2(true_ori[3], true_ori[0])  # From 3x3 rotation matrix
-        
-        # Transform using ground truth values
-        current_scan = np.array(bot.lidarSens.getRangeImage(), dtype=float)
-        points_map = transform_lidar_scan(
-            current_scan,
-            (bot.position[0],  # World X
-            bot.position[1],),  # World Y
-            bot.position[2]      # World Yaw
-        )
-        
-        # Update plot with ground truth data
-        ax.clear()
-        if points_map.size > 0:
-            ax.scatter(points_map[:, 0], points_map[:, 1], s=2, c='blue')
-        ax.scatter(bot.position[0], bot.position[1], s=50, c='red', marker='x')
-        ax.quiver(bot.position[0], bot.position[1], 
-                 math.cos(bot.position[2]), math.sin(bot.position[2]),
-                 color='red', scale=10)
-        plt.pause(0.05)
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        save_path = os.path.join(map_dir, f"occupancy_map_{timestamp}_{counter:04d}.png")
+        visualize_map(bot, save_path)
+        time.sleep(1.0)  # Update every second
 
 
 def get_global_pose(node: Node):
@@ -92,13 +71,11 @@ def get_global_pose(node: Node):
     Returns the initial (x, y, yaw) in global coordinates.
     Correctly handles Webots' 3x3 rotation matrix format.
     """
-    position = node.getPosition()  # [x, y, z]
-    orientation = node.getOrientation()  # 3x3 rotation matrix as list[9]
+    position = node.getPosition()
+    orientation = node.getOrientation()
     
-    R00, R01, R02, R10, R11, R12, R20, R21, R22 = orientation
-    
-    # Calculate yaw from rotation matrix (Z-axis rotation)
-    yaw = math.atan2(R10, R00)  # yaw = atan2(sinθ, cosθ)
+    R00, R01, R02, R10, R11, R12, _, _, _ = orientation
+    yaw = math.atan2(R01, R00)
     
     return (position[0], position[1], yaw)
 
