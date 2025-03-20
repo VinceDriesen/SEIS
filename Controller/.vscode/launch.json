@@ -8,6 +8,14 @@
             "program": "${workspaceFolder}/main.py",
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/.env",
-        }
+        },
+        {
+            "name": "Python: Webots Controller Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/test.py",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env",
+        },
     ]
 }

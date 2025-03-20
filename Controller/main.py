@@ -1,12 +1,13 @@
 import math
-import os
+import sys
 from controller import Robot, Supervisor, Node
 from src.turtleBot import TurtleBot, visualize_map
 import matplotlib
-import threading
 import time
 
 matplotlib.use("TkAgg")
+
+print(sys.path)
 
 TIME_STEP = 64
 MAX_SPEED = 6.28
@@ -24,21 +25,7 @@ def main():
     for i in range(n):
         device = robot.getDeviceByIndex(i)
         print(device.getName())
-        
-    # Start the simulation (movement/odometry) thread.
-    simulation_thread = threading.Thread(target=robot_loop, args=(robot, bot, robotNode))
-    simulation_thread.start()
     
-    visualization_thread = threading.Thread(target=visualization_loop, args=(bot,))
-    visualization_thread.daemon = True
-    visualization_thread.start()
-    
-    simulation_thread.join()
-    visualization_thread.join()
-
-
-def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
-    """Modified movement pattern for better mapping"""
     movements = [
         (1.0, 0.0, 0),   # Move forward
         (0.0, 0.0, 90),  # Rotate right
@@ -49,21 +36,9 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     while robot.step(TIME_STEP) != -1:
         for dx, dy, dtheta in movements:
             bot.move_position(dx, dy, dtheta)
+            bot.scan_lidar()
             print(f"Position: {bot.position}")
             time.sleep(0.5)
-
-
-def visualization_loop(bot: TurtleBot):
-    """Loop to periodically update the visualization"""
-    map_dir = "occupancy_maps"
-    os.makedirs(map_dir, exist_ok=True)
-    
-    counter = 0
-    while True:
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        save_path = os.path.join(map_dir, f"occupancy_map_{timestamp}_{counter:04d}.png")
-        visualize_map(bot, save_path)
-        time.sleep(1.0)  # Update every second
 
 
 def get_global_pose(node: Node):
