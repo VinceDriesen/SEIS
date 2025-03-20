@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass, GPS
 import math
-from .occupancy_map import update_occupancy_map
+from .lidar import LidarFunctions
 
 
 class TurtleBot:
@@ -36,16 +36,17 @@ class TurtleBot:
         self.rightMotor.setVelocity(0)
         self.robot.step(self.timeStep)
 
-        # Parameters Occupany Map
-        self.map_size = 6 # Physical Map Size
-        self.map_resolution = 50 # Cells per meter
-        self.grid_size = int(self.map_size * self.map_resolution)
-        self.map_offset = self.grid_size // 2
-        self.map_lock = threading.Lock()
+        # # Parameters Occupany Map
+        # self.map_size = 6 # Physical Map Size
+        # self.map_resolution = 50 # Cells per meter
+        # self.grid_size = int(self.map_size * self.map_resolution)
+        # self.map_offset = self.grid_size // 2
+        # self.map_lock = threading.Lock()
         
-        self.occupancy_map = np.zeros((self.grid_size, self.grid_size), dtype=np.uint8)
+        # self.occupancy_map = np.zeros((self.grid_size, self.grid_size), dtype=np.uint8)
 
         self.position = list(initial_position)
+        self.lidarFunc = LidarFunctions()
 
         # Parameter om max velocity mee te vermenigvuldigen
         self.velocityNorm = 0.3
@@ -222,8 +223,8 @@ class TurtleBot:
         x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
         self.position[0] = x_gps
         self.position[1] = y_gps  # Now using Y for vertical in 2D map
-        self.position[2] = self.get_heading_from_compass()  # Updated heading        
-        update_occupancy_map(self)
+        self.position[2] = self.get_heading_from_compass()  # Updated heading
+        self.lidarFunc.scan(self.lidarSens, self.get_position())
 
 
     def normalizeAngle(self, angle):
