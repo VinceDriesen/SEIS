@@ -43,16 +43,20 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     """Modified movement pattern for better mapping"""
     print("currentPosition", bot.get_position())
     movements = [
-        (0.25, 0.0, 0),   # Move forward
-        (0.0, 0.0, 90),  # Rotate right
-        (0.25, 0.0, 0),   # Move forward
-        (0.0, 0.0, -90), # Rotate left
+        (0.5, 0.0, 0),   # Move forward
+        (0.0, 0.0, 90), # Rotate left
+        (1, 0.0, 0),   # Move forward
+        (0, 0.0, 90),  # Rotate right
+        (0.25, 0.0, 0),  # Rotate right
+        (0, 0.0, 180),  # Rotate right
+        (2, 0.0, 0),  # Rotate right
     ]
     
     while robot.step(TIME_STEP) != -1:
         for dx, dy, dtheta in movements:
             bot.move_position(dx, dy, dtheta)
             time.sleep(1)
+        time.sleep(500)
 
 
 # def visualization_loop(bot: TurtleBot):

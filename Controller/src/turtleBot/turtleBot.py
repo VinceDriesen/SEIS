@@ -52,6 +52,9 @@ class TurtleBot:
 
         # Parameter om max velocity mee te vermenigvuldigen
         self.velocityNorm = 0.3
+        
+        
+        self.lidarFunc.scan(self.lidarSens, self.get_position())
 
 
     def _enableSensors(self):
