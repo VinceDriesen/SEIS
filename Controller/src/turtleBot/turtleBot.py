@@ -14,7 +14,7 @@ class TurtleBot:
     It can move, sense its environment, and update its position accordingly.
     """
 
-    def __init__(self, robot: Robot, timeStep: int, maxSpeed: float, initial_position: tuple[float, float, float] = (0, 0, 0)):
+    def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
         """Initializes The TurtleBot
 
         Args:
@@ -44,8 +44,10 @@ class TurtleBot:
         # self.map_lock = threading.Lock()
         
         # self.occupancy_map = np.zeros((self.grid_size, self.grid_size), dtype=np.uint8)
-
-        self.position = list(initial_position)
+        
+        x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
+        theta = self.get_heading_from_compass()  # Updated heading
+        self.position = list((x_gps, y_gps, theta))
         self.lidarFunc = LidarFunctions()
 
         # Parameter om max velocity mee te vermenigvuldigen
@@ -224,6 +226,8 @@ class TurtleBot:
         self.position[0] = x_gps
         self.position[1] = y_gps  # Now using Y for vertical in 2D map
         self.position[2] = self.get_heading_from_compass()  # Updated heading
+        
+        print(f"Position: {self.get_position()}")
         self.lidarFunc.scan(self.lidarSens, self.get_position())
 
 

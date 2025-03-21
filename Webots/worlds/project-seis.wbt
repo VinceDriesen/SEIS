@@ -5,10 +5,12 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
 
 WorldInfo {
+  physicsDisableLinearThreshold 0
+  physicsDisableAngularThreshold 0
 }
 Viewpoint {
-  orientation 0.4226851577265841 -0.6438133219058362 -0.6378414097361702 4.666161859621654
-  position -0.9344244988694582 -1.5137036645894202 2.539572312957391
+  orientation 0.26516191354394864 0.5171948028713221 -0.8137559188654825 1.1244197672352299
+  position -5.128408221068181 6.85537875149087 5.666280791368504
   follow "rectangle arena"
 }
 TexturedBackground {
@@ -16,13 +18,12 @@ TexturedBackground {
 TexturedBackgroundLight {
 }
 RectangleArena {
-  floorSize 3 1
+  floorSize 5 5
   wallThickness 0.05
   wallHeight 0.3
 }
 DEF robot Robot {
-  translation -0.75 0 0
-  rotation -0.001965388415032782 -0.9999980334439691 0.00026524813413394423 0.0048235273378585426
+  rotation 0 0 1 1.5708
   children [
     GPS {
       translation -0.03 0 0.1
@@ -878,7 +879,7 @@ DEF robot Robot {
       ]
       endPoint Solid {
         translation 0 0.08 0.033
-        rotation 0.9862437160845385 -1.350701626443759e-06 0.16529770864091228 3.1415964428269763
+        rotation 0.9862437160845385 -1.3507016263917229e-06 0.16529770864091234 3.1415964428269763
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -912,8 +913,8 @@ DEF robot Robot {
         anchor -0.081 0 0.004
       }
       endPoint Solid {
-        translation -0.08098268631235703 3.3704366557452544e-05 0.004008041248159038
-        rotation -0.9773450867168619 0.20514293678345233 0.052086053395032 4.043267101840416
+        translation -0.08098268631235703 3.3704366557448716e-05 0.004008041248159033
+        rotation -0.977345086716862 0.2051429367834525 0.052086053395031716 4.043267101840416
         children [
           Shape {
             appearance PBRAppearance {
@@ -1138,7 +1139,7 @@ DEF robot Robot {
   supervisor TRUE
 }
 Solid {
-  translation 1 -0.1 0.2
+  translation 2 0 0
   children [
     Shape {
       geometry Box {

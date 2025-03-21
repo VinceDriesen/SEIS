@@ -2,6 +2,8 @@ import math
 from controller import Lidar
 import numpy as np
 import matplotlib.pyplot as plt
+import time
+import threading
 
 def bresenham(start, end):
     """Bresenham's line algorithm voor vrije ruimte updates"""
@@ -58,20 +60,28 @@ class OccupancyGrid:
 class LidarFunctions:
     def __init__(self):
         self.occupancyGrid = OccupancyGrid()
+        self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
+        self.visualization_thread.start()
 
-    def get_lidar_coord_values(self, lidarSensor: Lidar):
+    def get_lidar_global_coord_values(self, lidarSensor: Lidar, position):
         scan = lidarSensor.getRangeImage()
         fov = lidarSensor.getFov()
         angle_increment = fov / (lidarSensor.getHorizontalResolution() - 1)
+        
         coords = []
         for i in range(lidarSensor.getHorizontalResolution()):
             angle = -fov/2 + angle_increment * i
             distance = scan[i]
             if distance > 0:
-                x_local = distance * math.sin(angle)  # Correctie: gebruik cos voor voorwaartse richting
-                y_local = distance * math.cos(angle)
-                coords.append((x_local, y_local))
+                x_local = distance * math.cos(angle)
+                y_local = distance * math.sin(angle)
+                coords.append(self.local_to_global((x_local, y_local), position))
         return coords
+    
+    def local_to_global(self, local, position):
+        x_global = position['x_value'] + local[0] * math.cos(position['theta_value']) - local[1] * math.sin(position['theta_value'])
+        y_global = position['y_value'] + local[0] * math.sin(position['theta_value']) + local[1] * math.cos(position['theta_value'])
+        return [x_global, y_global]
 
     def get_sensor_position(self, position):
         return self.occupancyGrid.coords_to_grid((position['x_value'], position['y_value']))
@@ -83,25 +93,18 @@ class LidarFunctions:
         theta_robot = position['theta_value']  # Converteer graden naar radialen indien nodig
 
         # Transformeer lidar-metingen
-        local_coords = self.get_lidar_coord_values(lidarSensor)
-        global_coords = []
-        for (x_local, y_local) in local_coords:
-            # Rotatie en translatie
-            x_global = x_robot + x_local * math.cos(theta_robot) - y_local * math.sin(theta_robot)
-            y_global = y_robot + x_local * math.sin(theta_robot) + y_local * math.cos(theta_robot)
-            print("global", x_global, y_global)
-            global_coords.append((x_global, y_global))
-
+        global_coords = self.get_lidar_global_coord_values(lidarSensor, position)
+        
         # Update grid
         sensor_pos = self.get_sensor_position(position)
         hits = [self.occupancyGrid.coords_to_grid(c) for c in global_coords]
         self.occupancyGrid.update_grid(sensor_pos, hits)
-        self.visualize_grid()
 
     def visualize_grid(self):
-        plt.clf()
-        grid_prob = 1 - 1/(1 + np.exp(self.occupancyGrid.grid))  # Log-odds naar probability
-        plt.imshow(grid_prob.T, origin='lower', cmap='binary', vmin=0, vmax=1)
-        plt.colorbar(label='Occupancy Probability')
-        plt.draw()
-        plt.pause(0.001)
+        while True:
+            plt.clf()
+            grid_prob = 1 - 1/(1 + np.exp(self.occupancyGrid.grid))  # Log-odds naar probability
+            plt.imshow(grid_prob.T, origin='lower', cmap='binary', vmin=0, vmax=1)
+            plt.colorbar(label='Occupancy Probability')
+            plt.draw()
+            plt.pause(0.1)

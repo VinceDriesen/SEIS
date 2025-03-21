@@ -17,7 +17,7 @@ def main():
     robotNode = robot.getFromDef('robot')
     
     # Get the initial global pose from the simulation node.
-    bot: TurtleBot = TurtleBot(robot, TIME_STEP, MAX_SPEED, get_global_pose(robotNode))
+    bot: TurtleBot = TurtleBot(robot, TIME_STEP, MAX_SPEED)
     
     # Print available device names for debugging.
     n = robot.getNumberOfDevices()
@@ -43,17 +43,16 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     """Modified movement pattern for better mapping"""
     print("currentPosition", bot.get_position())
     movements = [
-        (1, 0.0, 0),   # Move forward
+        (0.25, 0.0, 0),   # Move forward
         (0.0, 0.0, 90),  # Rotate right
-        (1.0, 0.0, 0),   # Move forward
+        (0.25, 0.0, 0),   # Move forward
         (0.0, 0.0, -90), # Rotate left
     ]
     
     while robot.step(TIME_STEP) != -1:
         for dx, dy, dtheta in movements:
             bot.move_position(dx, dy, dtheta)
-            print(f"Position: {bot.position}")
-            time.sleep(0.5)
+            time.sleep(1)
 
 
 # def visualization_loop(bot: TurtleBot):
