@@ -14,7 +14,7 @@ class TurtleBot:
     It can move, sense its environment, and update its position accordingly.
     """
 
-    def __init__(self, robot: Robot, timeStep: int, maxSpeed: float, initial_position: tuple[float, float, float] = (0, 0, 0)):
+    def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
         """Initializes The TurtleBot
 
         Args:
@@ -29,23 +29,14 @@ class TurtleBot:
         self.rightMotor: Motor = self.robot.getDevice("right wheel motor")
         self.radius = 0.033
         self.distanceBetweenWheels = 0.1775
-        self._enableSensors()
+        self.position = list([0, 0, 0])
         self.rightMotor.setPosition(float("inf"))
         self.leftMotor.setPosition(float("inf"))
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
+        self._enableSensors()
         self.robot.step(self.timeStep)
 
-        # # Parameters Occupany Map
-        # self.map_size = 6 # Physical Map Size
-        # self.map_resolution = 50 # Cells per meter
-        # self.grid_size = int(self.map_size * self.map_resolution)
-        # self.map_offset = self.grid_size // 2
-        # self.map_lock = threading.Lock()
-        
-        # self.occupancy_map = np.zeros((self.grid_size, self.grid_size), dtype=np.uint8)
-
-        self.position = list(initial_position)
         self.lidarFunc = LidarFunctions()
 
         # Parameter om max velocity mee te vermenigvuldigen
@@ -81,13 +72,14 @@ class TurtleBot:
         self.leftMotorSens.enable(self.timeStep)
         self.rightMotorSens.enable(self.timeStep)
         self.lidarSens.enable(self.timeStep)
+        self.lidarSens.enablePointCloud()
         self.compass.enable(self.timeStep)
         self.gps.enable(self.timeStep)
 
     
     def get_heading_from_compass(self):
         x, y, _ = self.compass.getValues()
-        heading = math.atan2(y, x)
+        heading = math.atan2(y, x) - math.pi / 2
         return self.normalizeAngle(heading)
 
 
@@ -101,6 +93,15 @@ class TurtleBot:
             "y_value": self.position[1],
             "theta_value": self.position[2],
         }
+
+    
+    def update_position(self):
+        x_gps, y_gps, _ = self.get_gps_position()
+        alpha = 0.3  # Increase to 30% GPS correction
+        self.position[0] = (1-alpha) * self.position[0] + alpha * x_gps
+        self.position[1] = (1-alpha) * self.position[1] + alpha * y_gps
+        self.position[2] = self.get_heading_from_compass()
+        print(f'Updated Position, X: {self.position[0]}, Y: {self.position[1]}, Rot: {self.position[2]}')
 
 
     def _rotate(self, angle: float):
@@ -194,6 +195,7 @@ class TurtleBot:
             y (float): relative y movement
             angle (float): relative angle movement
         """
+        self.update_position()
 
         target_x = self.position[0] + (x if x is not None else 0)
         target_y = self.position[1] + (y if y is not None else 0)
@@ -218,13 +220,8 @@ class TurtleBot:
         distance = math.sqrt(dx**2 + dy**2)
 
         self._move(distance)
-        
-        compass_heading = self.get_heading_from_compass()
-        x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
-        self.position[0] = x_gps
-        self.position[1] = y_gps  # Now using Y for vertical in 2D map
-        self.position[2] = self.get_heading_from_compass()  # Updated heading
-        self.lidarFunc.scan(self.lidarSens, self.get_position())
+        self.update_position()
+        self.lidarFunc.scan_point_cloud(self.lidarSens, self.position)
 
 
     def normalizeAngle(self, angle):

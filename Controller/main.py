@@ -17,7 +17,7 @@ def main():
     robotNode = robot.getFromDef('robot')
     
     # Get the initial global pose from the simulation node.
-    bot: TurtleBot = TurtleBot(robot, TIME_STEP, MAX_SPEED, get_global_pose(robotNode))
+    bot: TurtleBot = TurtleBot(robot, TIME_STEP, MAX_SPEED)
     
     # Print available device names for debugging.
     n = robot.getNumberOfDevices()
@@ -26,7 +26,7 @@ def main():
         print(device.getName())
         
         
-    robot_loop(robot, bot, robotNode)
+    robot_loop(robot, bot)
     # Start the simulation (movement/odometry) thread.
     # simulation_thread = threading.Thread(target=robot_loop, args=(robot, bot, robotNode))
     # simulation_thread.start()
@@ -39,9 +39,8 @@ def main():
     # visualization_thread.join()
 
 
-def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
+def robot_loop(robot: Robot, bot: TurtleBot):
     """Modified movement pattern for better mapping"""
-    print("currentPosition", bot.get_position())
     movements = [
         (1, 0.0, 0),   # Move forward
         (0.0, 0.0, 90),  # Rotate right
@@ -52,7 +51,6 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     while robot.step(TIME_STEP) != -1:
         for dx, dy, dtheta in movements:
             bot.move_position(dx, dy, dtheta)
-            print(f"Position: {bot.position}")
             time.sleep(0.5)
 
 
@@ -67,21 +65,6 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
 #         save_path = os.path.join(map_dir, f"occupancy_map_{timestamp}_{counter:04d}.png")
 #         visualize_map(bot, save_path)
 #         time.sleep(1.0)  # Update every second
-
-
-def get_global_pose(node: Node):
-    """
-    Returns the initial (x, y, yaw) in global coordinates.
-    Correctly handles Webots' 3x3 rotation matrix format.
-    """
-    position = node.getPosition()
-    orientation = node.getOrientation()
-    
-    R00, R01, R02, R10, R11, R12, _, _, _ = orientation
-    yaw = math.atan2(R01, R00)
-    
-    return (position[0], position[1], yaw)
-
 
 if __name__ == "__main__":
     main()
