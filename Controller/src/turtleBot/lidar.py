@@ -88,11 +88,11 @@ class LidarFunctions:
         :return: Globale coördinaten [x, y].
         """
         # Lokale coördinaten berekenen (in het robotframe)
-        x_local = distance * math.cos(lidar_angle)
-        y_local = distance * math.sin(lidar_angle)
+        x_local = - distance * math.sin(lidar_angle)
+        y_local = distance * math.cos(lidar_angle)
 
-        x_global = x_local + position['y_value']
-        y_global = y_local + position['x_value']
+        x_global = x_local + position['x_value']
+        y_global = y_local + position['y_value']
         return [x_global, y_global]
 
     def get_robot_position_grid(self, position):
