@@ -55,7 +55,7 @@ class TurtleBot:
 
         # Parameter om max velocity mee te vermenigvuldigen
         self.velocityNorm = 0.3
-        
+        self.nonMeasuredPosition = [0,0,0]
         
         self.lidarFunc.scan(self.lidarSens, self.get_position())
 
@@ -96,7 +96,8 @@ class TurtleBot:
     def get_heading_from_compass(self):
         x, y, _ = self.compass.getValues()
         # Laat deze 1/2pi staan, dit is aangezien compass zijn noorde legt tov de y-as en de map zijn noorde tov de x-as is
-        heading = math.atan2(y, x) - 1/2 * math.pi
+        heading = math.atan2(x,y)
+        # return heading
         return self.normalizeAngle(heading)
     
     def start_lidar(self):
@@ -111,7 +112,7 @@ class TurtleBot:
         return {
             "x_value": self.position[0],
             "y_value": self.position[1],
-            "theta_value": self.position[2] - math.pi,
+            "theta_value": self.position[2],
         }
 
 
@@ -203,6 +204,34 @@ class TurtleBot:
         self.rightMotor.setVelocity(0)
         
         
+    def fix_position(self):
+        """
+        Fix the position of the robot in the map.
+        This function is used to correct the position of the robot in the occupancy map.
+        """
+        
+        
+        x_gps, y_gps, _ = self.get_gps_position()
+        
+        # Calculate the difference between the current position and the target position
+        dx = self.nonMeasuredPosition[0] - x_gps
+        
+        
+        if abs(dx) > 0.05:
+            print(f"correcting dx: {dx}")
+            self.move_position(-1 * dx, 0, 0, safePosition=False)
+        x_gps, y_gps, _ = self.get_gps_position()
+        dy = self.nonMeasuredPosition[1] - y_gps
+        if abs(dy) > 0.05:
+            print(f"correcting dy: {dy}")
+            self.move_position(0, -1 * dy, 0, safePosition=False)
+        rotation = self.get_heading_from_compass()
+        d_rot = self.nonMeasuredPosition[2] - rotation
+        if abs(d_rot) > 0.02:
+            print(f"correcting d_rot: {d_rot}")
+            self.move_position(0, 0, d_rot, safePosition=False)
+        
+        
     def simplify_path(self, path):
         """
         Vereenvoudig het pad door enkel de knooppunten te behouden waar de richting verandert.
@@ -227,7 +256,49 @@ class TurtleBot:
 
         simplified.append(path[-1])
         return simplified
+    
+    
+    def visualize_grid_prob(self, grid_prob):
+        """
+        Visualiseer de probabilistische occupancy grid (waarden tussen 0 en 1).
+        Donker = bezet, licht = vrij.
+        """
+        plt.figure(figsize=(8, 8))
+        plt.title("Occupancy Grid Probabilities")
+        plt.imshow(grid_prob, cmap='gray', origin='lower')
+        plt.colorbar(label="Probability (0 = free, 1 = occupied)")
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.show()
 
+    def visualize_pathfinding_grid(self, grid, path=None, start=None, end=None):
+        """
+        Visualiseer de grid die gebruikt wordt door A* (pathfinding.core.grid.Grid).
+        1 = walkable, 0 = wall
+        """
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        matrix = np.array([[1 if node.walkable else 0 for node in col] for col in grid.nodes])
+        matrix = matrix  # Transpose terug naar originele oriëntatie
+
+        if path:
+            for node in path:
+                x, y = node.x, node.y
+                if 0 <= y < matrix.shape[0] and 0 <= x < matrix.shape[1]:
+                    matrix[y, x] = 0.5  # Pad = grijs
+
+        if start:
+            matrix[start[1], start[0]] = 0.2  # Start = donkergrijs
+        if end:
+            matrix[end[1], end[0]] = 0.8      # End = lichtgrijs
+
+        plt.figure(figsize=(8, 8))
+        plt.title("A* Grid Visualization (used by pathfinder)")
+        plt.imshow(matrix, cmap='gray', origin='lower')
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.show()
 
     def move_to_position(self, x: float, y: float):
         """
@@ -245,6 +316,7 @@ class TurtleBot:
         
         # Convert to binary grid (INVERTED since 0=occupied)
         binary_grid = 1 - (grid_prob > 0.8).astype(np.int8)
+        # self.visualize_grid_prob(binary_grid)
         print(f"Grid stats: Size={binary_grid.shape}, Free%={np.mean(binary_grid)*100:.1f}%")
 
         # Coordinate conversion
@@ -265,14 +337,16 @@ class TurtleBot:
             return False
 
         # Create pathfinding grid (transpose for correct x,y)
-        grid = Grid(matrix=binary_grid.T)
+        grid = Grid(matrix=binary_grid.tolist())
         start = grid.node(start_x, start_y)
         end = grid.node(end_x, end_y)
 
         # Find path
         finder = AStarFinder()
         path, _ = finder.find_path(start, end, grid)
+        self.visualize_pathfinding_grid(grid, path=path, start=(start_x, start_y), end=(end_x, end_y))
         path = self.simplify_path(path)
+        
         print(path)
         
         if not path:
@@ -287,6 +361,7 @@ class TurtleBot:
             target_y = (grid_y) / (binary_grid.shape[0]) * (extent[3] - extent[2])+ extent[2]
             
             dx = target_x - current_pos['x_value']
+            # Deze plug moet blivjen staan, komt omdat de compass en map coordinaten anders zijn
             dy = target_y + current_pos['y_value']
             
 
@@ -295,8 +370,12 @@ class TurtleBot:
 
         print("Reached target position!")
         return True
+    
+    
         
-    def move_position(self, x: float, y: float, angle: float):
+    def move_position(self, x: float, y: float, angle: float, safePosition: bool = True):
+        if safePosition:
+            self.nonMeasuredPosition = [self.nonMeasuredPosition[0] + x, self.nonMeasuredPosition[1] + y, self.normalizeAngle(self.nonMeasuredPosition[2] + math.radians(angle))]
         """
         This is a relative move function, from the current position, move x meters, y meters and or a new angle position.
         For reference, the X and Y coordinates are from the absolute X and Y of the map. This is X-axis in Red and Y-axis in Green
@@ -321,7 +400,8 @@ class TurtleBot:
             )
 
         rotation_needed = math.degrees(
-            self.normalizeAngle(desired_heading - self.position[2])
+            # self.normalizeAngle(desired_heading - self.position[2])
+            desired_heading - self.position[2]
         )
 
         self._rotate(rotation_needed)
@@ -339,10 +419,10 @@ class TurtleBot:
         
         print(f"Position: {self.get_position()}")
         self.lidarFunc.scan(self.lidarSens, self.get_position())
+        
+        self.fix_position()
 
 
     def normalizeAngle(self, angle): 
-        if angle % (2 * math.pi) < math.pi:
-            return angle % (2 * math.pi)
-        else:
-            return angle % (2 * math.pi) - 2 * math.pi
+        return angle % (2 * math.pi)
+        

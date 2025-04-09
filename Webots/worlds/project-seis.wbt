@@ -9,8 +9,8 @@ WorldInfo {
   physicsDisableAngularThreshold 0
 }
 Viewpoint {
-  orientation 0.03857412677893558 0.9949630372066232 -0.09252346370415639 0.7935934389689663
-  position -6.466194364277377 1.9305104125110557 7.359346156091529
+  orientation 0.038583084854454 0.9951940976289724 -0.09000029781933684 0.8134950390027232
+  position -6.319979661478053 1.9191560315194849 7.527531220940968
   follow "rectangle arena"
 }
 TexturedBackground {
@@ -878,7 +878,7 @@ DEF robot Robot {
       ]
       endPoint Solid {
         translation 0 0.08 0.033
-        rotation -0.30795246602025866 2.0720029792704912e-06 0.9514017440953891 3.141594770925992
+        rotation -0.30795246602025883 2.072002979304304e-06 0.9514017440953891 3.141594770925992
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -912,8 +912,8 @@ DEF robot Robot {
         anchor -0.081 0 0.004
       }
       endPoint Solid {
-        translation -0.08098008436610274 -4.83943601526593e-06 0.004032868787052712
-        rotation -0.6246958700435257 0.7808678329814325 0.000705241408461504 3.2951145771477006
+        translation -0.08098008436610274 -4.8394360152652506e-06 0.004032868787052712
+        rotation -0.6246958700435271 0.7808678329814314 0.0007052414084616431 3.2951145771477015
         children [
           Shape {
             appearance PBRAppearance {
@@ -1138,15 +1138,15 @@ DEF robot Robot {
   supervisor TRUE
 }
 Solid {
-  translation 2 0 0
+  translation 3.61 1.67 0
   children [
     Shape {
       geometry Box {
-        size 0.2 0.2 0.4
+        size 0.2 1 0.4
       }
     }
   ]
   boundingObject Box {
-    size 0.2 0.2 0.4
+    size 0.2 1 0.4
   }
 }
