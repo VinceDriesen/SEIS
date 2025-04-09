@@ -181,9 +181,9 @@ class TurtleBot:
             currentRightEncoder = self.rightMotorSens.getValue()
             frontSensorValue = self.frontDistSens.getValue()
 
-            if frontSensorValue > 1000 - (self.distanceBetweenWheels * 1.1 * 1000):
-                print("Broken Off Movement!")
-                break
+            # if frontSensorValue > 300 - (self.distanceBetweenWheels * 1.1 * 1000):
+            #     print("Broken Off Movement!")
+            #     break
 
             leftDistanceTravelled = (currentLeftEncoder - startLeftEncoder) * self.radius
             rightDistanceTravelled = (currentRightEncoder - startRightEncoder) * self.radius
@@ -305,12 +305,36 @@ class TurtleBot:
         plt.legend()
         plt.show()
 
+    def add_buffer_to_grid(self, grid, extent, buffer_distance=0.2):
+        """Verbeterde versie met gegarandeerde minimale buffer"""
+        cell_size = (extent[1] - extent[0]) / grid.shape[1]
+        buffer_cells = max(1, int(round(buffer_distance / cell_size)))  # Minimaal 1 cel, met afronding
+        
+        # Maak een kernel voor circulaire buffer
+        y, x = np.ogrid[-buffer_cells:buffer_cells+1, -buffer_cells:buffer_cells+1]
+        mask = x*x + y*y <= buffer_cells*buffer_cells
+        
+        buffered_grid = grid.copy()
+        wall_coords = np.argwhere(grid == 0)
+        
+        for y, x in wall_coords:
+            # Bepaal bounds van de buffer
+            y_min = max(0, y - buffer_cells)
+            y_max = min(grid.shape[0], y + buffer_cells + 1)
+            x_min = max(0, x - buffer_cells)
+            x_max = min(grid.shape[1], x + buffer_cells + 1)
+            
+            # Pas de buffer toe
+            buffered_grid[y_min:y_max, x_min:x_max] *= ~mask[
+                buffer_cells - (y - y_min): buffer_cells + (y_max - y),
+                buffer_cells - (x - x_min): buffer_cells + (x_max - x)
+            ]
+        
+        return buffered_grid
+
     def move_to_position(self, x: float, y: float):
         """
         Move robot to target position !absolute! (x,y), this will be done with A* pathfinding.
-        It is important to remember that is an absolute position, so the robot will move to the target position (with the center of the map being (0,0))
-        and not relative to the current position.
-        For reference, the X and Y coordinates are from the absolute X and Y of the map. This is X-axis in Red and Y-axis in Green
         """
         # Get current position
         current_pos = self.get_position()
@@ -323,25 +347,28 @@ class TurtleBot:
         binary_grid = 1 - (grid_prob > 0.8).astype(np.int8)
         print(f"Grid stats: Size={binary_grid.shape}, Free%={np.mean(binary_grid)*100:.1f}%")
 
+        # Voeg buffer toe rond muren (om een minimale afstand te behouden)
+        buffered_grid = self.add_buffer_to_grid(binary_grid, extent)
+
         # Coordinate conversion
         def real_to_grid(real_x, real_y):
-            grid_x = int((real_x - extent[0]) / (extent[1]-extent[0]) * (binary_grid.shape[1]))
-            grid_y = int((real_y - extent[2]) / (extent[3]-extent[2]) * (binary_grid.shape[0]))
-            return np.clip(grid_x, 0, binary_grid.shape[1]), np.clip(grid_y, 0, binary_grid.shape[0])
+            grid_x = int((real_x - extent[0]) / (extent[1]-extent[0]) * (buffered_grid.shape[1]))
+            grid_y = int((real_y - extent[2]) / (extent[3]-extent[2]) * (buffered_grid.shape[0]))
+            return np.clip(grid_x, 0, buffered_grid.shape[1]), np.clip(grid_y, 0, buffered_grid.shape[0])
 
         # Convert positions
         start_x, start_y = real_to_grid(current_pos['x_value'], current_pos['y_value'])
         end_x, end_y = real_to_grid(x, y)
         print(f"Grid coords: Start=({start_x},{start_y}), End=({end_x},{end_y})")
-        print(f"Cell values: Start={binary_grid[start_y, start_x]}, End={binary_grid[end_y, end_x]}")
+        print(f"Cell values: Start={buffered_grid[start_y, start_x]}, End={buffered_grid[end_y, end_x]}")
 
         # Check if target is valid
-        if binary_grid[end_y, end_x] == 0:
-            print(f"ERROR: Target cell ({end_x},{end_y}) is occupied!")
+        if buffered_grid[end_y, end_x] == 0:
+            print(f"ERROR: Target cell ({end_x},{end_y}) is occupied or too close to a wall!")
             return False
 
         # Create pathfinding grid (transpose for correct x,y)
-        grid = Grid(matrix=binary_grid.tolist())
+        grid = Grid(matrix=buffered_grid.tolist())
         start = grid.node(start_x, start_y)
         end = grid.node(end_x, end_y)
 
@@ -355,25 +382,24 @@ class TurtleBot:
         
         if not path:
             print("ERROR: No path found! Showing area around target:")
-            print(binary_grid[max(0,end_y-3):end_y+3, max(0,end_x-3):end_x+3])
+            print(buffered_grid[max(0,end_y-3):end_y+3, max(0,end_x-3):end_x+3])
             return False
 
         # Execute path
         for i, (grid_x, grid_y) in enumerate(path):
             if i == 0: continue # Skip first point (already at start)
-            target_x = (grid_x) / (binary_grid.shape[1]) * (extent[1] - extent[0]) + extent[0]
-            target_y = (grid_y) / (binary_grid.shape[0]) * (extent[3] - extent[2])+ extent[2]
+            target_x = (grid_x) / (buffered_grid.shape[1]) * (extent[1] - extent[0]) + extent[0]
+            target_y = (grid_y) / (buffered_grid.shape[0]) * (extent[3] - extent[2]) + extent[2]
             
             dx = target_x - current_pos['x_value']
-            # Deze plug moet blivjen staan, komt omdat de compass en map coordinaten anders zijn
-            dy = target_y + current_pos['y_value']
+            dy = target_y + current_pos['y_value'] #Laat deze plug staan, dat klopt
             
-
             self.move_position(dx, dy, 0)
             current_pos = self.get_position()
 
         print("Reached target position!")
         return True
+
     
     
         
