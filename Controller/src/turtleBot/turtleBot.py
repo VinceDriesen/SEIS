@@ -261,24 +261,12 @@ class TurtleBot:
         simplified.append(path[-1])
         return simplified
     
-    
-    def visualize_grid_prob(self, grid_prob):
-        """
-        Visualiseer de probabilistische occupancy grid (waarden tussen 0 en 1).
-        Donker = bezet, licht = vrij.
-        """
-        plt.figure(figsize=(8, 8))
-        plt.title("Occupancy Grid Probabilities")
-        plt.imshow(grid_prob, cmap='gray', origin='lower')
-        plt.colorbar(label="Probability (0 = free, 1 = occupied)")
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.show()
+
 
     def visualize_pathfinding_grid(self, grid, path=None, start=None, end=None):
         """
         Visualiseer de grid die gebruikt wordt door A* (pathfinding.core.grid.Grid).
-        1 = walkable, 0 = wall
+        1 = walkable, 0 = wall. Het midden van de map wordt weergegeven als (0,0).
         """
         import numpy as np
         import matplotlib.pyplot as plt
@@ -297,11 +285,24 @@ class TurtleBot:
         if end:
             matrix[end[1], end[0]] = 0.8      # End = lichtgrijs
 
+        # Zet het midden van de map op (0,0)
+        extent = [-matrix.shape[1] // 2, matrix.shape[1] // 2, -matrix.shape[0] // 2, matrix.shape[0] // 2]
+
         plt.figure(figsize=(8, 8))
         plt.title("A* Grid Visualization (used by pathfinder)")
-        plt.imshow(matrix, cmap='gray', origin='lower')
-        plt.xlabel("X")
-        plt.ylabel("Y")
+        plt.imshow(matrix, cmap='gray', origin='lower', extent=extent)
+
+        # Highlight the path in blue
+        if path:
+            path_x = [node.x - matrix.shape[1] // 2 for node in path]
+            path_y = [node.y - matrix.shape[0] // 2 for node in path]
+            plt.plot(path_x, path_y, color='blue', linewidth=2, label="Path")
+
+        plt.xlabel("X (0,0 is center)")
+        plt.ylabel("Y (0,0 is center)")
+        plt.axhline(0, color='red', linewidth=0.5)  # X-as
+        plt.axvline(0, color='green', linewidth=0.5)  # Y-as
+        plt.legend()
         plt.show()
 
     def move_to_position(self, x: float, y: float):
@@ -320,7 +321,6 @@ class TurtleBot:
         
         # Convert to binary grid (INVERTED since 0=occupied)
         binary_grid = 1 - (grid_prob > 0.8).astype(np.int8)
-        # self.visualize_grid_prob(binary_grid)
         print(f"Grid stats: Size={binary_grid.shape}, Free%={np.mean(binary_grid)*100:.1f}%")
 
         # Coordinate conversion

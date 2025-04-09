@@ -93,7 +93,7 @@ class LidarFunctions:
 
         x_global = x_local - position['x_value']
         y_global = y_local + position['y_value']
-        return [-x_global, y_global]
+        return [x_global, y_global]
 
     def get_robot_position_grid(self, position):
         """Berekent de sensorpositie in de occupancy grid op basis van de absolute wereldcoördinaten"""

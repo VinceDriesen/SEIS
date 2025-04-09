@@ -878,7 +878,7 @@ DEF robot Robot {
       ]
       endPoint Solid {
         translation 0 0.08 0.033
-        rotation -0.30795246602025883 2.072002979304304e-06 0.9514017440953891 3.141594770925992
+        rotation -0.3079524660202588 2.072002979304269e-06 0.9514017440953892 3.141594770925992
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -913,7 +913,7 @@ DEF robot Robot {
       }
       endPoint Solid {
         translation -0.08098008436610274 -4.8394360152652506e-06 0.004032868787052712
-        rotation -0.6246958700435271 0.7808678329814314 0.0007052414084616431 3.2951145771477015
+        rotation -0.6246958700435269 0.7808678329814315 0.0007052414084615875 3.2951145771477015
         children [
           Shape {
             appearance PBRAppearance {
@@ -1138,7 +1138,7 @@ DEF robot Robot {
   supervisor TRUE
 }
 Solid {
-  translation 3.61 1.67 0
+  translation 1 0 0
   children [
     Shape {
       geometry Box {
