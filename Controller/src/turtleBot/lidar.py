@@ -32,7 +32,7 @@ def bresenham(start, end):
 class OccupancyGrid:
     def __init__(self):
         self.map_size = 5 # meters
-        self.map_resolution = 0.04  # meters per cell
+        self.map_resolution = 0.02  # meters per cell
         self.grid_cells = int(self.map_size / self.map_resolution)
         self.grid = np.zeros((self.grid_cells, self.grid_cells), dtype=np.float32)
         self.free_prob = 0.4
@@ -61,8 +61,8 @@ class OccupancyGrid:
 class LidarFunctions:
     def __init__(self):
         self.occupancyGrid = OccupancyGrid()
-        self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
-        self.visualization_thread.start()
+        # self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
+        # self.visualization_thread.start()
 
     def get_lidar_global_coord_values(self, lidarSensor: Lidar, position):
         """Verwerkt de Lidar-metingen en zet ze om naar globale coördinaten"""

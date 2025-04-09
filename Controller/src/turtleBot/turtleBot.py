@@ -201,12 +201,40 @@ class TurtleBot:
 
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
+        
+        
+    def simplify_path(self, path):
+        """
+        Vereenvoudig het pad door enkel de knooppunten te behouden waar de richting verandert.
+        Als het pad volledig in één richting ligt, worden alleen het eerste en laatste punt behouden.
+        """
+        if len(path) <= 2:
+            return path
+
+        simplified = [path[0]]
+        dir_x = path[1].x - path[0].x
+        dir_y = path[1].y - path[0].y
+
+        for i in range(2, len(path)):
+            prev = path[i - 1]
+            curr = path[i]
+            new_dir_x = curr.x - prev.x
+            new_dir_y = curr.y - prev.y
+
+            if (new_dir_x, new_dir_y) != (dir_x, dir_y):
+                simplified.append(prev)
+                dir_x, dir_y = new_dir_x, new_dir_y
+
+        simplified.append(path[-1])
+        return simplified
+
 
     def move_to_position(self, x: float, y: float):
         """
-        Move robot to target position (x,y) where:
-        - 0 = occupied
-        - 1 = free
+        Move robot to target position !absolute! (x,y), this will be done with A* pathfinding.
+        It is important to remember that is an absolute position, so the robot will move to the target position (with the center of the map being (0,0))
+        and not relative to the current position.
+        For reference, the X and Y coordinates are from the absolute X and Y of the map. This is X-axis in Red and Y-axis in Green
         """
         # Get current position
         current_pos = self.get_position()
@@ -221,9 +249,9 @@ class TurtleBot:
 
         # Coordinate conversion
         def real_to_grid(real_x, real_y):
-            grid_x = int((real_x - extent[0]) / (extent[1]-extent[0]) * (binary_grid.shape[1]-1))
-            grid_y = int((real_y - extent[2]) / (extent[3]-extent[2]) * (binary_grid.shape[0]-1))
-            return np.clip(grid_x, 0, binary_grid.shape[1]-1), np.clip(grid_y, 0, binary_grid.shape[0]-1)
+            grid_x = int((real_x - extent[0]) / (extent[1]-extent[0]) * (binary_grid.shape[1]))
+            grid_y = int((real_y - extent[2]) / (extent[3]-extent[2]) * (binary_grid.shape[0]))
+            return np.clip(grid_x, 0, binary_grid.shape[1]), np.clip(grid_y, 0, binary_grid.shape[0])
 
         # Convert positions
         start_x, start_y = real_to_grid(current_pos['x_value'], current_pos['y_value'])
@@ -244,6 +272,7 @@ class TurtleBot:
         # Find path
         finder = AStarFinder()
         path, _ = finder.find_path(start, end, grid)
+        path = self.simplify_path(path)
         print(path)
         
         if not path:
@@ -253,17 +282,16 @@ class TurtleBot:
 
         # Execute path
         for i, (grid_x, grid_y) in enumerate(path):
-            target_x = (grid_x) / (binary_grid.shape[1]-1)+ (extent[0] / (extent[1]-extent[0]))
-            target_y = (grid_y) / (binary_grid.shape[0]-1)+ (extent[2] / (extent[3]-extent[2]))
-            # target_x = extent[0] + (grid_x / (binary_grid.shape[1]-1)) * (extent[1]-extent[0])
-            # target_y = extent[2] + (grid_y / (binary_grid.shape[0]-1)) * (extent[3]-extent[2])
+            if i == 0: continue # Skip first point (already at start)
+            target_x = (grid_x) / (binary_grid.shape[1]) * (extent[1] - extent[0]) + extent[0]
+            target_y = (grid_y) / (binary_grid.shape[0]) * (extent[3] - extent[2])+ extent[2]
             
-            dx = target_x - current_pos['y_value']
-            dy = target_y - current_pos['x_value']
+            dx = target_x - current_pos['x_value']
+            dy = target_y + current_pos['y_value']
             
-            if math.hypot(dx, dy) > 0.05:  # Skip tiny movements
-                self.move_position(dx, dy, None)
-                current_pos = self.get_position()
+
+            self.move_position(dx, dy, 0)
+            current_pos = self.get_position()
 
         print("Reached target position!")
         return True
@@ -313,5 +341,8 @@ class TurtleBot:
         self.lidarFunc.scan(self.lidarSens, self.get_position())
 
 
-    def normalizeAngle(self, angle):
-        return angle % (2 * math.pi)
+    def normalizeAngle(self, angle): 
+        if angle % (2 * math.pi) < math.pi:
+            return angle % (2 * math.pi)
+        else:
+            return angle % (2 * math.pi) - 2 * math.pi
