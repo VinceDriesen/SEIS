@@ -31,8 +31,8 @@ def bresenham(start, end):
 
 class OccupancyGrid:
     def __init__(self):
-        self.map_size = 6 # meters
-        self.map_resolution = 0.03  # meters per cell
+        self.map_size = 5 # meters
+        self.map_resolution = 0.04  # meters per cell
         self.grid_cells = int(self.map_size / self.map_resolution)
         self.grid = np.zeros((self.grid_cells, self.grid_cells), dtype=np.float32)
         self.free_prob = 0.4
@@ -88,12 +88,12 @@ class LidarFunctions:
         :return: Globale coördinaten [x, y].
         """
         # Lokale coördinaten berekenen (in het robotframe)
-        x_local = - distance * math.sin(lidar_angle)
-        y_local = distance * math.cos(lidar_angle)
+        x_local = distance * math.cos(lidar_angle)
+        y_local = distance * math.sin(lidar_angle)
 
-        x_global = x_local + position['x_value']
+        x_global = x_local - position['x_value']
         y_global = y_local + position['y_value']
-        return [x_global, y_global]
+        return [-x_global, y_global]
 
     def get_robot_position_grid(self, position):
         """Berekent de sensorpositie in de occupancy grid op basis van de absolute wereldcoördinaten"""
@@ -123,3 +123,25 @@ class LidarFunctions:
             plt.title('Occupancy Grid')
             plt.draw()
             plt.pause(0.1)
+            
+    def get_occupancy_grid(self):
+        """
+        Converteer het interne log-odds grid naar een probability grid (0-1) en retourneer het als numpy array.
+        
+        Returns:
+            tuple: (grid_prob, extent)
+                - grid_prob: 2D numpy array met occupancy probabilities (0 = vrij, 1 = bezet)
+                - extent: List [x_min, x_max, y_min, y_max] voor plotten (in meters)
+        """
+        # Converteer log-odds naar probabilities (sigmoid)
+        grid_prob = 1 - 1 / (1 + np.exp(self.occupancyGrid.grid))
+        
+        # Bereken de extent van de map (in meters)
+        extent = [
+            -self.occupancyGrid.map_size / 2,
+            self.occupancyGrid.map_size / 2,
+            -self.occupancyGrid.map_size / 2,
+            self.occupancyGrid.map_size / 2
+        ]
+        
+        return grid_prob.T, extent  # Transpose voor correcte oriëntatie

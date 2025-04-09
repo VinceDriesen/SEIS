@@ -1,4 +1,7 @@
 import threading
+from pathfinding.core.grid import Grid
+from pathfinding.finder.a_star import AStarFinder
+from pathfinding.core.diagonal_movement import DiagonalMovement
 from matplotlib import pyplot as plt
 import numpy as np
 from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass, GPS
@@ -92,8 +95,12 @@ class TurtleBot:
     
     def get_heading_from_compass(self):
         x, y, _ = self.compass.getValues()
-        heading = math.atan2(y, x)
+        # Laat deze 1/2pi staan, dit is aangezien compass zijn noorde legt tov de y-as en de map zijn noorde tov de x-as is
+        heading = math.atan2(y, x) - 1/2 * math.pi
         return self.normalizeAngle(heading)
+    
+    def start_lidar(self):
+        self.lidarFunc.scan(self.lidarSens, self.get_position())
 
 
     def get_gps_position(self):
@@ -104,20 +111,22 @@ class TurtleBot:
         return {
             "x_value": self.position[0],
             "y_value": self.position[1],
-            "theta_value": self.position[2],
+            "theta_value": self.position[2] - math.pi,
         }
 
 
     def _rotate(self, angle: float):
         """This is a help function, do not touch it. Thank you
-        This function rotates the robots in degrees. Use the movePosition function to move the robot
+        This function rotates the robot counter-clockwise (CCW) for positive angles
+        and clockwise (CW) for negative angles. Use the movePosition function to move the robot.
 
         Args:
             angle (float): Angle to rotate in degrees
         """
-        # Idk als dit een goeie fix is, maar werkt nu wel op het moment
+        # If the angle is too small, skip rotation
         if -0.01 < angle < 0.01:
             return
+
         angleRadians = math.radians(angle)
         angleVelocity = self.velocityNorm * self.maxSpeed
 
@@ -126,8 +135,13 @@ class TurtleBot:
 
         targetRotation = angleRadians
 
-        self.leftMotor.setVelocity(angleVelocity)
-        self.rightMotor.setVelocity(-angleVelocity)
+        # Positive angle -> CCW rotation, Negative angle -> CW rotation
+        if angle > 0:
+            self.leftMotor.setVelocity(-angleVelocity)
+            self.rightMotor.setVelocity(angleVelocity)
+        else:
+            self.leftMotor.setVelocity(angleVelocity)
+            self.rightMotor.setVelocity(-angleVelocity)
 
         while self.robot.step(self.timeStep) != -1:
             currentLeftEncoder = self.leftMotorSens.getValue()
@@ -144,7 +158,7 @@ class TurtleBot:
 
             if abs(currentRotation) >= abs(targetRotation):
                 break
-        
+
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
         
@@ -188,12 +202,78 @@ class TurtleBot:
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
 
+    def move_to_position(self, x: float, y: float):
+        """
+        Move robot to target position (x,y) where:
+        - 0 = occupied
+        - 1 = free
+        """
+        # Get current position
+        current_pos = self.get_position()
+        print(f"\n=== MOVING TO ({x:.2f}, {y:.2f}) FROM ({current_pos['x_value']:.2f}, {current_pos['y_value']:.2f}) ===")
 
-    
+        # Get occupancy grid (0=occupied, 1=free)
+        grid_prob, extent = self.lidarFunc.get_occupancy_grid()
+        
+        # Convert to binary grid (INVERTED since 0=occupied)
+        binary_grid = 1 - (grid_prob > 0.8).astype(np.int8)
+        print(f"Grid stats: Size={binary_grid.shape}, Free%={np.mean(binary_grid)*100:.1f}%")
+
+        # Coordinate conversion
+        def real_to_grid(real_x, real_y):
+            grid_x = int((real_x - extent[0]) / (extent[1]-extent[0]) * (binary_grid.shape[1]-1))
+            grid_y = int((real_y - extent[2]) / (extent[3]-extent[2]) * (binary_grid.shape[0]-1))
+            return np.clip(grid_x, 0, binary_grid.shape[1]-1), np.clip(grid_y, 0, binary_grid.shape[0]-1)
+
+        # Convert positions
+        start_x, start_y = real_to_grid(current_pos['x_value'], current_pos['y_value'])
+        end_x, end_y = real_to_grid(x, y)
+        print(f"Grid coords: Start=({start_x},{start_y}), End=({end_x},{end_y})")
+        print(f"Cell values: Start={binary_grid[start_y, start_x]}, End={binary_grid[end_y, end_x]}")
+
+        # Check if target is valid
+        if binary_grid[end_y, end_x] == 0:
+            print(f"ERROR: Target cell ({end_x},{end_y}) is occupied!")
+            return False
+
+        # Create pathfinding grid (transpose for correct x,y)
+        grid = Grid(matrix=binary_grid.T)
+        start = grid.node(start_x, start_y)
+        end = grid.node(end_x, end_y)
+
+        # Find path
+        finder = AStarFinder()
+        path, _ = finder.find_path(start, end, grid)
+        print(path)
+        
+        if not path:
+            print("ERROR: No path found! Showing area around target:")
+            print(binary_grid[max(0,end_y-3):end_y+3, max(0,end_x-3):end_x+3])
+            return False
+
+        # Execute path
+        for i, (grid_x, grid_y) in enumerate(path):
+            target_x = (grid_x) / (binary_grid.shape[1]-1)+ (extent[0] / (extent[1]-extent[0]))
+            target_y = (grid_y) / (binary_grid.shape[0]-1)+ (extent[2] / (extent[3]-extent[2]))
+            # target_x = extent[0] + (grid_x / (binary_grid.shape[1]-1)) * (extent[1]-extent[0])
+            # target_y = extent[2] + (grid_y / (binary_grid.shape[0]-1)) * (extent[3]-extent[2])
+            
+            dx = target_x - current_pos['y_value']
+            dy = target_y - current_pos['x_value']
+            
+            if math.hypot(dx, dy) > 0.05:  # Skip tiny movements
+                self.move_position(dx, dy, None)
+                current_pos = self.get_position()
+
+        print("Reached target position!")
+        return True
+        
     def move_position(self, x: float, y: float, angle: float):
         """
         This is a relative move function, from the current position, move x meters, y meters and or a new angle position.
-        These can be None, if you only want to move in the x direction. De angle operator wordt EERST uitgevoerd, NIET ER NA!!
+        For reference, the X and Y coordinates are from the absolute X and Y of the map. This is X-axis in Red and Y-axis in Green
+        The rotation is with math convention, so counter clock wise is positive and clock wise is negative.
+        These can be None, if you only want to move in the x direction. The Angle operator will be run first, then the x and y!
         Args:
             x (float): relative x movement
             y (float): relative y movement
@@ -203,7 +283,7 @@ class TurtleBot:
         target_x = self.position[0] + (x if x is not None else 0)
         target_y = self.position[1] + (y if y is not None else 0)
 
-        if angle is not None:
+        if angle is not None and angle != 0:
             desired_heading = self.normalizeAngle(
                 self.position[2] + math.radians(angle)
             )
@@ -224,7 +304,6 @@ class TurtleBot:
 
         self._move(distance)
         
-        compass_heading = self.get_heading_from_compass()
         x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
         self.position[0] = x_gps
         self.position[1] = y_gps  # Now using Y for vertical in 2D map
@@ -235,4 +314,4 @@ class TurtleBot:
 
 
     def normalizeAngle(self, angle):
-        return (angle + math.pi) % (2 * math.pi) - math.pi
+        return angle % (2 * math.pi)

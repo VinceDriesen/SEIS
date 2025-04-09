@@ -8,6 +8,7 @@ dependencies = [
     "matplotlib>=3.10.1",
     "numpy>=2.2.3",
     "opencv-python>=4.11.0.86",
+    "pathfinding>=1.0.16",
     "ruff>=0.9.9",
     "scikit-learn>=1.6.1",
     "scipy>=1.15.2",

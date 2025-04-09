@@ -42,48 +42,30 @@ def main():
 def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     """Modified movement pattern for better mapping"""
     print("currentPosition", bot.get_position())
-    movements = [
-        (0.5, 0.0, 0),   # Move forward
-        (0.0, 0.0, 90), # Rotate left
-        (1, 0.0, 0),   # Move forward
-        (0, 0.0, 90),  # Rotate right
-        (0.25, 0.0, 0),  # Rotate right
-        (0, 0.0, 180),  # Rotate right
-        (2, 0.0, 0),  # Rotate right
-    ]
+    # movements = [
+    #     (0.5, 0.0, 0),   # Move forward
+    #     (0.0, 0.0, 90), # Rotate left
+    #     (1, 0.0, 0),   # Move forward
+    #     (0, 0.0, 90),  # Rotate right
+    #     (0.25, 0.0, 0),  # Rotate right
+    #     (0, 0.0, 180),5  # Rotate right
+    #     (2, 0.0, 0),  # Rotate right
+    # ]
     
-    while robot.step(TIME_STEP) != -1:
-        for dx, dy, dtheta in movements:
-            bot.move_position(dx, dy, dtheta)
-            time.sleep(1)
-        time.sleep(500)
+    # bot.start_lidar()
+    # bot.move_position(0, 0, -180)
+    # bot.move_to_position(1, 0)
+    bot.move_position(0.25,0,0)
+    bot.move_position(0,0.25,0)
+    time.sleep(5000)
+    
+    # while robot.step(TIME_STEP) != -1:
+    #     for dx, dy, dtheta in movements:
+    #         bot.move_position(dx, dy, dtheta)
+    #         time.sleep(1)
+    #     time.sleep(500)
 
 
-# def visualization_loop(bot: TurtleBot):
-#     """Loop to periodically update the visualization"""
-#     map_dir = "occupancy_maps"
-#     os.makedirs(map_dir, exist_ok=True)
-    
-#     counter = 0
-#     while True:
-#         timestamp = time.strftime("%Y%m%d_%H%M%S")
-#         save_path = os.path.join(map_dir, f"occupancy_map_{timestamp}_{counter:04d}.png")
-#         visualize_map(bot, save_path)
-#         time.sleep(1.0)  # Update every second
-
-
-def get_global_pose(node: Node):
-    """
-    Returns the initial (x, y, yaw) in global coordinates.
-    Correctly handles Webots' 3x3 rotation matrix format.
-    """
-    position = node.getPosition()
-    orientation = node.getOrientation()
-    
-    R00, R01, R02, R10, R11, R12, _, _, _ = orientation
-    yaw = math.atan2(R01, R00)
-    
-    return (position[0], position[1], yaw)
 
 
 if __name__ == "__main__":
