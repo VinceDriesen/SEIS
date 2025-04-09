@@ -227,6 +227,10 @@ class TurtleBot:
             self.move_position(0, -1 * dy, 0, safePosition=False)
         rotation = self.get_heading_from_compass()
         d_rot = self.nonMeasuredPosition[2] - rotation
+        if d_rot < -math.pi:
+            d_rot += 2 * math.pi
+        if d_rot > math.pi:
+            d_rot -= 2 * math.pi
         if abs(d_rot) > 0.02:
             print(f"correcting d_rot: {d_rot}")
             self.move_position(0, 0, d_rot, safePosition=False)
