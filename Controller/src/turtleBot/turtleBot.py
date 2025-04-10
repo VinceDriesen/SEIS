@@ -237,30 +237,68 @@ class TurtleBot:
             self.move_position(0, 0, d_rot, safePosition=False)
         
         
-    def simplify_path(self, path):
+    def simplify_path(self, path, grid):
         """
-        Vereenvoudig het pad door enkel de knooppunten te behouden waar de richting verandert.
-        Als het pad volledig in één richting ligt, worden alleen het eerste en laatste punt behouden.
+        Vereenvoudig het pad door punten te verwijderen waar een rechte lijn mogelijk is.
+        Gebruikt Bresenham's algoritme om de lijn te checken op obstakels.
         """
         if len(path) <= 2:
             return path
 
         simplified = [path[0]]
-        dir_x = path[1].x - path[0].x
-        dir_y = path[1].y - path[0].y
+        current_index = 0
 
-        for i in range(2, len(path)):
-            prev = path[i - 1]
-            curr = path[i]
-            new_dir_x = curr.x - prev.x
-            new_dir_y = curr.y - prev.y
+        while current_index < len(path) - 1:
+            furthest_index = current_index + 1  # Minstens één stap vooruit
+            # Zoek het verste punt vanaf current_index met vrij zicht
+            for next_index in range(len(path)-1, current_index, -1):
+                if self.has_line_of_sight(path[current_index], path[next_index], grid):
+                    furthest_index = next_index
+                    break
+            simplified.append(path[furthest_index])
+            current_index = furthest_index
 
-            if (new_dir_x, new_dir_y) != (dir_x, dir_y):
-                simplified.append(prev)
-                dir_x, dir_y = new_dir_x, new_dir_y
-
-        simplified.append(path[-1])
         return simplified
+
+    def has_line_of_sight(self, node_a, node_b, grid):
+        """Controleer of er een rechte lijn is tussen twee nodes zonder obstakels."""
+        x0, y0 = node_a.x, node_a.y
+        x1, y1 = node_b.x, node_b.y
+        line = self.bresenham_line(x0, y0, x1, y1)
+
+        for (x, y) in line:
+            # Check of de node binnen de grid grenzen valt
+            if x < 0 or y < 0 or x >= grid.width or y >= grid.height:
+                return False
+            if not grid.node(x, y).walkable:
+                return False
+        return True
+
+    def bresenham_line(self, x0, y0, x1, y1):
+        """Genereer punten op de lijn tussen (x0,y0) en (x1,y1) met Bresenham's algoritme."""
+        points = []
+        dx = abs(x1 - x0)
+        dy = -abs(y1 - y0)
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+        err = dx + dy  # foutaccumulatie
+
+        while True:
+            points.append((x0, y0))
+            if x0 == x1 and y0 == y1:
+                break
+            e2 = 2 * err
+            if e2 >= dy:  # horizontale stap
+                if x0 == x1:
+                    break
+                err += dy
+                x0 += sx
+            if e2 <= dx:  # verticale stap
+                if y0 == y1:
+                    break
+                err += dx
+                y0 += sy
+        return points
     
 
 
@@ -378,7 +416,7 @@ class TurtleBot:
         finder = AStarFinder()
         path, _ = finder.find_path(start, end, grid)
         self.visualize_pathfinding_grid(grid, path=path, start=(start_x, start_y), end=(end_x, end_y))
-        path = self.simplify_path(path)
+        path = self.simplify_path(path, grid)
         
         print(path)
         
