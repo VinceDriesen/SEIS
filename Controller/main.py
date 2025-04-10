@@ -58,10 +58,10 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     # bot.move_position(0, 0, 90)
     # bot.move_position(0, 0, 90)
     # bot.move_position(0, 0, 90)
-    # bot.move_to_position(1, 1)
+    bot.move_to_position(1, 1)
     # bot.move_position(0.25,0,0)
     # bot.move_position(0,0.25,0)
-    time.sleep(5000)
+    # time.sleep(5000)
     
     # while robot.step(TIME_STEP) != -1:
     #     for dx, dy, dtheta in movements:
