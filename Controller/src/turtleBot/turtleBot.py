@@ -348,7 +348,8 @@ class TurtleBot:
         print(f"Grid stats: Size={binary_grid.shape}, Free%={np.mean(binary_grid)*100:.1f}%")
 
         # Voeg buffer toe rond muren (om een minimale afstand te behouden)
-        buffered_grid = self.add_buffer_to_grid(binary_grid, extent)
+        # buffered_grid = self.add_buffer_to_grid(binary_grid, extent)
+        buffered_grid = binary_grid
 
         # Coordinate conversion
         def real_to_grid(real_x, real_y):
