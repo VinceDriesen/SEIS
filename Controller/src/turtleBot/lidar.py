@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import threading
 
+
 def bresenham(start, end):
     """Bresenham's line algorithm voor vrije ruimte updates"""
     x0, y0 = start
@@ -15,7 +16,7 @@ def bresenham(start, end):
     sx = -1 if x0 > x1 else 1
     sy = -1 if y0 > y1 else 1
     err = dx - dy
-    
+
     while True:
         points.append((x, y))
         if x == x1 and y == y1:
@@ -29,9 +30,10 @@ def bresenham(start, end):
             y += sy
     return points
 
+
 class OccupancyGrid:
     def __init__(self):
-        self.map_size = 5 # meters
+        self.map_size = 5  # meters
         self.map_resolution = 0.02  # meters per cell
         self.grid_cells = int(self.map_size / self.map_resolution)
         self.grid = np.zeros((self.grid_cells, self.grid_cells), dtype=np.float32)
@@ -40,9 +42,9 @@ class OccupancyGrid:
 
     def world_to_grid(self, world_coords, position):
         """Zet wereldcoördinaten om naar grid-coördinaten"""
-        grid_x = int(((world_coords[0] + self.map_size/2) / self.map_resolution))
-        grid_y = int(((world_coords[1] + self.map_size/2) / self.map_resolution))
-        return np.clip([grid_x, grid_y], 0, self.grid_cells-1).astype(int)
+        grid_x = int(((world_coords[0] + self.map_size / 2) / self.map_resolution))
+        grid_y = int(((world_coords[1] + self.map_size / 2) / self.map_resolution))
+        return np.clip([grid_x, grid_y], 0, self.grid_cells - 1).astype(int)
 
     def update_grid(self, sensor_pos, hits):
         """Werk de occupancy grid bij op basis van Lidar-metingen"""
@@ -58,6 +60,7 @@ class OccupancyGrid:
         self.grid[cell[0], cell[1]] += log_odds
         self.grid = np.clip(self.grid, -10, 10)
 
+
 class LidarFunctions:
     def __init__(self):
         self.occupancyGrid = OccupancyGrid()
@@ -69,13 +72,17 @@ class LidarFunctions:
         scan = lidarSensor.getRangeImage()
         fov = lidarSensor.getFov()
         angle_increment = fov / (lidarSensor.getHorizontalResolution() - 1)
-        
+
         coords = []
         for i in range(lidarSensor.getHorizontalResolution()):
-            angle = -fov/2 + angle_increment * i
+            angle = -fov / 2 + angle_increment * i
             distance = scan[i]
             if distance > 0:
-                coords.append(self.local_to_global(distance, (angle + position['theta_value']), position))
+                coords.append(
+                    self.local_to_global(
+                        distance, (angle + position["theta_value"]), position
+                    )
+                )
         return coords
 
     def local_to_global(self, distance, lidar_angle, position):
@@ -91,20 +98,22 @@ class LidarFunctions:
         x_local = distance * math.cos(lidar_angle)
         y_local = distance * math.sin(lidar_angle)
 
-        x_global = x_local - position['x_value']
-        y_global = y_local + position['y_value']
+        x_global = x_local - position["x_value"]
+        y_global = y_local + position["y_value"]
         return [x_global, -y_global]
 
     def get_robot_position_grid(self, position):
         """Berekent de sensorpositie in de occupancy grid op basis van de absolute wereldcoördinaten"""
-        return self.occupancyGrid.world_to_grid([position['x_value'], position['y_value']], position)
+        return self.occupancyGrid.world_to_grid(
+            [position["x_value"], position["y_value"]], position
+        )
 
     def scan(self, lidarSensor: Lidar, position):
         """Voert een scan uit en werkt de occupancy grid bij"""
         # Transformeer lidar-metingen naar globale coördinaten
         sensor_pos = self.get_robot_position_grid(position)
         global_coords = self.get_lidar_global_coord_values(lidarSensor, position)
-        
+
         # Update grid met gescande punten
         hits = [self.occupancyGrid.world_to_grid(c, position) for c in global_coords]
         self.occupancyGrid.update_grid(sensor_pos, hits)
@@ -113,21 +122,34 @@ class LidarFunctions:
         plt.figure()
         while True:
             plt.clf()
-            grid_prob = 1 - 1/(1 + np.exp(self.occupancyGrid.grid))  # Log-odds naar probability
-            extent = [-self.occupancyGrid.map_size/2, self.occupancyGrid.map_size/2,
-                      -self.occupancyGrid.map_size/2, self.occupancyGrid.map_size/2]
-            plt.imshow(grid_prob.T, extent=extent, origin='lower', cmap='binary', vmin=0, vmax=1)
-            plt.colorbar(label='Occupancy Probability')
-            plt.xlabel('X Position (m)')
-            plt.ylabel('Y Position (m)')
-            plt.title('Occupancy Grid')
+            grid_prob = 1 - 1 / (
+                1 + np.exp(self.occupancyGrid.grid)
+            )  # Log-odds naar probability
+            extent = [
+                -self.occupancyGrid.map_size / 2,
+                self.occupancyGrid.map_size / 2,
+                -self.occupancyGrid.map_size / 2,
+                self.occupancyGrid.map_size / 2,
+            ]
+            plt.imshow(
+                grid_prob.T,
+                extent=extent,
+                origin="lower",
+                cmap="binary",
+                vmin=0,
+                vmax=1,
+            )
+            plt.colorbar(label="Occupancy Probability")
+            plt.xlabel("X Position (m)")
+            plt.ylabel("Y Position (m)")
+            plt.title("Occupancy Grid")
             plt.draw()
             plt.pause(0.1)
-            
+
     def get_occupancy_grid(self):
         """
         Converteer het interne log-odds grid naar een probability grid (0-1) en retourneer het als numpy array.
-        
+
         Returns:
             tuple: (grid_prob, extent)
                 - grid_prob: 2D numpy array met occupancy probabilities (0 = vrij, 1 = bezet)
@@ -135,13 +157,13 @@ class LidarFunctions:
         """
         # Converteer log-odds naar probabilities (sigmoid)
         grid_prob = 1 - 1 / (1 + np.exp(self.occupancyGrid.grid))
-        
+
         # Bereken de extent van de map (in meters)
         extent = [
             -self.occupancyGrid.map_size / 2,
             self.occupancyGrid.map_size / 2,
             -self.occupancyGrid.map_size / 2,
-            self.occupancyGrid.map_size / 2
+            self.occupancyGrid.map_size / 2,
         ]
-        
+
         return grid_prob.T, extent  # Transpose voor correcte oriëntatie
