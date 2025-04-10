@@ -13,3 +13,5 @@ uv.lock
 
 # Virtual environments
 .venv
+
+occupancy_maps/
