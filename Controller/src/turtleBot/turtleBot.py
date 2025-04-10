@@ -157,7 +157,8 @@ class TurtleBot:
                 / self.distanceBetweenWheels
             )
 
-            if abs(currentRotation) >= abs(targetRotation):
+            #Blijf van die 0.02 af, de robot schoot gwn iets te ver door, dus die 0.02 is gdn adv tests
+            if (abs(currentRotation) + 0.02) >= abs(targetRotation):
                 break
 
         self.leftMotor.setVelocity(0)
@@ -219,19 +220,19 @@ class TurtleBot:
         
         if abs(dx) > 0.05:
             print(f"correcting dx: {dx}")
-            self.move_position(-1 * dx, 0, 0, safePosition=False)
+            self.move_position(dx, 0, 0, safePosition=False)
         x_gps, y_gps, _ = self.get_gps_position()
         dy = self.nonMeasuredPosition[1] - y_gps
         if abs(dy) > 0.05:
             print(f"correcting dy: {dy}")
-            self.move_position(0, -1 * dy, 0, safePosition=False)
+            self.move_position(0, dy, 0, safePosition=False)
         rotation = self.get_heading_from_compass()
         d_rot = self.nonMeasuredPosition[2] - rotation
         if d_rot < -math.pi:
             d_rot += 2 * math.pi
         if d_rot > math.pi:
             d_rot -= 2 * math.pi
-        if abs(d_rot) > 0.02:
+        if abs(d_rot) > 0.03:
             print(f"correcting d_rot: {d_rot}")
             self.move_position(0, 0, d_rot, safePosition=False)
         
@@ -405,8 +406,6 @@ class TurtleBot:
     
         
     def move_position(self, x: float, y: float, angle: float, safePosition: bool = True):
-        if safePosition:
-            self.nonMeasuredPosition = [self.nonMeasuredPosition[0] + x, self.nonMeasuredPosition[1] + y, self.normalizeAngle(self.nonMeasuredPosition[2] + math.radians(angle))]
         """
         This is a relative move function, from the current position, move x meters, y meters and or a new angle position.
         For reference, the X and Y coordinates are from the absolute X and Y of the map. This is X-axis in Red and Y-axis in Green
@@ -434,6 +433,17 @@ class TurtleBot:
             # self.normalizeAngle(desired_heading - self.position[2])
             desired_heading - self.position[2]
         )
+        
+        if safePosition:
+            if angle is not None and angle != 0:
+                self.nonMeasuredPosition = [self.nonMeasuredPosition[0] + x, self.nonMeasuredPosition[1] + y, self.normalizeAngle(self.nonMeasuredPosition[2] + math.radians(angle))]
+            else:
+                self.nonMeasuredPosition = [self.nonMeasuredPosition[0] + x, self.nonMeasuredPosition[1] + y, self.normalizeAngle(desired_heading)]
+            print(f"Non-measured position: {self.nonMeasuredPosition}")
+            
+        if abs(rotation_needed) > 180:
+            rotation_needed -= 360 if rotation_needed > 0 else -360
+            
 
         self._rotate(rotation_needed)
 
@@ -442,6 +452,9 @@ class TurtleBot:
         distance = math.sqrt(dx**2 + dy**2)
 
         self._move(distance)
+        
+        if not safePosition and (angle is None or angle == 0):
+            self._rotate(-rotation_needed)
         
         x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
         self.position[0] = x_gps
