@@ -26,31 +26,34 @@ def main():
         print(device.getName())
         
         
-    robot_loop(robot, bot, robotNode)
+    # robot_loop(robot, bot, robotNode)
     # Start the simulation (movement/odometry) thread.
-    # simulation_thread = threading.Thread(target=robot_loop, args=(robot, bot, robotNode))
-    # simulation_thread.start()
+    simulation_thread = threading.Thread(target=robot_loop, args=(robot, bot, robotNode))
+    simulation_thread.start()
     
     # visualization_thread = threading.Thread(target=visualization_loop, args=(bot,))
     # visualization_thread.daemon = True
     # visualization_thread.start()
     
-    # simulation_thread.join()
+    simulation_thread.join()
     # visualization_thread.join()
+
+# def visualization_loop(bot: TurtleBot):
 
 
 def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     """Modified movement pattern for better mapping"""
     print("currentPosition", bot.get_position())
     bot.start_lidar()
+    bot.explore_environment()
     # bot.move_position(-0.5,-0.5,0)
-    movements = [
-        (1, 0.0, 0), # Rotate left
-        (0,0,90),
-        (0, 1, 0),   # Move forward
-        (-1, 0.0, 0),  # Rotate right5
-        (0, -1, 0),  # Rotate right
-    ]
+    # movements = [
+    #     (1, 0.0, 0), # Rotate left
+    #     (0,0,90),
+    #     (0, 1, 0),   # Move forward
+    #     (-1, 0.0, 0),  # Rotate right5
+    #     (0, -1, 0),  # Rotate right
+    # ]
     
     # time.sleep(20000)
     # bot.move_position(0, 0, -180)
@@ -59,10 +62,10 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     # bot.move_position(0,0.25,0)
     # time.sleep(5000)
     
-    while robot.step(TIME_STEP) != -1:
-        for dx, dy, dtheta in movements:
-            bot.move_position(dx, dy, dtheta)
-            time.sleep(1)
+    # while robot.step(TIME_STEP) != -1:
+    #     for dx, dy, dtheta in movements:
+    #         bot.move_position(dx, dy, dtheta)
+    #         time.sleep(1)
 
 
 

@@ -415,7 +415,7 @@ class TurtleBot:
         # Find path
         finder = AStarFinder()
         path, _ = finder.find_path(start, end, grid)
-        self.visualize_pathfinding_grid(grid, path=path, start=(start_x, start_y), end=(end_x, end_y))
+        # self.visualize_pathfinding_grid(grid, path=path, start=(start_x, start_y), end=(end_x, end_y))
         path = self.simplify_path(path, grid)
         
         print(path)
@@ -507,4 +507,38 @@ class TurtleBot:
 
     def normalizeAngle(self, angle): 
         return angle % (2 * math.pi)
+    
+    def explore_environment(self):
+        """Verkent de omgeving tot de gewenste dekking is bereikt"""
+        while self.robot.step(self.timeStep) != -1:
+            # Update de grid met LiDAR-data
+            self.lidarFunc.scan(self.lidarSens, self.get_position())
+            
+            if self.lidarFunc.occupancyGrid.is_explored():
+                print("Exploratie voltooid!")
+                break
+            
+            # Zoek dichtstbijzijnde onverkende gebied
+            target = self.find_nearest_unexplored()
+            if target:
+                self.move_to_position(target[0], target[1])
+
+    def find_nearest_unexplored(self):
+        """Vind de dichtstbijzijnde onverkende cel (status 0)"""
+        robot_pos = self.get_position()
+        grid = self.lidarFunc.occupancyGrid
+        
+        # Begin met lokaal zoeken, expandeer geleidelijk
+        for radius in range(10, grid.grid_cells//2, 10):
+            for dx in range(-radius, radius+1):
+                for dy in range(-radius, radius+1):
+                    x = int((robot_pos['x_value'] + grid.map_size/2) / grid.map_resolution) + dx
+                    y = int((robot_pos['y_value'] + grid.map_size/2) / grid.map_resolution) + dy
+                    if 0 <= x < grid.grid_cells and 0 <= y < grid.grid_cells:
+                        if grid.grid[x, y] == 0:
+                            world_x = (x * grid.map_resolution) - grid.map_size/2
+                            world_y = (y * grid.map_resolution) - grid.map_size/2
+                            return (world_x, world_y)
+        return None
+    
         

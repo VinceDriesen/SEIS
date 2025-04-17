@@ -37,6 +37,9 @@ class OccupancyGrid:
         self.grid = np.zeros((self.grid_cells, self.grid_cells), dtype=np.float32)
         self.free_prob = 0.4
         self.occ_prob = 0.7
+        self.explored = -1
+        self.exploration_radius = 0.35
+        self.coverage_threshold = 0.5
 
     def world_to_grid(self, world_coords, position):
         """Zet wereldcoördinaten om naar grid-coördinaten"""
@@ -46,17 +49,37 @@ class OccupancyGrid:
 
     def update_grid(self, sensor_pos, hits):
         """Werk de occupancy grid bij op basis van Lidar-metingen"""
+        radius_cells = int(self.exploration_radius / self.map_resolution)
+        for dx in range(-radius_cells, radius_cells+1):
+            for dy in range(-radius_cells, radius_cells+1):
+                if math.hypot(dx, dy) * self.map_resolution <= self.exploration_radius:
+                    x = sensor_pos[0] + dx
+                    y = sensor_pos[1] + dy
+                    if 0 <= x < self.grid_cells and 0 <= y < self.grid_cells:
+                        # Alleen updaten als niet occupied
+                        if self.grid[x, y] <= 0: 
+                            self.grid[x, y] = self.explored
+        # for hit in hits:
+        #     # for cell in line[:-1]:  # Alle cellen behalve de laatste
+        #     #     self.update_cell(cell, self.free_prob)
+        #     if line:  # Laatste cel als occupied markeren
+        #         self.update_cell(line[-1], self.occ_prob)
+                
+                
         for hit in hits:
             line = bresenham(sensor_pos, hit)
-            # for cell in line[:-1]:  # Alle cellen behalve de laatste
-            #     self.update_cell(cell, self.free_prob)
-            if line:  # Laatste cel als occupied markeren
-                self.update_cell(line[-1], self.occ_prob)
+            log_odds = np.log(self.occ_prob / (1 - self.occ_prob))
+            self.grid[line[-1][0], line[-1][1]] += log_odds
+            self.grid = np.clip(self.grid, -10, 10)
 
     def update_cell(self, cell, probability):
         log_odds = np.log(probability / (1 - probability))
         self.grid[cell[0], cell[1]] += log_odds
         self.grid = np.clip(self.grid, -10, 10)
+        
+    def is_explored(self):
+        explored = np.sum(self.grid != 0)
+        return explored / self.grid.size >= self.coverage_threshold
 
 class LidarFunctions:
     def __init__(self):
@@ -108,16 +131,35 @@ class LidarFunctions:
 
     def visualize_grid(self):
         plt.figure()
+        cmap = plt.cm.get_cmap('RdYlBu')  # Rood voor explored, Geel voor occupied
+        norm = plt.Normalize(vmin=-2, vmax=2)
+        
         while True:
             plt.clf()
-            grid_prob = 1 - 1/(1 + np.exp(self.occupancyGrid.grid))  # Log-odds naar probability
-            extent = [-self.occupancyGrid.map_size/2, self.occupancyGrid.map_size/2,
-                      -self.occupancyGrid.map_size/2, self.occupancyGrid.map_size/2]
-            plt.imshow(grid_prob.T, extent=extent, origin='lower', cmap='binary', vmin=0, vmax=1)
-            plt.colorbar(label='Occupancy Probability')
+            grid_data = self.occupancyGrid.grid.T
+            
+            extent = [
+                -self.occupancyGrid.map_size/2,
+                self.occupancyGrid.map_size/2,
+                -self.occupancyGrid.map_size/2,
+                self.occupancyGrid.map_size/2
+            ]
+            
+            img = plt.imshow(
+                grid_data,
+                extent=extent,
+                origin='lower',
+                cmap=cmap,
+                norm=norm,
+                interpolation='none'
+            )
+            
+            cbar = plt.colorbar(img)
+            cbar.set_label('Log-Odds (Explored: <0, Occupied: >0)')
+            
             plt.xlabel('X Position (m)')
             plt.ylabel('Y Position (m)')
-            plt.title('Occupancy Grid')
+            plt.title('Hybride Occupancy Grid')
             plt.draw()
             plt.pause(0.1)
             
