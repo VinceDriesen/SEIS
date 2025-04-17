@@ -48,8 +48,8 @@ class OccupancyGrid:
         """Werk de occupancy grid bij op basis van Lidar-metingen"""
         for hit in hits:
             line = bresenham(sensor_pos, hit)
-            for cell in line[:-1]:  # Alle cellen behalve de laatste
-                self.update_cell(cell, self.free_prob)
+            # for cell in line[:-1]:  # Alle cellen behalve de laatste
+            #     self.update_cell(cell, self.free_prob)
             if line:  # Laatste cel als occupied markeren
                 self.update_cell(line[-1], self.occ_prob)
 
@@ -79,22 +79,16 @@ class LidarFunctions:
         return coords
 
     def local_to_global(self, distance, lidar_angle, position):
-        # Robot-relative coördinaten
-        x_robot = distance * math.cos(lidar_angle)
-        y_robot = distance * math.sin(lidar_angle)
-
-        # Rotatiematrix (theta is de robotorientatie t.o.v. wereld-X-as)
         theta = position['theta_value']
-        x_global = (
-            x_robot * math.cos(theta) 
-            - y_robot * math.sin(theta) 
-            + position['x_value']
-        )
-        y_global = (
-            x_robot * math.sin(theta) 
-            + y_robot * math.cos(theta)
-            + position['y_value']
-        )
+        
+        x_local = distance * math.cos(lidar_angle)
+        y_local = distance * math.sin(lidar_angle)
+        
+        x_rot = x_local * math.cos(theta) + y_local * math.sin(theta)
+        y_rot = -x_local * math.sin(theta) + y_local * math.cos(theta)
+        
+        x_global = x_rot + position['x_value']
+        y_global = y_rot - position['y_value']
         
         return [x_global, y_global]
 

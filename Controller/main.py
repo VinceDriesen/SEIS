@@ -54,11 +54,7 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     
     # time.sleep(20000)
     # bot.move_position(0, 0, -180)
-    # bot.move_position(0, 0, 90)
-    # bot.move_position(0, 0, 90)
-    # bot.move_position(0, 0, 90)
-    # bot.move_position(0, 0, 90)
-    # bot.move_to_position(1, 1)
+    # bot.move_to_position(1, 0)
     # bot.move_position(0.25,0,0)
     # bot.move_position(0,0.25,0)
     # time.sleep(5000)
