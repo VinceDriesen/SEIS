@@ -61,8 +61,8 @@ class OccupancyGrid:
 class LidarFunctions:
     def __init__(self):
         self.occupancyGrid = OccupancyGrid()
-        # self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
-        # self.visualization_thread.start()
+        self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
+        self.visualization_thread.start()
 
     def get_lidar_global_coord_values(self, lidarSensor: Lidar, position):
         """Verwerkt de Lidar-metingen en zet ze om naar globale coördinaten"""
@@ -75,25 +75,28 @@ class LidarFunctions:
             angle = -fov/2 + angle_increment * i
             distance = scan[i]
             if distance > 0:
-                coords.append(self.local_to_global(distance, (angle + position['theta_value']), position))
+                coords.append(self.local_to_global(distance, angle, position))
         return coords
 
     def local_to_global(self, distance, lidar_angle, position):
-        """
-        Zet lokale LiDAR-coördinaten om naar wereldcoördinaten.
+        # Robot-relative coördinaten
+        x_robot = distance * math.cos(lidar_angle)
+        y_robot = distance * math.sin(lidar_angle)
 
-        :param distance: De afstand gemeten door de LiDAR.
-        :param lidar_angle: De hoek van de LiDAR-meting (in radialen).
-        :param position: De positie en oriëntatie van de robot [x, y, theta].
-        :return: Globale coördinaten [x, y].
-        """
-        # Lokale coördinaten berekenen (in het robotframe)
-        x_local = distance * math.cos(lidar_angle)
-        y_local = distance * math.sin(lidar_angle)
-
-        x_global = x_local - position['x_value']
-        y_global = y_local + position['y_value']
-        return [x_global, -y_global]
+        # Rotatiematrix (theta is de robotorientatie t.o.v. wereld-X-as)
+        theta = position['theta_value']
+        x_global = (
+            x_robot * math.cos(theta) 
+            - y_robot * math.sin(theta) 
+            + position['x_value']
+        )
+        y_global = (
+            x_robot * math.sin(theta) 
+            + y_robot * math.cos(theta)
+            + position['y_value']
+        )
+        
+        return [x_global, y_global]
 
     def get_robot_position_grid(self, position):
         """Berekent de sensorpositie in de occupancy grid op basis van de absolute wereldcoördinaten"""
