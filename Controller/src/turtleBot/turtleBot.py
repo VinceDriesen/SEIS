@@ -9,6 +9,9 @@ import math
 from .lidar import LidarFunctions
 
 
+from collections import deque
+
+
 class TurtleBot:
     """
     A class representing a TurtleBot robot in a Webots simulation.
@@ -521,7 +524,7 @@ class TurtleBot:
             # Zoek dichtstbijzijnde onverkende gebied
             target = self.find_nearest_unexplored()
             if target:
-                self.move_to_position(target[0], target[1])
+                self.move_to_position(target[0], target[1]) 
 
     def find_nearest_unexplored(self):
         """Vind de dichtstbijzijnde onverkende cel (status 0)"""
@@ -529,16 +532,31 @@ class TurtleBot:
         grid = self.lidarFunc.occupancyGrid
         
         # Begin met lokaal zoeken, expandeer geleidelijk
-        for radius in range(10, grid.grid_cells//2, 10):
-            for dx in range(-radius, radius+1):
-                for dy in range(-radius, radius+1):
-                    x = int((robot_pos['x_value'] + grid.map_size/2) / grid.map_resolution) + dx
-                    y = int((robot_pos['y_value'] + grid.map_size/2) / grid.map_resolution) + dy
-                    if 0 <= x < grid.grid_cells and 0 <= y < grid.grid_cells:
-                        if grid.grid[x, y] == 0:
-                            world_x = (x * grid.map_resolution) - grid.map_size/2
-                            world_y = (y * grid.map_resolution) - grid.map_size/2
-                            return (world_x, world_y)
+        rows, cols = grid.shape
+        visited = set()
+        queue = deque()
+        queue.append(robot_pos)
+
+        while queue:
+            x, y = queue.popleft()
+
+            if (x, y) in visited:
+                continue
+            visited.add((x, y))
+
+            # Skip out-of-bounds
+            if not (0 <= x < rows and 0 <= y < cols):
+                continue
+
+            if grid[x, y] == -1:
+                temp_grid = Grid(matrix=(grid != 100).astype(int))
+                start_node = temp_grid.node(robot_pos[0], robot_pos[1])
+                end_node = temp_grid.node(y, x)
+                finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+                path, _ = finder.find_path(start_node, end_node, temp_grid)
+                if path:
+                    return (x, y)
+
         return None
     
         
