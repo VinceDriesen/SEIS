@@ -49,16 +49,23 @@ class OccupancyGrid:
 
     def update_grid(self, sensor_pos, hits):
         """Werk de occupancy grid bij op basis van Lidar-metingen"""
-        radius_cells = int(self.exploration_radius / self.map_resolution)
-        for dx in range(-radius_cells, radius_cells+1):
-            for dy in range(-radius_cells, radius_cells+1):
-                if math.hypot(dx, dy) * self.map_resolution <= self.exploration_radius:
-                    x = sensor_pos[0] + dx
-                    y = sensor_pos[1] + dy
-                    if 0 <= x < self.grid_cells and 0 <= y < self.grid_cells:
-                        # Alleen updaten als niet occupied
-                        if self.grid[x, y] <= 0: 
-                            self.grid[x, y] = self.explored
+        for hit in hits:
+            line = bresenham(sensor_pos, hit)
+            for cell in line[:-1]:
+                self.update_cell(cell, self.free_prob)
+            if line:
+                self.update_cell(line[-1], self.occ_prob)
+        
+        # radius_cells = int(self.exploration_radius / self.map_resolution)
+        # for dx in range(-radius_cells, radius_cells+1):
+        #     for dy in range(-radius_cells, radius_cells+1):
+        #         if math.hypot(dx, dy) * self.map_resolution <= self.exploration_radius:
+        #             x = sensor_pos[0] + dx
+        #             y = sensor_pos[1] + dy
+        #             if 0 <= x < self.grid_cells and 0 <= y < self.grid_cells:
+        #                 # Alleen updaten als niet occupied
+        #                 if self.grid[x, y] <= 0: 
+        #                     self.grid[x, y] = self.explored
         # for hit in hits:
         #     # for cell in line[:-1]:  # Alle cellen behalve de laatste
         #     #     self.update_cell(cell, self.free_prob)
