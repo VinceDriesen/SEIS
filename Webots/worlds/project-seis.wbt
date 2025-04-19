@@ -9,8 +9,8 @@ WorldInfo {
   physicsDisableAngularThreshold 0
 }
 Viewpoint {
-  orientation -0.4410085042178066 0.4267099549727018 0.7895759073925492 1.8368208713438579
-  position 0.5366926592394698 -5.082671668638751 8.91126031334412
+  orientation -0.4418062518399357 0.4232252545765348 0.7910041843908125 1.8447237887193781
+  position 0.607914262498986 -5.089166554649244 8.91126031334412
   follow "rectangle arena"
 }
 TexturedBackground {
@@ -23,8 +23,6 @@ RectangleArena {
   wallHeight 0.3
 }
 DEF robot Robot {
-  translation -2.1255885474975866e-06 1.2619326815146081e-08 -0.0002787512925407215
-  rotation -0.0029736882027651696 -0.999995577659105 -4.290344837201761e-05 0.0032798854985700127
   children [
     GPS {
       translation -0.03 0 0.1
@@ -743,7 +741,7 @@ DEF robot Robot {
     }
     DEF RIGHT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
-        position 4606.5719959870385
+        position 4624.170662386611
         axis 0 1 0
         anchor 0 -0.08 0.033
       }
@@ -760,7 +758,7 @@ DEF robot Robot {
       ]
       endPoint Solid {
         translation 0 -0.08 0.033
-        rotation 0 1 0 5.70955513158116
+        rotation 0 -0.9999999999999999 0 1.8245196975644644
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -862,7 +860,7 @@ DEF robot Robot {
     }
     DEF LEFT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
-        position 7858.067948295262
+        position 7873.256021779345
         axis 0 1 0
         anchor 0 0.08 0.033
       }
@@ -879,7 +877,7 @@ DEF robot Robot {
       ]
       endPoint Solid {
         translation 0 0.08 0.033
-        rotation -0.30795246696169976 2.0720029804388173e-06 0.9514017437906609 3.1415947709259875
+        rotation 0.8402863979330578 -4.905399134820213e-07 0.5421427574435043 3.141597202587522
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -909,12 +907,12 @@ DEF robot Robot {
     }
     DEF CASTER_JOINT BallJoint {
       jointParameters BallJointParameters {
-        position 8192.976372179939
+        position 8209.382788604702
         anchor -0.081 0 0.004
       }
       endPoint Solid {
-        translation -0.08097843071496089 -5.36227186775146e-06 0.004035671719039404
-        rotation 0.6189530245034368 -0.7851616445751539 -0.020453492271184655 2.948950829542943
+        translation -0.08104138309513433 -4.241427552582604e-07 0.003992670668793483
+        rotation 0.36670528999757224 -0.478768231297796 0.7976892947681927 4.449364226540922
         children [
           Shape {
             appearance PBRAppearance {
@@ -1139,15 +1137,15 @@ DEF robot Robot {
   supervisor TRUE
 }
 Solid {
-  translation 1.11 2 0.2
+  translation 0.2 1 0.2
   children [
     Shape {
       geometry Box {
-        size 0.2 0.2 0.4
+        size 1 0.2 0.4
       }
     }
   ]
   boundingObject Box {
-    size 0.2 0.2 0.4
+    size 1 0.2 0.4
   }
 }
