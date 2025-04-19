@@ -513,50 +513,68 @@ class TurtleBot:
     
     def explore_environment(self):
         """Verkent de omgeving tot de gewenste dekking is bereikt"""
+        exploration_count = 0
+
         while self.robot.step(self.timeStep) != -1:
             # Update de grid met LiDAR-data
             self.lidarFunc.scan(self.lidarSens, self.get_position())
             
-            if self.lidarFunc.occupancyGrid.is_explored():
-                print("Exploratie voltooid!")
-                break
+            if exploration_count % 10 == 0:
+                if self.lidarFunc.occupancyGrid.is_explored():
+                    print("Exploration complete!")
+                    break
+                
+                # Find nearest unexplored area
+                target = self.find_nearest_unexplored()
+                if target:
+                    print(f"Moving to unexplored area at {target}")
+                    success = self.move_to_position(target[0], target[1])
+                    if not success:
+                        print("Failed to move to target, trying different approach")
+                        # Try moving to a random nearby position
+                        self.move_position(0.5, 0, 0)
+                else:
+                    print("No unexplored areas found!")
+                    break
             
-            # Zoek dichtstbijzijnde onverkende gebied
-            target = self.find_nearest_unexplored()
-            if target:
-                self.move_to_position(target[0], target[1]) 
+            exploration_count += 1
 
     def find_nearest_unexplored(self):
         """Vind de dichtstbijzijnde onverkende cel (status 0)"""
         robot_pos = self.get_position()
         grid = self.lidarFunc.occupancyGrid
         
-        # Begin met lokaal zoeken, expandeer geleidelijk
-        rows, cols = grid.shape
-        visited = set()
+        grid_x = int((robot_pos['x_value'] + grid.map_size/2) / grid.map_resolution)
+        grid_y = int((robot_pos['y_value'] + grid.map_size/2) / grid.map_resolution)
+        grid_x = np.clip(grid_x, 0, grid.grid_cells-1)
+        grid_y = np.clip(grid_y, 0, grid.grid_cells-1)
+        
+        directions = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1), (1,0), (1,1)]
+        
+        visited = np.zeros((grid.grid_cells, grid.grid_cells), dtype=bool)
         queue = deque()
-        queue.append(robot_pos)
-
+        queue.append((grid_x,grid_y))
+        visited[grid_x,grid_y] = True 
+        
         while queue:
-            x, y = queue.popleft()
-
-            if (x, y) in visited:
-                continue
-            visited.add((x, y))
-
-            # Skip out-of-bounds
-            if not (0 <= x < rows and 0 <= y < cols):
-                continue
-
-            if grid[x, y] == -1:
-                temp_grid = Grid(matrix=(grid != 100).astype(int))
-                start_node = temp_grid.node(robot_pos[0], robot_pos[1])
-                end_node = temp_grid.node(y, x)
-                finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
-                path, _ = finder.find_path(start_node, end_node, temp_grid)
-                if path:
-                    return (x, y)
-
-        return None
-    
+            x,y = queue.popleft()
+            
+            prob = 1 - 1/(1 + np.exp(grid.grid[x, y]))
+            
+            if prob < 0.3:
+                world_x = (x* grid.map_resolution) - grid.map_size/2
+                world_y = (y* grid.map_resolution) - grid.map_size/2
+                return world_x, world_y
+            
+            for dx, dy in directions:
+                nx, ny = x+dx , y+dy
+                
+                if (0 <= nx < grid.grid_cells and 
+                    0 <= ny < grid.grid_cells and 
+                    not visited[nx, ny]):
+                    visited[nx, ny] = True
+                    queue.append((nx, ny))
+        
+        # HOPPAAAA, everything has been visited
+        return None 
         

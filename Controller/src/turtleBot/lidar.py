@@ -85,8 +85,12 @@ class OccupancyGrid:
         self.grid = np.clip(self.grid, -10, 10)
         
     def is_explored(self):
-        explored = np.sum(self.grid != 0)
+        prob_grid = 1 - 1/(1 + np.exp(self.grid))
+        explored = np.sum((prob_grid > 0.3) & (prob_grid < 0.7))
         return explored / self.grid.size >= self.coverage_threshold
+
+        # explored = np.sum(self.grid != 0)
+        # return explored / self.grid.size >= self.coverage_threshold
 
 class LidarFunctions:
     def __init__(self):
