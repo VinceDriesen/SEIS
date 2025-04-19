@@ -597,42 +597,68 @@ class TurtleBot:
             
             exploration_count += 1
 
+    # def find_nearest_unexplored(self):
+    #     """Vind de dichtstbijzijnde onverkende cel (status 0)"""
+    #     robot_pos = self.get_position()
+    #     grid = self.lidarFunc.occupancyGrid
+        
+    #     grid_x = int((robot_pos['x_value'] + grid.map_size/2) / grid.map_resolution)
+    #     grid_y = int((robot_pos['y_value'] + grid.map_size/2) / grid.map_resolution)
+    #     grid_x = np.clip(grid_x, 0, grid.grid_cells-1)
+    #     grid_y = np.clip(grid_y, 0, grid.grid_cells-1)
+        
+    #     directions = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1), (1,0), (1,1)]
+        
+    #     visited = np.zeros((grid.grid_cells, grid.grid_cells), dtype=bool)
+    #     queue = deque()
+    #     queue.append((grid_x, grid_y))
+    #     visited[grid_x, grid_y] = True
+
+    #     while queue:
+    #         x, y = queue.popleft()
+    #         value = grid.grid[x, y]
+
+    #         prob = 1 - 1 / (1 + np.exp(value))
+
+    #         if 0.3 < prob < 0.7:
+    #             world_x = (x * grid.map_resolution) - grid.map_size / 2
+    #             world_y = (y * grid.map_resolution) - grid.map_size / 2
+    #             return world_x, world_y
+
+    #         for dx, dy in directions:
+    #             nx, ny = x + dx, y + dy
+    #             if (0 <= nx < grid.grid_cells and 
+    #                 0 <= ny < grid.grid_cells and 
+    #                 not visited[nx, ny]):
+    #                 visited[nx, ny] = True
+    #                 queue.append((nx, ny))
+
+    #     # HOPPAAAA, everything has been visited
+    #     return None
+
     def find_nearest_unexplored(self):
-        """Vind de dichtstbijzijnde onverkende cel (status 0)"""
+        """Find the nearest unexplored cell (status unknown)"""
         robot_pos = self.get_position()
         grid = self.lidarFunc.occupancyGrid
         
-        grid_x = int((robot_pos['x_value'] + grid.map_size/2) / grid.map_resolution)
-        grid_y = int((robot_pos['y_value'] + grid.map_size/2) / grid.map_resolution)
-        grid_x = np.clip(grid_x, 0, grid.grid_cells-1)
-        grid_y = np.clip(grid_y, 0, grid.grid_cells-1)
+        # Convert probability grid (0=free, 1=occupied)
+        prob_grid = 1 - 1 / (1 + np.exp(grid.grid))
         
-        directions = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1), (1,0), (1,1)]
+        # Find all unexplored cells (probability between 0.3 and 0.7)
+        unexplored = (prob_grid > 0.3) & (prob_grid < 0.7)
         
-        visited = np.zeros((grid.grid_cells, grid.grid_cells), dtype=bool)
-        queue = deque()
-        queue.append((grid_x,grid_y))
-        visited[grid_x,grid_y] = True 
-        
-        while queue:
-            x,y = queue.popleft()
+        if not np.any(unexplored):
+            return None
             
-            prob = 1 - 1/(1 + np.exp(grid.grid[x, y]))
-            
-            if prob < 0.3:
-                world_x = (x* grid.map_resolution) - grid.map_size/2
-                world_y = (y* grid.map_resolution) - grid.map_size/2
-                return world_x, world_y
-            
-            for dx, dy in directions:
-                nx, ny = x+dx , y+dy
-                
-                if (0 <= nx < grid.grid_cells and 
-                    0 <= ny < grid.grid_cells and 
-                    not visited[nx, ny]):
-                    visited[nx, ny] = True
-                    queue.append((nx, ny))
+        # Find closest unexplored cell
+        grid_x, grid_y = np.where(unexplored)
+        robot_grid_x = int((robot_pos['x_value'] + grid.map_size/2) / grid.map_resolution)
+        robot_grid_y = int((robot_pos['y_value'] + grid.map_size/2) / grid.map_resolution)
         
-        # HOPPAAAA, everything has been visited
-        return None 
+        distances = np.sqrt((grid_x - robot_grid_x)**2 + (grid_y - robot_grid_y)**2)
+        closest_idx = np.argmin(distances)
         
+        world_x = (grid_x[closest_idx] * grid.map_resolution) - grid.map_size / 2
+        world_y = (grid_y[closest_idx] * grid.map_resolution) - grid.map_size / 2
+        
+        return world_x, world_y
