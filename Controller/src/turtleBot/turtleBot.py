@@ -540,7 +540,6 @@ class TurtleBot:
         self.position[2] = self.get_heading_from_compass()  # Updated heading
         
         print(f"Position: {self.get_position()}")
-        self.lidarFunc.scan(self.lidarSens, self.get_position())
         
         self.fix_position()
 
