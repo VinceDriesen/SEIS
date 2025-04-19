@@ -96,6 +96,8 @@ class LidarFunctions:
         self.occupancyGrid = OccupancyGrid()
         self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
         self.visualization_thread.start()
+        
+        self.lidar_offset = 0.12
 
     def get_lidar_global_coord_values(self, lidarSensor: Lidar, position):
         """Verwerkt de Lidar-metingen en zet ze om naar globale coördinaten"""
@@ -108,20 +110,33 @@ class LidarFunctions:
             angle = -fov/2 + angle_increment * i
             distance = scan[i]
             if distance > 0:
-                coords.append(self.local_to_global(distance, angle, position))
+                corrected_distance = distance - self.lidar_offset * math.cos(angle)
+                if corrected_distance > 0:
+                    coords.append(self.local_to_global(distance, angle, position))
         return coords
 
     def local_to_global(self, distance, lidar_angle, position):
         theta = position['theta_value']
         
+        lidar_local_x = self.lidar_offset
+        lidar_local_y = self.lidar_offset
+        
+        
+        lidar_global_x = position['x_value'] + lidar_local_x * math.cos(theta) - lidar_local_y * math.sin(theta)
+        lidar_global_y = position['y_value'] + lidar_local_x * math.sin(theta) + lidar_local_y * math.cos(theta)
+        
+        # Now calculate the detected point's position
         x_local = distance * math.cos(lidar_angle)
         y_local = distance * math.sin(lidar_angle)
         
         x_rot = x_local * math.cos(theta) + y_local * math.sin(theta)
         y_rot = -x_local * math.sin(theta) + y_local * math.cos(theta)
         
-        x_global = x_rot + position['x_value']
-        y_global = y_rot - position['y_value']
+        x_global = x_rot + lidar_global_x
+        y_global = y_rot + lidar_global_y
+        
+        # x_global = x_rot + position['x_value']
+        # y_global = y_rot - position['y_value']
         
         return [x_global, -y_global]
 
