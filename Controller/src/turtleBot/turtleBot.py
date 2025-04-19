@@ -168,14 +168,26 @@ class TurtleBot:
     #     self.rightMotor.setVelocity(0)
         
     def _rotate(self, angle: float):
-        """Rotate the robot by specified angle (degrees)"""
+        """This is a help function, do not touch it. Thank you
+        This function rotates the robot counter-clockwise (CCW) for positive angles
+        and clockwise (CW) for negative angles. Use the movePosition function to move the robot.
+
+        Args:
+            angle (float): Angle to rotate in degrees
+        """
+        # If the angle is too small, skip rotation
         if -0.01 < angle < 0.01:
             return
 
         angleRadians = math.radians(angle)
         angleVelocity = self.velocityNorm * self.maxSpeed
 
-        # Set motor velocities based on rotation direction
+        startLeftEncoder = self.leftMotorSens.getValue()
+        startRightEncoder = self.rightMotorSens.getValue()
+
+        targetRotation = angleRadians
+
+        # Positive angle -> CCW rotation, Negative angle -> CW rotation
         if angle > 0:
             self.leftMotor.setVelocity(-angleVelocity)
             self.rightMotor.setVelocity(angleVelocity)
@@ -183,25 +195,23 @@ class TurtleBot:
             self.leftMotor.setVelocity(angleVelocity)
             self.rightMotor.setVelocity(-angleVelocity)
 
-        # Get initial encoder values
-        startLeft = self.leftMotorSens.getValue()
-        startRight = self.rightMotorSens.getValue()
+        while self.robot.step(self.timeStep) != -1:
+            currentLeftEncoder = self.leftMotorSens.getValue()
+            currentRightEncoder = self.rightMotorSens.getValue()
 
-        # Rotation loop
-        while True:
-            if self.robot.step(self.timeStep) == -1:
-                break
-                
-            currentLeft = self.leftMotorSens.getValue()
-            currentRight = self.rightMotorSens.getValue()
-            
-            # Calculate rotation progress
-            rotation = (currentRight - currentLeft) * self.radius / self.distanceBetweenWheels
-            
-            if abs(rotation) + 0.02 >= abs(angleRadians):
+            leftRotationChange = currentLeftEncoder - startLeftEncoder
+            rightRotationChange = currentRightEncoder - startRightEncoder
+
+            currentRotation = (
+                (rightRotationChange - leftRotationChange)
+                * self.radius
+                / self.distanceBetweenWheels
+            )
+
+            #Blijf van die 0.02 af, de robot schoot gwn iets te ver door, dus die 0.02 is gdn adv tests
+            if (abs(currentRotation) + 0.02) >= abs(targetRotation):
                 break
 
-        # Stop motors
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
 
@@ -552,12 +562,9 @@ class TurtleBot:
         exploration_count = 0
         initial_movements = [
             (0.5, 0, 0),   # Move forward
-            (0, 0, 90),     # Turn right
-            (0.5, 0, 0),    # Move forward
-            (0, 0, 90),     # Turn right
-            (0.5, 0, 0),    # Move forward
-            (0, 0, 90),     # Turn right
-            (0.5, 0, 0)     # Move forward
+            (0, 0.5, 0),    # Move forward
+            (-0.5, 0, 0),    # Move forward
+            (0, -0.5, 0)     # Move forward
         ]
 
         for dx, dy, dtheta in initial_movements:
