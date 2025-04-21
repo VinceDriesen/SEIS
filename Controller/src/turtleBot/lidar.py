@@ -32,7 +32,7 @@ def bresenham(start, end):
 class OccupancyGrid:
     def __init__(self):
         self.map_size = 5 # meters
-        self.map_resolution = 0.02  # meters per cell
+        self.map_resolution = 0.015  # meters per cell
         self.grid_cells = int(self.map_size / self.map_resolution)
         self.grid = np.zeros((self.grid_cells, self.grid_cells), dtype=np.float32)
         self.free_prob = 0.4
@@ -42,10 +42,10 @@ class OccupancyGrid:
         self.coverage_threshold = 0.9
 
     def world_to_grid(self, world_coords, position):
-        """Zet wereldcoördinaten om naar grid-coördinaten"""
-        grid_x = int(((world_coords[0] + self.map_size/2) / self.map_resolution))
-        grid_y = int(((world_coords[1] + self.map_size/2) / self.map_resolution))
+        grid_x = int(np.floor(((world_coords[0] + self.map_size/2) / self.map_resolution)))
+        grid_y = int(np.floor(((world_coords[1] + self.map_size/2) / self.map_resolution)))
         return np.clip([grid_x, grid_y], 0, self.grid_cells-1).astype(int)
+
 
     def update_grid(self, sensor_pos, hits):
         """Werk de occupancy grid bij op basis van Lidar-metingen"""
@@ -125,8 +125,6 @@ class LidarFunctions:
         x_global = x_rot + position['x_value'] + self.lidar_offset
         y_global = y_rot + position['y_value']
         return [x_global, -y_global]
-
-        # return [x_global, -y_global]
 
     def get_robot_position_grid(self, position):
         """Berekent de sensorpositie in de occupancy grid op basis van de absolute wereldcoördinaten"""
