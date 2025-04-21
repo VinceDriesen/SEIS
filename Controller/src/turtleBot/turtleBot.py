@@ -559,43 +559,26 @@ class TurtleBot:
     
     def explore_environment(self):
         """Verkent de omgeving tot de gewenste dekking is bereikt"""
-        exploration_count = 0
-        initial_movements = [
-            (0.5, 0, 0),   # Move forward
-            (0, 0.5, 0),    # Move forward
-            (-0.5, 0, 0),    # Move forward
-            (0, -0.5, 0)     # Move forward
-        ]
-
-        for dx, dy, dtheta in initial_movements:
-            self.move_position(dx,dy, dtheta)
-            if self.robot.step(self.timeStep) == -1:
-                return
-        
-        # Perform initial movements
         while self.robot.step(self.timeStep) != -1:
             # Update de grid met LiDAR-data
             self.lidarFunc.scan(self.lidarSens, self.get_position())
+            if self.lidarFunc.occupancyGrid.is_explored():
+                print("Exploration complete!")
+                break
             
-            if exploration_count % 10 == 0:
-                if self.lidarFunc.occupancyGrid.is_explored():
-                    print("Exploration complete!")
-                    break
-                
-                # Find nearest unexplored area
-                target = self.find_nearest_unexplored()
-                if target:
-                    print(f"Moving to unexplored area at {target}")
-                    success = self.move_to_position(target[0], target[1])
-                    if not success:
-                        print("Failed to move to target, trying different approach")
-                        # Try moving to a random nearby position
-                        self.move_position(0.5, 0, 0)
-                else:
-                    print("No unexplored areas found!")
-                    break
+            # Find nearest unexplored area
+            target = self.find_nearest_unexplored()
+            if target:
+                print(f"Moving to unexplored area at {target}")
+                success = self.move_to_position(target[0], target[1])
+                if not success:
+                    print("Failed to move to target, trying different approach")
+                    # Try moving to a random nearby position
+                    self.move_position(0.5, 0, 0)
+            else:
+                print("No unexplored areas found!")
+                break
             
-            exploration_count += 1
 
     # def find_nearest_unexplored(self):
     #     """Vind de dichtstbijzijnde onverkende cel (status 0)"""

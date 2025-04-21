@@ -53,7 +53,7 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     # bot.start_lidar()
     # bot.move_position(1,0,0)
     # bot.start_lidar()
-    # bot.explore_environment()
+    bot.explore_environment()
     # bot.move_position(-0.5,-0.5,0)
     # movements = [
     #     (1, 0.0, 0), # Rotate left

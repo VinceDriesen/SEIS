@@ -115,15 +115,15 @@ class LidarFunctions:
     def local_to_global(self, distance, lidar_angle, position):
         theta = position['theta_value']
         
-        # Now calculate the detected point's position
         x_local = distance * math.cos(lidar_angle)
         y_local = distance * math.sin(lidar_angle)
         
-        x_rot = x_local * math.cos(theta) - y_local * math.sin(theta)
-        y_rot = x_local * math.sin(theta) + y_local * math.cos(theta)
-
-        x_global = x_rot + position['x_value'] + self.lidar_offset
-        y_global = y_rot + position['y_value']
+        x_rot = x_local * math.cos(theta) + y_local * math.sin(theta)
+        y_rot = -x_local * math.sin(theta) + y_local * math.cos(theta)
+        
+        x_global = x_rot + position['x_value']
+        y_global = y_rot - position['y_value']
+        
         return [x_global, -y_global]
 
     def get_robot_position_grid(self, position):
