@@ -45,7 +45,7 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     """Modified movement pattern for better mapping"""
     print("currentPosition", bot.get_position())
     bot.start_lidar()
-    bot.explore_environment()
+    # bot.explore_environment()
     # bot.move_position(-0.5,-0.5,0)
     # movements = [
     #     (1, 0.0, 0), # Rotate left
@@ -55,7 +55,7 @@ def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
     #     (0, -1, 0),  # Rotate right
     # ]
     
-    # time.sleep(20000)
+    time.sleep(20000)
     # bot.move_position(0, 0, -180)
     # bot.move_to_position(1, 0)
     # bot.move_position(0.25,0,0)

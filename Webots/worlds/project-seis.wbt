@@ -9,8 +9,8 @@ WorldInfo {
   physicsDisableAngularThreshold 0
 }
 Viewpoint {
-  orientation -0.4418062518399357 0.4232252545765348 0.7910041843908125 1.8447237887193781
-  position 0.607914262498986 -5.089166554649244 8.91126031334412
+  orientation -0.45545251084062977 0.43195137138184664 0.7784478294210267 1.8696762571980088
+  position 0.5017118432325118 -4.39198739702746 8.273455068389536
   follow "rectangle arena"
 }
 TexturedBackground {
@@ -102,7 +102,7 @@ DEF robot Robot {
       translation 0.025 0 0.153
       children [
         Lidar {
-          translation 0 0 0.02
+          translation -0.06 0 0.02
           rotation 0 0 -1 0
           children [
             Pose {
@@ -1137,7 +1137,7 @@ DEF robot Robot {
   supervisor TRUE
 }
 Solid {
-  translation 0.2 1 0.2
+  translation 0 0.6 0.2
   children [
     Shape {
       geometry Box {
@@ -1147,5 +1147,47 @@ Solid {
   ]
   boundingObject Box {
     size 1 0.2 0.4
+  }
+}
+Solid {
+  translation 0 -0.6 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 1 0.2 0.4
+      }
+    }
+  ]
+  name "solid(1)"
+  boundingObject Box {
+    size 1 0.2 0.4
+  }
+}
+Solid {
+  translation -0.6 0 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 0.2 1 0.4
+      }
+    }
+  ]
+  name "solid(2)"
+  boundingObject Box {
+    size 0.2 1 0.4
+  }
+}
+Solid {
+  translation 0.6 0 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 0.2 1 0.4
+      }
+    }
+  ]
+  name "solid(3)"
+  boundingObject Box {
+    size 0.2 1 0.4
   }
 }
