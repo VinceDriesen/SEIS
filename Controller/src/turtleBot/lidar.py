@@ -119,14 +119,14 @@ class LidarFunctions:
         x_local = distance * math.cos(lidar_angle)
         y_local = distance * math.sin(lidar_angle)
         
-        x_rot = x_local * math.cos(theta) + y_local * math.sin(theta)
-        y_rot = -x_local * math.sin(theta) + y_local * math.cos(theta)
+        x_rot = x_local * math.cos(theta) - y_local * math.sin(theta)
+        y_rot = x_local * math.sin(theta) + y_local * math.cos(theta)
 
-        
         x_global = x_rot + position['x_value'] + self.lidar_offset
-        y_global = y_rot - position['y_value']
-        
+        y_global = y_rot + position['y_value']
         return [x_global, -y_global]
+
+        # return [x_global, -y_global]
 
     def get_robot_position_grid(self, position):
         """Berekent de sensorpositie in de occupancy grid op basis van de absolute wereldcoördinaten"""
@@ -143,38 +143,35 @@ class LidarFunctions:
         self.occupancyGrid.update_grid(sensor_pos, hits)
 
     def visualize_grid(self):
-        plt.figure()
-        cmap = plt.cm.get_cmap('RdYlBu')  # Rood voor explored, Geel voor occupied
+        plt.ion()  # Interactieve modus
+        fig, ax = plt.subplots(figsize=(10, 10))
+        cmap = plt.cm.get_cmap('RdYlBu')
         norm = plt.Normalize(vmin=-2, vmax=2)
-        
+
+        # Initieel plot + colorbar buiten de loop
+        grid_data = self.occupancyGrid.grid.T
+        extent = [
+            -self.occupancyGrid.map_size / 2,
+            self.occupancyGrid.map_size / 2,
+            -self.occupancyGrid.map_size / 2,
+            self.occupancyGrid.map_size / 2
+        ]
+
+        img = ax.imshow(grid_data, extent=extent, origin='lower', cmap=cmap, norm=norm, interpolation='nearest')
+        cbar = fig.colorbar(img, ax=ax)
+        cbar.set_label('Log-Odds (Explored: <0, Occupied: >0)')
+
+        ax.set_title('Hybride Occupancy Grid')
+        ax.set_xlabel('X Positie (m)')
+        ax.set_ylabel('Y Positie (m)')
+
         while True:
-            plt.clf()
             grid_data = self.occupancyGrid.grid.T
-            
-            extent = [
-                -self.occupancyGrid.map_size/2,
-                self.occupancyGrid.map_size/2,
-                -self.occupancyGrid.map_size/2,
-                self.occupancyGrid.map_size/2
-            ]
-            
-            img = plt.imshow(
-                grid_data,
-                extent=extent,
-                origin='lower',
-                cmap=cmap,
-                norm=norm,
-                interpolation='none'
-            )
-            
-            cbar = plt.colorbar(img)
-            cbar.set_label('Log-Odds (Explored: <0, Occupied: >0)')
-            
-            plt.xlabel('X Position (m)')
-            plt.ylabel('Y Position (m)')
-            plt.title('Hybride Occupancy Grid')
-            plt.draw()
+            img.set_data(grid_data)
+            img.set_clim(vmin=-2, vmax=2)  # Zorgt dat de kleuren consistent blijven
             plt.pause(0.1)
+
+
             
     def get_occupancy_grid(self):
         """
