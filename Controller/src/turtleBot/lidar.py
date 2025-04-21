@@ -40,6 +40,111 @@ class OccupancyGrid:
         self.explored = -1
         self.exploration_radius = 0.35
         self.coverage_threshold = 0.9
+        self.unknown_threshold_low = -0.5 # Log-odds
+        self.unknown_threshold_high = 0.5  # Log-odds
+        self.max_lidar_range_cells = int(3.5 / self.map_resolution) # Max Lidar bereik in cellen (pas 3.5m aan indien nodig)
+
+    def get_probability_grid(self):
+        """Converteert log-odds grid naar probability grid (0=vrij, 1=bezet)."""
+        return 1 / (1 + np.exp(-self.grid)) # Sigmoid
+
+    def calculate_entropy(self, probability):
+        """Berekent de entropie van een cel."""
+        # Vermijd log(0) errors
+        p = np.clip(probability, 1e-9, 1 - 1e-9)
+        return -p * np.log2(p) - (1 - p) * np.log2(1 - p)
+
+    def get_entropy_grid(self):
+        """Berekent de entropie voor elke cel in de grid."""
+        prob_grid = self.get_probability_grid()
+        return self.calculate_entropy(prob_grid)
+
+    def simulate_scan_from_pose(self, pose_grid_coords, pose_theta, num_rays=72):
+        """
+        Simuleert een Lidar scan vanaf een gegeven pose op de *huidige* grid.
+        Retourneert een set van grid cellen die verwacht worden waargenomen.
+        """
+        observed_cells = set()
+        fov_rad = math.radians(360) # Lidar FOV (pas aan indien nodig)
+        angle_increment = fov_rad / num_rays
+
+        start_cell = tuple(pose_grid_coords)
+        observed_cells.add(start_cell)
+
+        # Huidige kansen op bezetting
+        prob_grid = self.get_probability_grid()
+
+        for i in range(num_rays):
+            angle = pose_theta - fov_rad / 2 + angle_increment * i
+            end_x = int(round(start_cell[0] + self.max_lidar_range_cells * math.cos(angle)))
+            end_y = int(round(start_cell[1] + self.max_lidar_range_cells * math.sin(angle)))
+
+            start_cell_int = (int(start_cell[0]), int(start_cell[1]))
+            end_point_int = (int(end_x), int(end_y))
+
+            line_cells = bresenham(start_cell_int, end_point_int) # Jouw functie!
+
+            for cell_coord in line_cells:
+                r, c = cell_coord[0], cell_coord[1]
+
+                if 0 <= r < self.grid_cells and 0 <= c < self.grid_cells:
+                    cell_coords_tuple = (r, c) # Zorg dat het een tuple is voor de set
+                    observed_cells.add(cell_coords_tuple)
+                    if prob_grid[r, c] > self.occ_prob:
+                        break
+                else:
+                    break
+
+        return list(observed_cells) # Retourneer als lijst van tuples (r, c)urneer als lijst van tuples (r, c)
+
+    def find_frontier_cells(self):
+        """
+        Vindt 'frontier' cellen: vrije cellen die grenzen aan onbekende cellen.
+        Retourneert een lijst van (r, c) coördinaten van frontier cellen.
+        """
+        prob_grid = self.get_probability_grid()
+        frontiers = []
+
+        free_threshold = self.free_prob # Cellen met kans < free_threshold zijn vrij
+
+        is_unknown = (self.grid >= self.unknown_threshold_low) & (self.grid <= self.unknown_threshold_high)
+        is_free = prob_grid < free_threshold
+
+        # Vind vrije cellen
+        free_indices = np.argwhere(is_free)
+
+        # Check buren van vrije cellen
+        for r, c in free_indices:
+            # Check 8 buren
+            is_frontier = False
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0:
+                        continue
+                    nr, nc = r + dr, c + dc
+                    # Check grenzen
+                    if 0 <= nr < self.grid_cells and 0 <= nc < self.grid_cells:
+                        if is_unknown[nr, nc]:
+                            is_frontier = True
+                            break
+                if is_frontier:
+                    break
+            if is_frontier:
+                frontiers.append((r, c))
+
+        return frontiers
+
+    def grid_to_world(self, grid_coords):
+        """Converteert grid coördinaten (r, c) terug naar wereld coördinaten (x, y)."""
+
+        world_x = (grid_coords[0] * self.map_resolution) - self.map_size / 2 + self.map_resolution / 2 # Centrum van cel
+        world_y = (grid_coords[1] * self.map_resolution) - self.map_size / 2 + self.map_resolution / 2 # Centrum van cel
+
+        world_x = (grid_coords[0] + 0.5) * self.map_resolution - self.map_size / 2
+        world_y = (grid_coords[1] + 0.5) * self.map_resolution - self.map_size / 2
+
+        return [world_x, world_y]
+
 
     def world_to_grid(self, world_coords, position):
         grid_x = int(np.floor(((world_coords[0] + self.map_size/2) / self.map_resolution)))
@@ -56,23 +161,6 @@ class OccupancyGrid:
             if line:
                 self.update_cell(line[-1], self.occ_prob)
         
-        # radius_cells = int(self.exploration_radius / self.map_resolution)
-        # for dx in range(-radius_cells, radius_cells+1):
-        #     for dy in range(-radius_cells, radius_cells+1):
-        #         if math.hypot(dx, dy) * self.map_resolution <= self.exploration_radius:
-        #             x = sensor_pos[0] + dx
-        #             y = sensor_pos[1] + dy
-        #             if 0 <= x < self.grid_cells and 0 <= y < self.grid_cells:
-        #                 # Alleen updaten als niet occupied
-        #                 if self.grid[x, y] <= 0: 
-        #                     self.grid[x, y] = self.explored
-        # for hit in hits:
-        #     # for cell in line[:-1]:  # Alle cellen behalve de laatste
-        #     #     self.update_cell(cell, self.free_prob)
-        #     if line:  # Laatste cel als occupied markeren
-        #         self.update_cell(line[-1], self.occ_prob)
-                
-                
         for hit in hits:
             line = bresenham(sensor_pos, hit)
             log_odds = np.log(self.occ_prob / (1 - self.occ_prob))
@@ -83,6 +171,7 @@ class OccupancyGrid:
         log_odds = np.log(probability / (1 - probability))
         self.grid[cell[0], cell[1]] += log_odds
         self.grid = np.clip(self.grid, -10, 10)
+        
         
     def is_explored(self):
         prob_grid = 1 - 1 / (1 + np.exp(self.grid))
@@ -173,22 +262,13 @@ class LidarFunctions:
             
     def get_occupancy_grid(self):
         """
-        Converteer het interne log-odds grid naar een probability grid (0-1) en retourneer het als numpy array.
-        
-        Returns:
-            tuple: (grid_prob, extent)
-                - grid_prob: 2D numpy array met occupancy probabilities (0 = vrij, 1 = bezet)
-                - extent: List [x_min, x_max, y_min, y_max] voor plotten (in meters)
+        Converteer log-odds NAAR JUISTE PROBABILITIES (zonder 1 - ...)
         """
-        # Converteer log-odds naar probabilities (sigmoid)
-        grid_prob = 1 - 1 / (1 + np.exp(self.occupancyGrid.grid))
-        
-        # Bereken de extent van de map (in meters)
+        grid_prob = 1 / (1 + np.exp(-self.occupancyGrid.grid))  # Dit is de correcte sigmoid
         extent = [
-            -self.occupancyGrid.map_size / 2,
-            self.occupancyGrid.map_size / 2,
-            -self.occupancyGrid.map_size / 2,
-            self.occupancyGrid.map_size / 2
+            -self.occupancyGrid.map_size/2,
+            self.occupancyGrid.map_size/2,
+            -self.occupancyGrid.map_size/2,
+            self.occupancyGrid.map_size/2
         ]
-        
-        return grid_prob.T, extent  # Transpose voor correcte oriëntatie
+        return grid_prob.T, extent

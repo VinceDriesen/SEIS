@@ -557,91 +557,112 @@ class TurtleBot:
     def normalizeAngle(self, angle): 
         return angle % (2 * math.pi)
     
-    def explore_environment(self):
-        """Verkent de omgeving tot de gewenste dekking is bereikt"""
+    def explore_environment(self, num_candidates=30, cost_alpha=1.0):
+        """Verkent de omgeving met Mutual Information gebaseerde doel selectie."""
+        """
+            J. M. Valero, J. del Cerro, A. Jardón, C. R. Quintero and J. L. Sanz, 
+            "Mutual information-based exploration on continuous occupancy maps," 
+            2016 IEEE International Conference on Robotics and Automation (ICRA), 
+            Stockholm, Sweden, 2016, pp. 2807-2812, 
+            doi: 10.1109/ICRA.2016.7487635.
+        """
+        print("Starting Mutual Information based exploration...")
+        processed_targets = set() 
+        tries = 0
+
         while self.robot.step(self.timeStep) != -1:
-            # Update de grid met LiDAR-data
-            self.lidarFunc.scan(self.lidarSens, self.get_position())
-            if self.lidarFunc.occupancyGrid.is_explored():
-                print("Exploration complete!")
+            current_pos_dict = self.get_position()
+            self.lidarFunc.scan(self.lidarSens, current_pos_dict)
+
+            if tries > 10:
+                print("Too many tries, stopping exploration. It is probably done!.")
                 break
-            
-            # Find nearest unexplored area
-            target = self.find_nearest_unexplored()
-            if target:
-                print(f"Moving to unexplored area at {target}")
-                success = self.move_to_position(target[0], target[1])
-                if not success:
-                    print("Failed to move to target, trying different approach")
-                    # Try moving to a random nearby position
-                    self.move_position(0.5, 0, 0)
+
+            grid_obj = self.lidarFunc.occupancyGrid
+            current_theta = current_pos_dict['theta_value']
+
+            frontier_cells = grid_obj.find_frontier_cells()
+
+            if not frontier_cells:
+                print("No more frontiers found. Exploration might be stuck or complete.")
+                break
+
+            if len(frontier_cells) > num_candidates:
+                indices = np.random.choice(len(frontier_cells), num_candidates, replace=False)
+                candidate_grid_cells = [frontier_cells[i] for i in indices]
             else:
-                print("No unexplored areas found!")
-                break
+                candidate_grid_cells = frontier_cells
+
+            entropy_grid = grid_obj.get_entropy_grid() 
+
+            print(f"Evaluating {len(candidate_grid_cells)} candidate frontier cells...")
+            candidate_info = []
+
+            for candidate_cell in candidate_grid_cells:
+                candidate_pose_grid = candidate_cell
+                candidate_theta = current_theta
+
+                observed_cells_indices = grid_obj.simulate_scan_from_pose(candidate_pose_grid, candidate_theta)
+
+                information_gain = 0
+                for r, c in observed_cells_indices:
+                     if 0 <= r < grid_obj.grid_cells and 0 <= c < grid_obj.grid_cells:
+                           information_gain += entropy_grid[r, c]
+
+                candidate_world_coords = grid_obj.grid_to_world(candidate_cell)
+                dx = candidate_world_coords[0] - current_pos_dict['x_value']
+                dy = candidate_world_coords[1] - current_pos_dict['y_value']
+                cost = math.sqrt(dx**2 + dy**2)
+
+                if cost < 1e-6:
+                    utility = information_gain 
+                else:
+                    utility = information_gain / (cost ** cost_alpha)
+
+                candidate_info.append({
+                    'cell': candidate_cell,
+                    'world': candidate_world_coords,
+                    'gain': information_gain,
+                    'cost': cost,
+                    'utility': utility
+                })
+
+            if not candidate_info:
+                print("Warning: No valid candidates found after evaluation.")
+                continue
             
+            candidate_info.sort(key=lambda x: x['utility'], reverse=True)
 
-    # def find_nearest_unexplored(self):
-    #     """Vind de dichtstbijzijnde onverkende cel (status 0)"""
-    #     robot_pos = self.get_position()
-    #     grid = self.lidarFunc.occupancyGrid
-        
-    #     grid_x = int((robot_pos['x_value'] + grid.map_size/2) / grid.map_resolution)
-    #     grid_y = int((robot_pos['y_value'] + grid.map_size/2) / grid.map_resolution)
-    #     grid_x = np.clip(grid_x, 0, grid.grid_cells-1)
-    #     grid_y = np.clip(grid_y, 0, grid.grid_cells-1)
-        
-    #     directions = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1), (1,0), (1,1)]
-        
-    #     visited = np.zeros((grid.grid_cells, grid.grid_cells), dtype=bool)
-    #     queue = deque()
-    #     queue.append((grid_x, grid_y))
-    #     visited[grid_x, grid_y] = True
+            selected_candidate = None
+            for candidate in candidate_info:
+                 target_key = (round(candidate['world'][0], 2), round(candidate['world'][1], 2))
+                 if target_key not in processed_targets:
+                     selected_candidate = candidate
+                     processed_targets.add(target_key)
+                     break 
+            if selected_candidate is None:
+                print("All high-utility frontiers have been tried recently. Picking the best overall.")
+                if candidate_info:
+                     selected_candidate = candidate_info[0]
+                else:
+                     print("ERROR: No candidates available at all.")
+                     break
 
-    #     while queue:
-    #         x, y = queue.popleft()
-    #         value = grid.grid[x, y]
 
-    #         prob = 1 - 1 / (1 + np.exp(value))
+            if selected_candidate:
+                target_world = selected_candidate['world']
+                print(f"Selected Target: {target_world} (Cell: {selected_candidate['cell']}) "
+                      f"Utility: {selected_candidate['utility']:.2f} (Gain: {selected_candidate['gain']:.2f}, Cost: {selected_candidate['cost']:.2f})")
 
-    #         if 0.3 < prob < 0.7:
-    #             world_x = (x * grid.map_resolution) - grid.map_size / 2
-    #             world_y = (y * grid.map_resolution) - grid.map_size / 2
-    #             return world_x, world_y
+                success = self.move_to_position(target_world[0], target_world[1])
 
-    #         for dx, dy in directions:
-    #             nx, ny = x + dx, y + dy
-    #             if (0 <= nx < grid.grid_cells and 
-    #                 0 <= ny < grid.grid_cells and 
-    #                 not visited[nx, ny]):
-    #                 visited[nx, ny] = True
-    #                 queue.append((nx, ny))
+                if not success:
+                    tries += 1
+                    print(f"Failed to reach target {target_world}. Adding to processed targets.")
+                else:
+                    tries = 0
+            else:
+                 print("Could not select a new target.")
+                 self.robot.step(self.timeStep * 10)
 
-    #     # HOPPAAAA, everything has been visited
-    #     return None
-
-    def find_nearest_unexplored(self):
-        """Find the nearest unexplored cell (status unknown)"""
-        robot_pos = self.get_position()
-        grid = self.lidarFunc.occupancyGrid
-        
-        # Convert probability grid (0=free, 1=occupied)
-        prob_grid = 1 - 1 / (1 + np.exp(grid.grid))
-        
-        # Find all unexplored cells (probability between 0.3 and 0.7)
-        unexplored = (prob_grid > 0.3) & (prob_grid < 0.7)
-        
-        if not np.any(unexplored):
-            return None
-            
-        # Find closest unexplored cell
-        grid_x, grid_y = np.where(unexplored)
-        robot_grid_x = int((robot_pos['x_value'] + grid.map_size/2) / grid.map_resolution)
-        robot_grid_y = int((robot_pos['y_value'] + grid.map_size/2) / grid.map_resolution)
-        
-        distances = np.sqrt((grid_x - robot_grid_x)**2 + (grid_y - robot_grid_y)**2)
-        closest_idx = np.argmin(distances)
-        
-        world_x = (grid_x[closest_idx] * grid.map_resolution) - grid.map_size / 2
-        world_y = (grid_y[closest_idx] * grid.map_resolution) - grid.map_size / 2
-        
-        return world_x, world_y
+        print("Exploration loop finished.")
