@@ -1,38 +1,45 @@
 <script lang="ts">
+	import JobList from "$lib/components/JobList.svelte";
 	import type { PageProps } from "./$types";
 
     let { data, form }: PageProps = $props()
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<div class="prose max-w-none flex flex-col md:flex-row gap-4 w-full w-screen">
+    <div class="flex-1">
+        <h1>Send Job</h1>
+        <form method="post" action="?/createJob">
+            <div>
+                <label for="topic">Robot:</label>
+                <select name="robot-id" id="robot-id" class="select">
+                    {#each data.robots || [] as robot (robot)}
+                    <option value="robot">{robot}</option>
+                    {/each}
+                </select>
+            </div>
+            <div>
+                <label for="message">X Position:</label>
+                <input type="number" name="x-pos" id="x-pos" class="input" step="any"/>
+            </div>
+            <div>
+                <label for="message">Y Position:</label>
+                <input type="number" name="y-pos" id="y-pos" class="input" step="any"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
 
-<div class="prose">
-    <h1>Publish Message</h1>
-    <form method="post" action="?/publishMessage">
-        <div>
-            <label for="topic">Topic:</label>
-            <input type="text" id="topic" name="topic" class="input"/>
-        </div>
-        <div>
-            <label for="message">Message:</label>
-            <textarea id="message" name="message" class="textarea"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
-    
-    <h1>Get Last Message</h1>    
-    <form method="post" action="?/getLatestMessage">
-        <div>
-            <label for="topic">Topic:</label>
-            <input type="text" name="topic" id="topic" class="input" />
-        </div>
-        <button type="submit" class="btn btn-primary">Get</button>
-    </form>
+    <div class="flex-1">
+        {#each data.jobs || [] as jobList, index}
+             <div>
+                <p>Robot {index}</p>
+                <JobList jobList={jobList?.[0] ?? []} title={"Pending"}/>
+                <JobList jobList={jobList?.[1] ?? []} title={"Completed"}/>
+             </div>
+        {/each}
+    </div>
 
-    {#if form?.success}
-        <h2>Last Message:</h2>
-        <p>Topic: {form.message?.topic} at {form.message?.timestamp}</p>
-        <p>{form.message?.message}</p>
-    {/if}
+    <div class="flex-1">
+
+    </div>
 </div>

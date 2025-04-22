@@ -1,37 +1,54 @@
 import type { Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import mqttService from '$lib/server/mqtt-client';
+import { createJob, getRobotJobLists, getRobots } from '$lib/server/backendClient';
 
 export const load = (async () => {
-	return {};
+    const { data: robots } = await getRobots()
+
+    const jobs = robots ? await Promise.all(robots.map( async (value) => {
+        const { data } = await getRobotJobLists(value);
+        if (data) {
+            return data;
+        }
+        return null;
+    })) : [];
+
+    return {
+        robots,
+        jobs,
+    };
 }) satisfies PageServerLoad;
 
 
 export const actions = {
-    publishMessage: async ({ request }) => {
+    createJob: async ({ request }) => {
         const formdata = await request.formData()
-        const topic = formdata.get('topic') as string
-        const message = formdata.get('message') as string
+        const x_pos_raw = formdata.get('x_pos')
+        const y_pos_raw = formdata.get('y_pos')
+        const robot_id_raw = formdata.get('robot_id');
 
-        await mqttService.publish(topic, message)
-    },
+        const x_pos = x_pos_raw ? Number(x_pos_raw) : null
+        const y_pos = y_pos_raw ? Number(y_pos_raw) : null 
+        const robot_id = robot_id_raw ? Number(robot_id_raw) : null;
 
-    getLatestMessage: async ({ request }) => {
-        const formdata = await request.formData()
-        const topic = formdata.get('topic') as string
-
-        const message = await mqttService.getLastMessage(topic)
-
-        console.log(message)
-
-        if (message) {
+        if(x_pos === null || y_pos === null || robot_id === null) {
             return {
-                success: true,
-                message: message,
+                success: false,
+                message: "Failed to get position/robot_id"
+            }
+        }
+
+        const { data, error } = await createJob(x_pos, y_pos, robot_id)
+
+        if(error && data !== undefined) {
+            return {
+                success: false,
+                message: error.message
             }
         } else {
             return {
-                success: false,
+                success: true,
+                data: data,
             }
         }
     },

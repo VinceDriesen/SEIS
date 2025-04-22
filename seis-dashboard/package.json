@@ -11,7 +11,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"generate-schema-types": "npx openapi-typescript ../backend-server/backend/schema.json -o ./src/lib/types/schema.d.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
@@ -27,6 +28,7 @@
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
 		"globals": "^16.0.0",
+		"openapi-typescript": "^7.6.1",
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
@@ -38,6 +40,7 @@
 		"vite": "^6.2.5"
 	},
 	"dependencies": {
-		"mqtt": "^5.11.0"
+		"mqtt": "^5.11.0",
+		"openapi-fetch": "^0.13.5"
 	}
 }

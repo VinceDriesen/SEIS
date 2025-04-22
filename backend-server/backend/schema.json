@@ -1,0 +1,321 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "NinjaAPI",
+        "version": "1.0.0",
+        "description": ""
+    },
+    "paths": {
+        "/api/createJob": {
+            "post": {
+                "operationId": "backend_urls_createJob",
+                "summary": "Createjob",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "x",
+                        "schema": {
+                            "title": "X",
+                            "type": "number"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "y",
+                        "schema": {
+                            "title": "Y",
+                            "type": "number"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "robot_id",
+                        "schema": {
+                            "title": "Robot Id",
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "title": "Response",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/isJobCompleted": {
+            "get": {
+                "operationId": "backend_urls_isJobCompleted",
+                "summary": "Isjobcompleted",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "job_id",
+                        "schema": {
+                            "title": "Job Id",
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/getRobotPos": {
+            "get": {
+                "operationId": "backend_urls_getRobotPos",
+                "summary": "Getrobotpos",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "robot_id",
+                        "schema": {
+                            "title": "Robot Id",
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RobotPosition"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/getRobotStatus": {
+            "get": {
+                "operationId": "backend_urls_getRobotStatus",
+                "summary": "Getrobotstatus",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "robot_id",
+                        "schema": {
+                            "title": "Robot Id",
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/getRobotJobList": {
+            "get": {
+                "operationId": "backend_urls_getRobotJobList",
+                "summary": "Getrobotjoblist",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "robot_id",
+                        "schema": {
+                            "title": "Robot Id",
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "maxItems": 2,
+                                    "minItems": 2,
+                                    "prefixItems": [
+                                        {
+                                            "items": {
+                                                "$ref": "#/components/schemas/RobotJob"
+                                            },
+                                            "type": "array"
+                                        },
+                                        {
+                                            "items": {
+                                                "$ref": "#/components/schemas/RobotJob"
+                                            },
+                                            "type": "array"
+                                        }
+                                    ],
+                                    "title": "Response",
+                                    "type": "array"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/getRobots": {
+            "get": {
+                "operationId": "backend_urls_getRobots",
+                "summary": "Getrobots",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "integer"
+                                    },
+                                    "title": "Response",
+                                    "type": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ErrorSchema": {
+                "properties": {
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ],
+                "title": "ErrorSchema",
+                "type": "object"
+            },
+            "RobotPosition": {
+                "properties": {
+                    "x": {
+                        "title": "X",
+                        "type": "number"
+                    },
+                    "y": {
+                        "title": "Y",
+                        "type": "number"
+                    },
+                    "timestamp": {
+                        "title": "Timestamp",
+                        "type": "number"
+                    },
+                    "heading": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Heading"
+                    }
+                },
+                "required": [
+                    "x",
+                    "y",
+                    "timestamp"
+                ],
+                "title": "RobotPosition",
+                "type": "object"
+            },
+            "RobotJob": {
+                "properties": {
+                    "job_id": {
+                        "title": "Job Id",
+                        "type": "string"
+                    },
+                    "x": {
+                        "title": "X",
+                        "type": "number"
+                    },
+                    "y": {
+                        "title": "Y",
+                        "type": "number"
+                    },
+                    "created": {
+                        "title": "Created",
+                        "type": "number"
+                    },
+                    "completed": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Completed"
+                    }
+                },
+                "required": [
+                    "job_id",
+                    "x",
+                    "y",
+                    "created"
+                ],
+                "title": "RobotJob",
+                "type": "object"
+            }
+        }
+    },
+    "servers": []
+}

@@ -17,7 +17,7 @@ class MQTTController(threading.Thread):
 
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected to MQTT broker with result code {rc}")
-        self.client.subscribe(f"robot/{self.robot_id}")
+        self.client.subscribe(f"robot/{self.robot_id}/job")
 
     def on_message(self, client, userdata, msg):
         try:
