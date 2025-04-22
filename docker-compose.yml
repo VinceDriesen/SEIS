@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+    mosquitto:
+        container_name: mosquitto-broker
+        image: docker.io/eclipse-mosquitto:latest
+        ports:
+            - "1883:1883"
+        volumes:
+            - ./mqtt_broker/mosquitto/config:/mosquitto/config:Z
+            - ./mqtt_broker/mosquitto/data:/mosquitto/data:Z
+            - ./mqtt_broker/mosquitto/log:/mosquitto/log:Z
+        restart: unless-stopped
+        networks:
+            - default
+        
+    seis-dashboard:
+        container_name: seis-dashboard
+        build:
+            context: ./seis-dashboard
+        ports:
+            - "5173:5173"
+        networks:
+            - default
+        depends_on:
+            - mosquitto
+        restart: unless-stopped
+    
+
+
+networks:
+    default:
+        name: default_network
