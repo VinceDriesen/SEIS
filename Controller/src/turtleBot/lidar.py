@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import threading
 
+
 def bresenham(start, end):
     """Bresenham's line algorithm voor vrije ruimte updates"""
     x0, y0 = start
@@ -15,7 +16,7 @@ def bresenham(start, end):
     sx = -1 if x0 > x1 else 1
     sy = -1 if y0 > y1 else 1
     err = dx - dy
-    
+
     while True:
         points.append((x, y))
         if x == x1 and y == y1:
@@ -29,9 +30,10 @@ def bresenham(start, end):
             y += sy
     return points
 
+
 class OccupancyGrid:
     def __init__(self):
-        self.map_size = 5 # meters
+        self.map_size = 5  # meters
         self.map_resolution = 0.015  # meters per cell
         self.grid_cells = int(self.map_size / self.map_resolution)
         self.grid = np.zeros((self.grid_cells, self.grid_cells), dtype=np.float32)
@@ -40,13 +42,15 @@ class OccupancyGrid:
         self.explored = -1
         self.exploration_radius = 0.35
         self.coverage_threshold = 0.9
-        self.unknown_threshold_low = -0.5 # Log-odds
+        self.unknown_threshold_low = -0.5  # Log-odds
         self.unknown_threshold_high = 0.5  # Log-odds
-        self.max_lidar_range_cells = int(3.5 / self.map_resolution) # Max Lidar bereik in cellen (pas 3.5m aan indien nodig)
+        self.max_lidar_range_cells = int(
+            3.5 / self.map_resolution
+        )  # Max Lidar bereik in cellen (pas 3.5m aan indien nodig)
 
     def get_probability_grid(self):
         """Converteert log-odds grid naar probability grid (0=vrij, 1=bezet)."""
-        return 1 / (1 + np.exp(-self.grid)) # Sigmoid
+        return 1 / (1 + np.exp(-self.grid))  # Sigmoid
 
     def calculate_entropy(self, probability):
         """Berekent de entropie van een cel."""
@@ -65,7 +69,7 @@ class OccupancyGrid:
         Retourneert een set van grid cellen die verwacht worden waargenomen.
         """
         observed_cells = set()
-        fov_rad = math.radians(360) # Lidar FOV (pas aan indien nodig)
+        fov_rad = math.radians(360)  # Lidar FOV (pas aan indien nodig)
         angle_increment = fov_rad / num_rays
 
         start_cell = tuple(pose_grid_coords)
@@ -76,26 +80,32 @@ class OccupancyGrid:
 
         for i in range(num_rays):
             angle = pose_theta - fov_rad / 2 + angle_increment * i
-            end_x = int(round(start_cell[0] + self.max_lidar_range_cells * math.cos(angle)))
-            end_y = int(round(start_cell[1] + self.max_lidar_range_cells * math.sin(angle)))
+            end_x = int(
+                round(start_cell[0] + self.max_lidar_range_cells * math.cos(angle))
+            )
+            end_y = int(
+                round(start_cell[1] + self.max_lidar_range_cells * math.sin(angle))
+            )
 
             start_cell_int = (int(start_cell[0]), int(start_cell[1]))
             end_point_int = (int(end_x), int(end_y))
 
-            line_cells = bresenham(start_cell_int, end_point_int) # Jouw functie!
+            line_cells = bresenham(start_cell_int, end_point_int)  # Jouw functie!
 
             for cell_coord in line_cells:
                 r, c = cell_coord[0], cell_coord[1]
 
                 if 0 <= r < self.grid_cells and 0 <= c < self.grid_cells:
-                    cell_coords_tuple = (r, c) # Zorg dat het een tuple is voor de set
+                    cell_coords_tuple = (r, c)  # Zorg dat het een tuple is voor de set
                     observed_cells.add(cell_coords_tuple)
                     if prob_grid[r, c] > self.occ_prob:
                         break
                 else:
                     break
 
-        return list(observed_cells) # Retourneer als lijst van tuples (r, c)urneer als lijst van tuples (r, c)
+        return list(
+            observed_cells
+        )  # Retourneer als lijst van tuples (r, c)urneer als lijst van tuples (r, c)
 
     def find_frontier_cells(self):
         """
@@ -105,9 +115,11 @@ class OccupancyGrid:
         prob_grid = self.get_probability_grid()
         frontiers = []
 
-        free_threshold = self.free_prob # Cellen met kans < free_threshold zijn vrij
+        free_threshold = self.free_prob  # Cellen met kans < free_threshold zijn vrij
 
-        is_unknown = (self.grid >= self.unknown_threshold_low) & (self.grid <= self.unknown_threshold_high)
+        is_unknown = (self.grid >= self.unknown_threshold_low) & (
+            self.grid <= self.unknown_threshold_high
+        )
         is_free = prob_grid < free_threshold
 
         # Vind vrije cellen
@@ -137,20 +149,30 @@ class OccupancyGrid:
     def grid_to_world(self, grid_coords):
         """Converteert grid coördinaten (r, c) terug naar wereld coördinaten (x, y)."""
 
-        world_x = (grid_coords[0] * self.map_resolution) - self.map_size / 2 + self.map_resolution / 2 # Centrum van cel
-        world_y = (grid_coords[1] * self.map_resolution) - self.map_size / 2 + self.map_resolution / 2 # Centrum van cel
+        world_x = (
+            (grid_coords[0] * self.map_resolution)
+            - self.map_size / 2
+            + self.map_resolution / 2
+        )  # Centrum van cel
+        world_y = (
+            (grid_coords[1] * self.map_resolution)
+            - self.map_size / 2
+            + self.map_resolution / 2
+        )  # Centrum van cel
 
         world_x = (grid_coords[0] + 0.5) * self.map_resolution - self.map_size / 2
         world_y = (grid_coords[1] + 0.5) * self.map_resolution - self.map_size / 2
 
         return [world_x, world_y]
 
-
     def world_to_grid(self, world_coords, position):
-        grid_x = int(np.floor(((world_coords[0] + self.map_size/2) / self.map_resolution)))
-        grid_y = int(np.floor(((world_coords[1] + self.map_size/2) / self.map_resolution)))
-        return np.clip([grid_x, grid_y], 0, self.grid_cells-1).astype(int)
-
+        grid_x = int(
+            np.floor(((world_coords[0] + self.map_size / 2) / self.map_resolution))
+        )
+        grid_y = int(
+            np.floor(((world_coords[1] + self.map_size / 2) / self.map_resolution))
+        )
+        return np.clip([grid_x, grid_y], 0, self.grid_cells - 1).astype(int)
 
     def update_grid(self, sensor_pos, hits):
         """Werk de occupancy grid bij op basis van Lidar-metingen"""
@@ -160,7 +182,7 @@ class OccupancyGrid:
                 self.update_cell(cell, self.free_prob)
             if line:
                 self.update_cell(line[-1], self.occ_prob)
-        
+
         for hit in hits:
             line = bresenham(sensor_pos, hit)
             log_odds = np.log(self.occ_prob / (1 - self.occ_prob))
@@ -171,8 +193,7 @@ class OccupancyGrid:
         log_odds = np.log(probability / (1 - probability))
         self.grid[cell[0], cell[1]] += log_odds
         self.grid = np.clip(self.grid, -10, 10)
-        
-        
+
     def is_explored(self):
         prob_grid = 1 - 1 / (1 + np.exp(self.grid))
         known = (prob_grid <= 0.3) | (prob_grid >= 0.7)
@@ -183,7 +204,9 @@ class OccupancyGrid:
 class LidarFunctions:
     def __init__(self):
         self.occupancyGrid = OccupancyGrid()
-        self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
+        self.visualization_thread = threading.Thread(
+            target=self.visualize_grid, daemon=True
+        )
         self.visualization_thread.start()
         self.lidar_offset = -0.006
 
@@ -192,39 +215,41 @@ class LidarFunctions:
         scan = lidarSensor.getRangeImage()
         fov = lidarSensor.getFov()
         angle_increment = fov / (lidarSensor.getHorizontalResolution() - 1)
-        
+
         coords = []
         for i in range(lidarSensor.getHorizontalResolution()):
-            angle = -fov/2 + angle_increment * i
+            angle = -fov / 2 + angle_increment * i
             distance = scan[i]
             if distance > 0:
                 coords.append(self.local_to_global(distance, angle, position))
         return coords
 
     def local_to_global(self, distance, lidar_angle, position):
-        theta = position['theta_value']
-        
+        theta = position["theta_value"]
+
         x_local = distance * math.cos(lidar_angle)
         y_local = distance * math.sin(lidar_angle)
-        
+
         x_rot = x_local * math.cos(theta) + y_local * math.sin(theta)
         y_rot = -x_local * math.sin(theta) + y_local * math.cos(theta)
-        
-        x_global = x_rot + position['x_value']
-        y_global = y_rot - position['y_value']
-        
+
+        x_global = x_rot + position["x_value"]
+        y_global = y_rot - position["y_value"]
+
         return [x_global, -y_global]
 
     def get_robot_position_grid(self, position):
         """Berekent de sensorpositie in de occupancy grid op basis van de absolute wereldcoördinaten"""
-        return self.occupancyGrid.world_to_grid([position['x_value'], position['y_value']], position)
+        return self.occupancyGrid.world_to_grid(
+            [position["x_value"], position["y_value"]], position
+        )
 
     def scan(self, lidarSensor: Lidar, position):
         """Voert een scan uit en werkt de occupancy grid bij"""
         # Transformeer lidar-metingen naar globale coördinaten
         sensor_pos = self.get_robot_position_grid(position)
         global_coords = self.get_lidar_global_coord_values(lidarSensor, position)
-        
+
         # Update grid met gescande punten
         hits = [self.occupancyGrid.world_to_grid(c, position) for c in global_coords]
         self.occupancyGrid.update_grid(sensor_pos, hits)
@@ -232,7 +257,7 @@ class LidarFunctions:
     def visualize_grid(self):
         plt.ion()  # Interactieve modus
         fig, ax = plt.subplots(figsize=(10, 10))
-        cmap = plt.cm.get_cmap('RdYlBu')
+        cmap = plt.cm.get_cmap("RdYlBu")
         norm = plt.Normalize(vmin=-2, vmax=2)
 
         # Initieel plot + colorbar buiten de loop
@@ -241,16 +266,23 @@ class LidarFunctions:
             -self.occupancyGrid.map_size / 2,
             self.occupancyGrid.map_size / 2,
             -self.occupancyGrid.map_size / 2,
-            self.occupancyGrid.map_size / 2
+            self.occupancyGrid.map_size / 2,
         ]
 
-        img = ax.imshow(grid_data, extent=extent, origin='lower', cmap=cmap, norm=norm, interpolation='nearest')
+        img = ax.imshow(
+            grid_data,
+            extent=extent,
+            origin="lower",
+            cmap=cmap,
+            norm=norm,
+            interpolation="nearest",
+        )
         cbar = fig.colorbar(img, ax=ax)
-        cbar.set_label('Log-Odds (Explored: <0, Occupied: >0)')
+        cbar.set_label("Log-Odds (Explored: <0, Occupied: >0)")
 
-        ax.set_title('Hybride Occupancy Grid')
-        ax.set_xlabel('X Positie (m)')
-        ax.set_ylabel('Y Positie (m)')
+        ax.set_title("Hybride Occupancy Grid")
+        ax.set_xlabel("X Positie (m)")
+        ax.set_ylabel("Y Positie (m)")
 
         while True:
             grid_data = self.occupancyGrid.grid.T
@@ -258,17 +290,17 @@ class LidarFunctions:
             img.set_clim(vmin=-2, vmax=2)  # Zorgt dat de kleuren consistent blijven
             plt.pause(0.1)
 
-
-            
     def get_occupancy_grid(self):
         """
         Converteer log-odds NAAR JUISTE PROBABILITIES (zonder 1 - ...)
         """
-        grid_prob = 1 / (1 + np.exp(-self.occupancyGrid.grid))  # Dit is de correcte sigmoid
+        grid_prob = 1 / (
+            1 + np.exp(-self.occupancyGrid.grid)
+        )  # Dit is de correcte sigmoid
         extent = [
-            -self.occupancyGrid.map_size/2,
-            self.occupancyGrid.map_size/2,
-            -self.occupancyGrid.map_size/2,
-            self.occupancyGrid.map_size/2
+            -self.occupancyGrid.map_size / 2,
+            self.occupancyGrid.map_size / 2,
+            -self.occupancyGrid.map_size / 2,
+            self.occupancyGrid.map_size / 2,
         ]
         return grid_prob.T, extent

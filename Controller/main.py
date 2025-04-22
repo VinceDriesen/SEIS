@@ -1,82 +1,71 @@
-import math
 import os
+from queue import Queue
 from controller import Robot, Supervisor, Node
-from src.turtleBot import TurtleBot
+from src.turtleBot import TurtleBot, MQTTController
 import matplotlib
 import threading
 import time
 
 matplotlib.use("TkAgg")
 
+ROBOT_ID = os.getenv("ROBOT_ID", -1)
+
+if ROBOT_ID == -1:
+    raise ValueError("ROBOT_ID environment variable is not set or invalid.")
+
 TIME_STEP = 64
 MAX_SPEED = 6.28
 
+
 def main():
     # Use Supervisor to have additional simulation control.
-    robot = Supervisor()  
-    robotNode = robot.getFromDef('robot')
-    
+    robot = Supervisor()
+    robotNode = robot.getFromDef(f"robot_{ROBOT_ID}")
+
     # Get the initial global pose from the simulation node.
     bot: TurtleBot = TurtleBot(robot, TIME_STEP, MAX_SPEED)
-    
+
     # Print available device names for debugging.
-    n = robot.getNumberOfDevices()
-    for i in range(n):
-        device = robot.getDeviceByIndex(i)
-        print(device.getName())
-        
-        
-    # robot_loop(robot, bot, robotNode)
-    # Start the simulation (movement/odometry) thread.
-    simulation_thread = threading.Thread(target=robot_loop, args=(robot, bot, robotNode))
+    # n = robot.getNumberOfDevices()
+    # for i in range(n):
+    #     device = robot.getDeviceByIndex(i)
+    #     print(device.getName())
+
+    # Create command queue, connect to mqtt broker
+    command_queue = Queue()
+    mqtt_client = MQTTController(ROBOT_ID, command_queue)
+
+    # Start the threads.
+    simulation_thread = threading.Thread(
+        target=robot_loop, args=(robot, bot, command_queue, mqtt_client)
+    )
+    mqtt_thread = threading.Thread(target=mqtt_client.run)
+
     simulation_thread.start()
-    
-    # visualization_thread = threading.Thread(target=visualization_loop, args=(bot,))
-    # visualization_thread.daemon = True
-    # visualization_thread.start()
-    
+    mqtt_thread.start()
+
     simulation_thread.join()
-    # visualization_thread.join()
-
-# def visualization_loop(bot: TurtleBot):
+    mqtt_thread.join()
 
 
-def robot_loop(robot: Robot, bot: TurtleBot, supervisor_node: Node):
-    """Modified movement pattern for better mapping"""
+def robot_loop(
+    robot: Robot, bot: TurtleBot, command_queue: Queue, mqtt_client: MQTTController
+):
     print("currentPosition", bot.get_position())
-    bot.start_lidar()
-    # bot.start_lidar()
-    # bot.start_lidar()
-    # bot.move_position(1,0,0)
-    # bot.start_lidar()
-    # bot.move_position(-2,0,0)
-    # bot.start_lidar()
-    # bot.move_position(1,0,0)
-    # bot.start_lidar()
-    bot.explore_environment()
-    # bot.move_position(-0.5,-0.5,0)
-    # bot.move_to_position(-1.03, 0)
-    # bot.move_to_position(0, 0)
-    # movements = [
-    #     (1, 0.0, 0), # Rotate left
-    #     (0,0,90),
-    #     (0, 1, 0),   # Move forward
-    #     (-1, 0.0, 0),  # Rotate right5
-    #     (0, -1, 0),  # Rotate right
-    # ]
-    
-    time.sleep(20000)
-    # bot.move_position(0, 0, -180)
-    # bot.move_position(0.25,0,0)
-    # bot.move_position(0,0.25,0)
-    # time.sleep(5000)
-    
-    # while robot.step(TIME_STEP) != -1:
-    #     for dx, dy, dtheta in movements:
-    #         bot.move_position(dx, dy, dtheta)
-    #         time.sleep(1)90
 
+    # bot.explore_environment()
+    # time.sleep(20000)
 
+    while robot.step(TIME_STEP) != -1:
+        while not command_queue.empty():
+            cmd_type, data = command_queue.get()
+            if cmd_type == "move":
+                x, y = data
+                if bot.move_to_position(x, y):
+                    mqtt_client.publish_done((x, y))
+                else:
+                    print(f"Failed To Complete Task: {x}, {y}")
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":

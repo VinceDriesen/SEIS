@@ -25,6 +25,14 @@ services:
         depends_on:
             - mosquitto
         restart: unless-stopped
+
+    robot-1:
+        container_name: robot-1
+        build:
+            context: ./Controller
+        environment:
+            - ROBOT_ID=1
+            - MQTT_BROKER_URL=mosquitto-broker
     
 
 

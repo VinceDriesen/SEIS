@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fromStore } from "svelte/store";
 	import type { PageProps } from "./$types";
 
     let { data, form }: PageProps = $props()
