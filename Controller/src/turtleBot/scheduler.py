@@ -3,25 +3,25 @@ import queue
 import time
 from typing import Dict, List
 
-from .turtleBot import TurtleBot
+from .turtleBotStateMachine import TurtleBotSM
 
 
 class Scheduler:
     def __init__(self):
-        self.robots: List[TurtleBot] = list()
+        self.robots: List[TurtleBotSM] = list()
         self.task_queue = queue.Queue()
-        self.robot_status: Dict[TurtleBot, str] = {robot: 'free' for robot in self.robots}
+        self.robot_status: Dict[TurtleBotSM, str] = {robot: 'free' for robot in self.robots}
         self.robot_task_threads = {}
         self._lock = threading.Lock()
         self._stop_event = threading.Event()
         self._worker_thread = threading.Thread(target=self._worker)
         self._worker_thread.daemon = True
         
-    def add_robot(self, robot: TurtleBot):
+    def add_robot(self, robot: TurtleBotSM):
         self.robots.append(robot)
         self.robot_status[robot] = 'free'
         
-    def remove_robot(self, robot: TurtleBot):
+    def remove_robot(self, robot: TurtleBotSM):
         if robot in self.robots:
             self.robots.remove(robot)
             del self.robot_status[robot]
@@ -62,7 +62,7 @@ class Scheduler:
                  try:
                      task = self.task_queue.get(timeout=0.1)
                  except queue.Empty:
-                     pass 
+                    pass 
 
             if task is not None and free_robot is not None:
                 with self._lock:
@@ -77,17 +77,13 @@ class Scheduler:
 
         print("Scheduler worker thread finished.")
         
-    def _run_robot_task(self, robot: TurtleBot, task: dict):
+    def _run_robot_task(self, robot: TurtleBotSM, task: dict):
         """
         Run a task on a robot. This method is run in a separate thread.
         """
         print("Running task on robot:", robot.name if hasattr(robot, 'name') else robot)
         try:
-            success = robot.execute_task(task) # <- Deze lijn wordt nu uitgevoerd
-            if success:
-                print(f"Task {task.get('type')} completed successfully ...")
-            else:
-                 print(f"Task {task.get('type')} failed ...") 
+            success = robot.executeTask(task) # <- Deze lijn wordt nu uitgevoerd
         except Exception as e:
             print(f"Task {task.get('type')} failed due to exception {e}")
     
@@ -111,6 +107,12 @@ class Scheduler:
         if self._worker_thread.is_alive():
             self._worker_thread.join()
         print("Scheduler stopped.")
+        
+    def getManagedRobots(self) -> List[TurtleBotSM]:
+        """
+        Returns the list of managed robots.
+        """
+        return self.robots
         
     def are_all_robots_free(self) -> bool:
         """

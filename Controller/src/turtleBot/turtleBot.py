@@ -41,7 +41,7 @@ class TurtleBot:
         self.leftMotor.setPosition(float("inf"))
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
-        self.robot.step(self.timeStep)
+        
 
         # # Parameters Occupany Map
         # self.map_size = 6 # Physical Map Size
