@@ -153,7 +153,7 @@ class TurtleBotSM:
             return None
         
         x_c, y_c, _ = self.compass.getValues()
-        heading = math.atan2(y_c, x_c)
+        heading = math.atan2(x_c, y_c)
         return self.normAngle(heading)
     
     def normAngle(self, angle: float) -> float:
@@ -669,7 +669,7 @@ class TurtleBotSM:
                 (current_pos['y_value'] - next_waypoint_world_y)**2
             )
 
-            WAYPOINT_REACH_TOLERANCE = 0.1
+            WAYPOINT_REACH_TOLERANCE = 0.03
             if dist_to_next_waypoint < WAYPOINT_REACH_TOLERANCE:
                 self._move_to_path_index += 1
 
@@ -690,8 +690,8 @@ class TurtleBotSM:
             current_heading = self.position[2]
             angle_needed_rel = self.normAngle(angle_to_waypoint_rad - current_heading)
 
-            k_rot = 1.0
-            k_lin = 1.0
+            k_rot = 3
+            k_lin = 10.0
 
             if abs(angle_needed_rel) > ROTATION_TOLERANCE_RAD * 2:
                 v_left = -math.copysign(self.velocity_norm * self.max_speed, angle_needed_rel)
@@ -710,7 +710,7 @@ class TurtleBotSM:
             self.left_motor.setVelocity(v_left)
             self.right_motor.setVelocity(v_right)
             
-            print(f"Robot {self.name}: Moving to waypoint {self._move_to_path_index + 1}/{len(self._move_to_path) - 1} at ({target_waypoint_world[0]:.2f}, {target_waypoint_world[1]:.2f}), distance: {distance_to_waypoint:.2f}, angle: {math.degrees(angle_needed_rel):.2f} deg")
+            print(f"Robot {self.name}: Moving to waypoint {self._move_to_path_index + 1}/{len(self._move_to_path) - 1} at ({target_waypoint_world[0]:.2f}, {target_waypoint_world[1]:.2f}), distance: {distance_to_waypoint:.2f}, angle: {math.degrees(angle_needed_rel):.2f} deg, velocity: ({v_left:.2f}, {v_right:.2f})")
 
             return True
 

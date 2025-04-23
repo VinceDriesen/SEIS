@@ -34,8 +34,8 @@ class Process:
                 for robot in self.scheduler.getManagedRobots(): # Of self.scheduler.get_managed_robots() als scheduler de master lijst heeft
                     # print(f"Processing robot: {robot.name if hasattr(robot, 'name') else robot}")
                     robot_is_currently_busy = robot.updateTaskExecution()
-                    if not robot_is_currently_busy: # Voeg get_robot_status toe aan Scheduler
-                        print(f"Detected robot {robot.name} finished task, marking as free.")
+                    # if not robot_is_currently_busy: # Voeg get_robot_status toe aan Scheduler
+                        # print(f"Detected robot {robot.name} finished task, marking as free.")
                 pass # De main loop wacht hier op de volgende simulatie stap
 
             # --- Cleanly stop when simulation ends ---
