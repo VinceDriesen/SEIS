@@ -12,11 +12,17 @@ class Process:
         self.robot: Supervisor = Supervisor()
         self.TIME_STEP = int(self.robot.getBasicTimeStep())
         self.MAX_SPEED = 6.28
-        self.ROBOT_ID = os.getenc("ROBOT_ID", -1)
+        # self.ROBOT_ID = os.getenc("ROBOT_ID", -1)
+        self.tasks = []
+        self.add_task({
+            "type": TASK_EXPLORE,
+            "params": {
+            }
+        })
+        self.ROBOT_ID = 0
         if self.ROBOT_ID == -1:
             raise ValueError("ROBOT_ID not set. Please set it in the environment.")
         self.start_robot()
-        self.tasks = []
 
     def __repr__(self):
             return f"Process(name={self.name}, pid={self.pid})"
@@ -26,15 +32,15 @@ class Process:
         self.queue = Queue()
         # mqtt_client = MQTTController(self.ROBOT_ID, queue)
         simulation_thread = Thread(
-            target=self.start, args=(self.queue,)
+            target=self.start
         )
-        mqtt_thread = Thread(
-            target=self.start_mqtt.run
-        )
+        # mqtt_thread = Thread(
+        #     target=self.start_mqtt.run
+        # )
         simulation_thread.start()
-        mqtt_thread.start()
+        # mqtt_thread.start()
         simulation_thread.join()
-        mqtt_thread.join()
+        # mqtt_thread.join()
 
     def start(self):
         print(f"Starting process {self.name} with PID {self.pid}")
@@ -73,6 +79,6 @@ class Process:
             print(f"Received task: {task}")
             self._add_task(task)
 
-    def _add_task(self, task):
+    def add_task(self, task):
         """Internal: Adds a task to the scheduler."""
         self.tasks.append(task)

@@ -83,7 +83,7 @@ class TurtleBotSM:
         
         self._explore_state: str | None = None 
         self._explore_processed_targets: set = set()
-        self._explore_tries = 0 
+        self._explore_count = 0 
         self._explore_consecutive_pathfinding_failures = 0 
         self._explore_stagnation_count = 0 
         self._explore_num_candidates = 30
@@ -94,6 +94,8 @@ class TurtleBotSM:
         self.velocity_norm = 0.3
         self.nonMeasuredPosition = [0.0, 0.0, 0.0]
         self.position = [0.0, 0.0, 0.0]
+        
+        self._move_to_success = False
         
         #Init de Lidar
         try:
@@ -320,7 +322,13 @@ class TurtleBotSM:
             finished_action = self._current_action 
             self._current_action = STATE_IDLE 
             self._current_task_details = None
-            print(f"Robot {self.name}: Action '{finished_action}' finished.")
+            print(f"Robot {self.name}: Action '{finished_action}' finished., {self._move_to_state}")
+            if finished_action == TASK_MOVE_TO and not self._move_to_state == MOVE_TO_STATE_FAILED:
+                self._move_to_success = True
+                print(f"Robot {self.name}: Move to task completed successfully.")
+            if (self._explore_state == EXPLORE_STATE_MOVING_TO_FRONTIER):
+                self._current_action = TASK_EXPLORE
+                print(f"Robot {self.name}: Finished move_to action in exploration. And continuing")
             self.left_motor.setVelocity(0)
             self.right_motor.setVelocity(0)
 
@@ -397,25 +405,25 @@ class TurtleBotSM:
 
         return True # Indicate ongoing
     
-    def startExploration(self, params: dict):
-        """Initiates the exploration task. Requires update_task_execution calls."""
-        if self._current_action != STATE_IDLE: return False
+    # def startExploration(self, params: dict):
+    #     """Initiates the exploration task. Requires update_task_execution calls."""
+    #     if self._current_action != STATE_IDLE: return False
 
-        print(f"Robot {self.name}: Starting exploration task.")
-        self._current_action = TASK_EXPLORE
-        self._explore_num_candidates = params.get('num_candidates', 30)
-        self._explore_cost_alpha = params.get('cost_alpha', 1.0)
-        self._explore_max_consecutive_failures = params.get('max_consecutive_failures', 10)
-        self._explore_max_stagnation_iterations = params.get('max_stagnation_iterations', 5)
+    #     print(f"Robot {self.name}: Starting exploration task.")
+    #     self._current_action = TASK_EXPLORE
+    #     self._explore_num_candidates = params.get('num_candidates', 30)
+    #     self._explore_cost_alpha = params.get('cost_alpha', 1.0)
+    #     self._explore_max_consecutive_failures = params.get('max_consecutive_failures', 10)
+    #     self._explore_max_stagnation_iterations = params.get('max_stagnation_iterations', 5)
 
-        self._explore_state = EXPLORE_STATE_START # Start the state machine
-        self._explore_processed_targets = set()
-        self._explore_tries = 0 # Used in original, needs integration
-        self._explore_consecutive_pathfinding_failures = 0
-        self._explore_stagnation_count = 0
+    #     self._explore_state = EXPLORE_STATE_START # Start the state machine
+    #     self._explore_processed_targets = set()
+    #     self._explore_tries = 0 # Used in original, needs integration
+    #     self._explore_consecutive_pathfinding_failures = 0
+    #     self._explore_stagnation_count = 0
 
 
-        return True # Indicate initiation started
+    #     return True # Indicate initiation started
     
     def _updateExploreAction(self) -> bool:
         if self._current_action != TASK_EXPLORE: return False
@@ -427,8 +435,9 @@ class TurtleBotSM:
         elif self._explore_state == EXPLORE_STATE_SCANNING:
             current_pos_dict = self.getGpsPosition()
             self.lidar.scan(self.lidarSens, current_pos_dict)
-
-            if self.lidar.occupancyGrid.is_explored():
+            print(f"Stagnation_cout = {self._explore_count}")
+            if self._explore_count >= 10:
+                print(f"Robot {self.name}: Stagnation count exceeded. Ending exploration.")
                 self._explore_state = EXPLORE_STATE_FINISHED
                 return False
 
@@ -481,8 +490,8 @@ class TurtleBotSM:
                 })
 
             if not candidate_info:
-                self.stagnation_count += 1
-                if self.stagnation_count >= self._explore_max_stagnation_iterations:
+                self._explore_count += 1
+                if self._explore_count >= self._explore_max_stagnation_iterations:
                     self._explore_state = EXPLORE_STATE_STUCK
                     return False
                 else:
@@ -501,7 +510,7 @@ class TurtleBotSM:
 
             if selected_candidate:
                 target_world_pos = selected_candidate['world']
-                print(f"Robot {self.name}: Planned move to frontier {target_world_pos}. Transitioning to move.")
+                # print(f"Robot {self.name}: Planned move to frontier {target_world_pos}. Transitioning to move.")
 
                 self._current_action = TASK_MOVE_TO # <<< ZET HIER DE HOOFD ACTIE >>>
                 move_init_success = self.startMoveTo(target_world_pos[0], target_world_pos[1], internal_call=True)
@@ -519,8 +528,7 @@ class TurtleBotSM:
                         self._explore_state = EXPLORE_STATE_SCANNING # Terug naar scannen/plannen na fout
                         return True
             else:
-                self.stagnation_count += 1
-                if self.stagnation_count >= self._explore_max_stagnation_iterations:
+                if self._explore_count >= self._explore_max_stagnation_iterations:
                     self._explore_state = EXPLORE_STATE_STUCK
                     return False
                 else:
@@ -528,12 +536,13 @@ class TurtleBotSM:
                     return True
 
         elif self._explore_state == EXPLORE_STATE_MOVING_TO_FRONTIER:
+            print("Kom je hier wel?")
             if self._current_action == TASK_MOVE_TO:
                 pass
-            elif self._current_action == STATE_IDLE:
+            elif self._current_action == TASK_EXPLORE:
                 if hasattr(self, '_move_to_success') and self._move_to_success:
                     print(f"Robot {self.name}: Successfully moved to frontier. Resuming exploration.")
-                    self.stagnation_count = 0 # Reset stagnation
+                    self._explore_count = 0 # Reset stagnation
                     self._explore_consecutive_pathfinding_failures = 0 # Reset failures
                     self._explore_state = EXPLORE_STATE_SCANNING # Ga naar volgende ronde van explore
                 else:
@@ -592,7 +601,9 @@ class TurtleBotSM:
     
     def _updateMoveToAction(self) -> bool:
         """Updates the state machine for a move_to task. Returns True if ongoing."""
-        if self._current_action != TASK_MOVE_TO: return False
+        if self._current_action != TASK_MOVE_TO: 
+            print("tf")
+            return False
 
         if self._move_to_state == MOVE_TO_STATE_PLANNING:
             current_pos = self.getGpsPosition()
@@ -614,6 +625,7 @@ class TurtleBotSM:
 
             if buffered_grid_np[end_y_grid, end_x_grid] == 0:
                 self._move_to_state = MOVE_TO_STATE_FAILED
+                print("curwa")
                 return False
 
             try:
@@ -623,9 +635,11 @@ class TurtleBotSM:
 
                 if not start_node.walkable:
                     self._move_to_state = MOVE_TO_STATE_FAILED
+                    print("aids")
                     return False
                 if not end_node.walkable:
                     self._move_to_state = MOVE_TO_STATE_FAILED
+                    print("nein")
                     return False
 
                 finder = AStarFinder()
@@ -640,12 +654,15 @@ class TurtleBotSM:
                         
                         self._last_grid_shape = buffered_grid_np.shape
                         self._last_extent = extent
+                        print("0")
                         return True
                     else:
                         self._move_to_state = MOVE_TO_STATE_FAILED
-                    return False
+                        print("1")
+                        return False
                 else:
                     self._move_to_state = MOVE_TO_STATE_FAILED
+                    print("2")
                     return False
 
             except Exception as e:
@@ -658,6 +675,7 @@ class TurtleBotSM:
             next_waypoint_grid = self._move_to_path[self._move_to_path_index + 1]
 
             if not hasattr(self, '_last_grid_shape') or self._last_grid_shape is None:
+                print(f"Robot {self.name}: ERROR: No grid shape available for pathfinding.")
                 self._move_to_state = MOVE_TO_STATE_FAILED
                 return False
 
@@ -710,18 +728,21 @@ class TurtleBotSM:
             self.left_motor.setVelocity(v_left)
             self.right_motor.setVelocity(v_right)
             
-            print(f"Robot {self.name}: Moving to waypoint {self._move_to_path_index + 1}/{len(self._move_to_path) - 1} at ({target_waypoint_world[0]:.2f}, {target_waypoint_world[1]:.2f}), distance: {distance_to_waypoint:.2f}, angle: {math.degrees(angle_needed_rel):.2f} deg, velocity: ({v_left:.2f}, {v_right:.2f})")
+            # print(f"Robot {self.name}: Moving to waypoint {self._move_to_path_index + 1}/{len(self._move_to_path) - 1} at ({target_waypoint_world[0]:.2f}, {target_waypoint_world[1]:.2f}), distance: {distance_to_waypoint:.2f}, angle: {math.degrees(angle_needed_rel):.2f} deg, velocity: ({v_left:.2f}, {v_right:.2f})")
 
             return True
 
         elif self._move_to_state == MOVE_TO_STATE_FINISHED:
+            print("4")
             return False
 
         elif self._move_to_state == MOVE_TO_STATE_FAILED:
+            print("5")
             return False
 
         else:
              self._move_to_state = MOVE_TO_STATE_FAILED
+             print("6")
              return False
 
     def addBufferToGrid(self, grid, extent, buffer_distance=0.2):
