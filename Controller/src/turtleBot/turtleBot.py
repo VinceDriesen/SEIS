@@ -20,7 +20,7 @@ class TurtleBot:
     It can move, sense its environment, and update its position accordingly.
     """
 
-    def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
+    def __init__(self, name, robot: Robot, timeStep: int, maxSpeed: float):
         """Initializes The TurtleBot
 
         Args:
@@ -28,6 +28,7 @@ class TurtleBot:
             timeStep (int): Simulation Timestep
             maxSpeed (float): Maximun wheel speed
         """
+        self.name = name
         self.robot = robot
         self.timeStep = timeStep
         self.maxSpeed = maxSpeed
@@ -40,7 +41,7 @@ class TurtleBot:
         self.leftMotor.setPosition(float("inf"))
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
-        self.robot.step(self.timeStep)
+        
 
         x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
         theta = self.get_heading_from_compass()  # Updated heading
@@ -104,6 +105,21 @@ class TurtleBot:
             "y_value": self.position[1],
             "theta_value": self.position[2],
         }
+
+    def execute_task(self, task: dict):
+        print(f"Executing task in robot: {task}")
+        if task["type"] == "move_to":
+            x = task["parameters"]["x"]
+            y = task["parameters"]["y"]
+            self.move_to_position(x, y)
+        elif task["type"] == "turn":
+            angle = task["parameters"]["angle"]
+            self.move_position(0, 0, angle)
+        elif task["type"] == "explore_environment":
+            self.explore_environment()   
+        else:
+            raise ValueError(f"Unknown task type: {task['type']}")
+
 
     def _rotate(self, angle: float):
         """This is a help function, do not touch it. Thank you
@@ -552,6 +568,7 @@ class TurtleBot:
         tries = 0
 
         while self.robot.step(self.timeStep) != -1:
+            print("geraakt hier!")
             current_pos_dict = self.get_position()
             self.lidarFunc.scan(self.lidarSens, current_pos_dict)
 
