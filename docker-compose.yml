@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+    mosquitto:
+        container_name: mosquitto-broker
+        image: docker.io/eclipse-mosquitto:latest
+        ports:
+            - "1883:1883"
+        volumes:
+            - ./mqtt_broker/mosquitto/config:/mosquitto/config:Z
+            - ./mqtt_broker/mosquitto/data:/mosquitto/data:Z
+            - ./mqtt_broker/mosquitto/log:/mosquitto/log:Z
+        restart: unless-stopped
+        networks:
+            - default
+        
+    seis-dashboard:
+        container_name: seis-dashboard
+        build:
+            context: ./seis-dashboard
+        ports:
+            - "5173:5173"
+        environment:
+            - BASE_URL=http://backend:8000
+        networks:
+            - default
+        depends_on:
+            - backend
+        restart: unless-stopped
+
+    robot-1:
+        container_name: robot-1
+        build:
+            context: ./Controller
+        environment:
+            - ROBOT_ID=1
+            - MQTT_BROKER_URL=mosquitto-broker
+        networks:
+            - default
+    
+    backend:
+        container_name: backend
+        build:
+            context: ./backend-server
+        ports:
+            - "8000:8000"
+        environment:
+            - MQTT_BROKER_URL=mosquitto
+        networks:
+            - default
+        depends_on:
+            - mosquitto
+    
+
+
+networks:
+    default:
+        driver: bridge

@@ -23,6 +23,8 @@ RectangleArena {
   wallHeight 0.3
 }
 DEF robot_0 Robot {
+  translation 1.1526536813981993 2.4141781203421373 -0.00024432529994644625
+  rotation -0.0026448983721178857 0.0019333582502229355 -0.9999946333048381 -1.8828881499570969
   children [
     GPS {
       translation -0.03 0 0.1
@@ -856,6 +858,8 @@ DEF robot_0 Robot {
             0 0 0
           ]
         }
+        linearVelocity -1.6921392549705287e-08 3.675142285239488e-08 -4.0236517495012255e-10
+        angularVelocity 6.412133716160902e-09 6.98886046738031e-09 -6.01376473834937e-08
       }
     }
     DEF LEFT_JOINT HingeJoint {
@@ -903,6 +907,8 @@ DEF robot_0 Robot {
             0 0 0
           ]
         }
+        linearVelocity -1.9977504037864467e-08 4.622390377797793e-08 3.3127499923580353e-10
+        angularVelocity 5.7882987798909155e-09 6.787621940857716e-09 -6.013765216093725e-08
       }
     }
     DEF CASTER_JOINT BallJoint {
@@ -926,6 +932,8 @@ DEF robot_0 Robot {
         boundingObject USE CASTER_SPHERE
         physics Physics {
         }
+        linearVelocity -2.1522949612249383e-07 -4.337181856056732e-08 1.4220320036460097e-10
+        angularVelocity -3.084600187237753e-05 -7.248412780813427e-05 -0.011305173371075327
       }
     }
     DEF BODY Pose {
@@ -1135,6 +1143,8 @@ DEF robot_0 Robot {
   }
   controller "<extern>"
   supervisor TRUE
+  linearVelocity -2.0120505981665707e-08 4.079977818302108e-08 -4.057640786543913e-10
+  angularVelocity 8.954178374676975e-09 7.803225352042698e-09 -6.013744997737269e-08
 }
 Solid {
   translation -0.01 1.34 0.2

@@ -1,2 +1,8 @@
 from .turtleBot import TurtleBot
-__all__ = ["TurtleBot", "Scheduler"]
+from .mqtt_client import MQTTController
+
+__all__ = [
+    "TurtleBot",
+    "Schedular",
+    "MQTTController",
+]

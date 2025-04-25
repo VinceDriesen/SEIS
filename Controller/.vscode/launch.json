@@ -8,6 +8,9 @@
             "program": "${workspaceFolder}/main.py",
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "ROBOT_ID": "0",
+            }
         }
     ]
 }
