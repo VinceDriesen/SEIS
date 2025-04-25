@@ -14,26 +14,25 @@ class Process:
         self.MAX_SPEED = 6.28
         # self.ROBOT_ID = os.getenc("ROBOT_ID", -1)
         self.tasks = []
-        self.add_task({
-            "type": TASK_EXPLORE,
-            "params": {
-            }
-        })
+        self.add_task({"type": TASK_EXPLORE, "params": {}})
         self.ROBOT_ID = 0
         if self.ROBOT_ID == -1:
             raise ValueError("ROBOT_ID not set. Please set it in the environment.")
         self.start_robot()
 
     def __repr__(self):
-            return f"Process(name={self.name}, pid={self.pid})"
-        
+        return f"Process(name={self.name}, pid={self.pid})"
+
     def start_robot(self):
-        self.bot : TurtleBotSM = TurtleBotSM(name=f"exploration_bot", robot=self.robot, time_step=self.TIME_STEP, max_speed=self.MAX_SPEED)
+        self.bot: TurtleBotSM = TurtleBotSM(
+            name=f"exploration_bot",
+            robot=self.robot,
+            time_step=self.TIME_STEP,
+            max_speed=self.MAX_SPEED,
+        )
         self.queue = Queue()
         # mqtt_client = MQTTController(self.ROBOT_ID, queue)
-        simulation_thread = Thread(
-            target=self.start
-        )
+        simulation_thread = Thread(target=self.start)
         # mqtt_thread = Thread(
         #     target=self.start_mqtt.run
         # )
@@ -56,7 +55,7 @@ class Process:
                         self.bot.executeTask(newTask)
                     else:
                         print("No tasks available for execution.")
-                
+
             print("Main Webots simulation loop finished.")
             self.stop()
             return True
@@ -64,9 +63,9 @@ class Process:
         except Exception as e:
             print(f"Error in process {self.name} start sequence: {e}")
             import traceback
+
             traceback.print_exc()
             return False
-    
 
     def stop(self):
         print(f"Stopping process {self.name}")
