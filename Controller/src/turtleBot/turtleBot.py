@@ -41,7 +41,6 @@ class TurtleBot:
         self.leftMotor.setPosition(float("inf"))
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
-        
 
         x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
         theta = self.get_heading_from_compass()  # Updated heading
@@ -116,10 +115,9 @@ class TurtleBot:
             angle = task["parameters"]["angle"]
             self.move_position(0, 0, angle)
         elif task["type"] == "explore_environment":
-            self.explore_environment()   
+            self.explore_environment()
         else:
             raise ValueError(f"Unknown task type: {task['type']}")
-
 
     def _rotate(self, angle: float):
         """This is a help function, do not touch it. Thank you
