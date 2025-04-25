@@ -20,7 +20,7 @@ class TurtleBot:
     It can move, sense its environment, and update its position accordingly.
     """
 
-    def __init__(self, robot: Robot, timeStep: int, maxSpeed: float):
+    def __init__(self, name, robot: Robot, timeStep: int, maxSpeed: float):
         """Initializes The TurtleBot
 
         Args:
@@ -28,6 +28,7 @@ class TurtleBot:
             timeStep (int): Simulation Timestep
             maxSpeed (float): Maximun wheel speed
         """
+        self.name = name
         self.robot = robot
         self.timeStep = timeStep
         self.maxSpeed = maxSpeed
@@ -40,7 +41,7 @@ class TurtleBot:
         self.leftMotor.setPosition(float("inf"))
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
-        self.robot.step(self.timeStep)
+        
 
         # # Parameters Occupany Map
         # self.map_size = 6 # Physical Map Size
@@ -118,55 +119,21 @@ class TurtleBot:
             "theta_value": self.position[2],
         }
 
+    def execute_task(self, task: dict):
+        print(f"Executing task in robot: {task}")
+        if task["type"] == "move_to":
+            x = task["parameters"]["x"]
+            y = task["parameters"]["y"]
+            self.move_to_position(x, y)
+        elif task["type"] == "turn":
+            angle = task["parameters"]["angle"]
+            self.move_position(0, 0, angle)
+        elif task["type"] == "explore_environment":
+            self.explore_environment()   
+        else:
+            raise ValueError(f"Unknown task type: {task['type']}")
 
-    # def _rotate(self, angle: float):
-    #     """This is a help function, do not touch it. Thank you
-    #     This function rotates the robot counter-clockwise (CCW) for positive angles
-    #     and clockwise (CW) for negative angles. Use the movePosition function to move the robot.
 
-    #     Args:
-    #         angle (float): Angle to rotate in degrees
-    #     """
-    #     # If the angle is too small, skip rotation
-    #     if -0.01 < angle < 0.01:
-    #         return
-
-    #     angleRadians = math.radians(angle)
-    #     angleVelocity = self.velocityNorm * self.maxSpeed
-
-    #     startLeftEncoder = self.leftMotorSens.getValue()
-    #     startRightEncoder = self.rightMotorSens.getValue()
-
-    #     targetRotation = angleRadians
-
-    #     # Positive angle -> CCW rotation, Negative angle -> CW rotation
-    #     if angle > 0:
-    #         self.leftMotor.setVelocity(-angleVelocity)
-    #         self.rightMotor.setVelocity(angleVelocity)
-    #     else:
-    #         self.leftMotor.setVelocity(angleVelocity)
-    #         self.rightMotor.setVelocity(-angleVelocity)
-
-    #     while self.robot.step(self.timeStep) != -1:
-    #         currentLeftEncoder = self.leftMotorSens.getValue()
-    #         currentRightEncoder = self.rightMotorSens.getValue()
-
-    #         leftRotationChange = currentLeftEncoder - startLeftEncoder
-    #         rightRotationChange = currentRightEncoder - startRightEncoder
-
-    #         currentRotation = (
-    #             (rightRotationChange - leftRotationChange)
-    #             * self.radius
-    #             / self.distanceBetweenWheels
-    #         )
-
-    #         #Blijf van die 0.02 af, de robot schoot gwn iets te ver door, dus die 0.02 is gdn adv tests
-    #         if (abs(currentRotation) + 0.02) >= abs(targetRotation):
-    #             break
-
-    #     self.leftMotor.setVelocity(0)
-    #     self.rightMotor.setVelocity(0)
-        
     def _rotate(self, angle: float):
         """This is a help function, do not touch it. Thank you
         This function rotates the robot counter-clockwise (CCW) for positive angles
@@ -571,6 +538,7 @@ class TurtleBot:
         tries = 0
 
         while self.robot.step(self.timeStep) != -1:
+            print("geraakt hier!")
             current_pos_dict = self.get_position()
             self.lidarFunc.scan(self.lidarSens, current_pos_dict)
 

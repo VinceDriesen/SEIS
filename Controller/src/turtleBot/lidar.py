@@ -183,8 +183,8 @@ class OccupancyGrid:
 class LidarFunctions:
     def __init__(self):
         self.occupancyGrid = OccupancyGrid()
-        self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
-        self.visualization_thread.start()
+        # self.visualization_thread = threading.Thread(target=self.visualize_grid, daemon=True)
+        # self.visualization_thread.start()
         self.lidar_offset = -0.006
 
     def get_lidar_global_coord_values(self, lidarSensor: Lidar, position):

@@ -9,8 +9,8 @@ WorldInfo {
   physicsDisableAngularThreshold 0
 }
 Viewpoint {
-  orientation -0.600877191742163 0.5325328366507516 0.5961169166638001 2.1695098550292355
-  position 0.20510010385694305 0.1879121968887251 9.399397094307197
+  orientation -0.5343335202891438 0.5786226646843324 0.6161846322402187 1.9647686993120945
+  position -0.2099258749470167 -1.2112750963630758 9.030024168561162
   follow "rectangle arena"
 }
 TexturedBackground {
@@ -22,9 +22,7 @@ RectangleArena {
   wallThickness 0.05
   wallHeight 0.3
 }
-DEF robot Robot {
-  translation 1.4314638301787808e-07 1.490444708623917e-09 -0.0002487155985037362
-  rotation -0.002189195757807569 -0.9999976037078815 6.547590417686015e-07 0.00448283155406298
+DEF robot_0 Robot {
   children [
     GPS {
       translation -0.03 0 0.1
@@ -743,7 +741,7 @@ DEF robot Robot {
     }
     DEF RIGHT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
-        position 4624.170662392595
+        position 4644.956229061877
         axis 0 1 0
         anchor 0 -0.08 0.033
       }
@@ -760,7 +758,7 @@ DEF robot Robot {
       ]
       endPoint Solid {
         translation 0 -0.08 0.033
-        rotation 0 -1 0 1.8245196915808988
+        rotation 0 -1 0 6.171694251017085
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -862,7 +860,7 @@ DEF robot Robot {
     }
     DEF LEFT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
-        position 7873.256021785453
+        position 7864.974879058173
         axis 0 1 0
         anchor 0 0.08 0.033
       }
@@ -879,7 +877,7 @@ DEF robot Robot {
       ]
       endPoint Solid {
         translation 0 0.08 0.033
-        rotation 0.840286399588807 -4.905399202987538e-07 0.5421427548771998 3.141597202587519
+        rotation 0.001167430098040234 -1.6472074449249506e-06 -0.9999993185518943 3.1415893668393466
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -909,12 +907,12 @@ DEF robot Robot {
     }
     DEF CASTER_JOINT BallJoint {
       jointParameters BallJointParameters {
-        position 8209.382787570512
+        position 8315.192816393466
         anchor -0.081 0 0.004
       }
       endPoint Solid {
-        translation -0.08104138070237993 -4.18194801444839e-07 0.003992656830414619
-        rotation 0.3665441551232699 -0.47867429373877085 0.7978197182688938 4.4494091300379575
+        translation -0.08102608439837682 9.65725236257402e-06 0.003968491252103063
+        rotation -0.18620116983713364 0.03457370035904555 -0.9819031436932901 2.561077649272049
         children [
           Shape {
             appearance PBRAppearance {
@@ -1139,7 +1137,7 @@ DEF robot Robot {
   supervisor TRUE
 }
 Solid {
-  translation -0.01 0.6 0.2
+  translation -0.01 1.34 0.2
   children [
     Shape {
       geometry Box {
@@ -1152,21 +1150,21 @@ Solid {
   }
 }
 Solid {
-  translation 0 -0.75 0.2
+  translation 0 -1.7 0.2
   children [
     Shape {
       geometry Box {
-        size 3 0.5 0.4
+        size 1 0.25 0.4
       }
     }
   ]
   name "solid(1)"
   boundingObject Box {
-    size 3 0.5 0.4
+    size 1 0.25 0.4
   }
 }
 Solid {
-  translation -2.22 1.74 0.2
+  translation 0.5 0 0.2
   children [
     Shape {
       geometry Box {
@@ -1180,7 +1178,7 @@ Solid {
   }
 }
 Solid {
-  translation 2.29 1.82 0.2
+  translation -0.5 0 0.2
   children [
     Shape {
       geometry Box {
