@@ -1,0 +1,64 @@
+#VRML_SIM R2025a utf8
+
+PROTO Rack [
+  field SFVec3f translation 0 0 0
+  field SFString name "rack"
+]
+{
+Solid {
+  translation IS translation
+  children [
+    Shape {
+      geometry Box {
+        size 4 0.1 0.1
+      }
+      appearance PBRAppearance {
+        baseColor 0.7 0.7 0.7
+      }
+    }
+    Transform {
+      translation 0 0 -0.3
+      children [
+        Shape {
+          geometry Box {
+            size 4 0.1 0.1
+          }
+          appearance PBRAppearance {
+            baseColor 0.7 0.7 0.7
+          }
+        }
+      ]
+    }
+    Transform {
+      translation -1.95 0 -0.15
+      children [
+        Shape {
+          geometry Box {
+            size 0.1 0.1 0.6
+          }
+          appearance PBRAppearance {
+            baseColor 0.5 0.5 0.5
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 1.95 0 -0.15
+      children [
+        Shape {
+          geometry Box {
+            size 0.1 0.1 0.6
+          }
+          appearance PBRAppearance {
+            baseColor 0.5 0.5 0.5
+          }
+        }
+      ]
+    }
+  ]
+  name IS name
+  boundingObject Box {
+    size 4 0.2 0.6
+  }
+}
+}

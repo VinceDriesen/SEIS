@@ -3,6 +3,7 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "Rack.proto"
 
 WorldInfo {
   physicsDisableLinearThreshold 0
@@ -22,6 +23,256 @@ RectangleArena {
   wallThickness 0.05
   wallHeight 0.3
 }
+
+
+
+# Right row
+Group {
+  children [
+    # Eerste blok
+    Rack {
+      translation 2.5 4.5 0.4
+      name "rack_right_1"
+    }
+    Rack {
+      translation 2.5 4.0 0.4
+      name "rack_right_2_1"
+    }
+    Rack {
+      translation 2.5 3.9 0.4
+      name "rack_right_3_1"
+    }
+    Rack {
+      translation 2.5 3.4 0.4
+      name "rack_right_4_1"
+    }
+    Rack {
+      translation 2.5 3.3 0.4
+      name "rack_right_5_1"
+    }
+
+    # Tweede blok
+    Rack {
+      translation 2.5 2.8 0.4
+      name "rack_right_2_2"
+    }
+    Rack {
+      translation 2.5 2.7 0.4
+      name "rack_right_3_2"
+    }
+    Rack {
+      translation 2.5 2.2 0.4
+      name "rack_right_4_2"
+    }
+    Rack {
+      translation 2.5 2.1 0.4
+      name "rack_right_5_2"
+    }
+
+    # Derde blok
+    Rack {
+      translation 2.5 1.6 0.4
+      name "rack_right_2_3"
+    }
+    Rack {
+      translation 2.5 1.5 0.4
+      name "rack_right_3_3"
+    }
+    Rack {
+      translation 2.5 1.0 0.4
+      name "rack_right_4_3"
+    }
+    Rack {
+      translation 2.5 0.9 0.4
+      name "rack_right_5_3"
+    }
+
+    # Vierde blok
+    Rack {
+      translation 2.5 0.4 0.4
+      name "rack_right_2_4"
+    }
+    Rack {
+      translation 2.5 0.3 0.4
+      name "rack_right_3_4"
+    }
+    Rack {
+      translation 2.5 -0.2 0.4
+      name "rack_right_4_4"
+    }
+    Rack {
+      translation 2.5 -0.3 0.4
+      name "rack_right_5_4"
+    }
+
+    # Vijfde blok
+    Rack {
+      translation 2.5 -0.8 0.4
+      name "rack_right_2_5"
+    }
+    Rack {
+      translation 2.5 -0.9 0.4
+      name "rack_right_3_5"
+    }
+    Rack {
+      translation 2.5 -1.4 0.4
+      name "rack_right_4_5"
+    }
+    Rack {
+      translation 2.5 -1.5 0.4
+      name "rack_right_5_5"
+    }
+
+    # Zesde blok
+    Rack {
+      translation 2.5 -2.0 0.4
+      name "rack_right_2_6"
+    }
+    Rack {
+      translation 2.5 -2.1 0.4
+      name "rack_right_3_6"
+    }
+    Rack {
+      translation 2.5 -2.6 0.4
+      name "rack_right_4_6"
+    }
+    Rack {
+      translation 2.5 -2.7 0.4
+      name "rack_right_5_6"
+    }
+
+    # Zevende blok
+    Rack {
+      translation 2.5 -3.2 0.4
+      name "rack_right_2_7"
+    }
+    Rack {
+      translation 2.5 -3.3 0.4
+      name "rack_right_3_7"
+    }
+    Rack {
+      translation 2.5 -3.8 0.4
+      name "rack_right_4_7"
+    }
+    Rack {
+      translation 2.5 -3.9 0.4
+      name "rack_right_5_7"
+    }
+
+    # Achtste blok
+    Rack {
+      translation 2.5 -4.4 0.4
+      name "rack_right_2_8"
+    }
+    Rack {
+      translation 2.5 -4.5 0.4
+      name "rack_right_3_8"
+    }
+  ]
+}
+
+
+# left row
+Group {
+  children [
+    # Eerste blok
+    Rack {
+      translation -2.5 4.5 0.4
+      name "rack_left_1"
+    }
+    Rack {
+      translation -2.5 4.0 0.4
+      name "rack_left_2_1"
+    }
+    Rack {
+      translation -2.5 3.9 0.4
+      name "rack_left_3_1"
+    }
+    Rack {
+      translation -2.5 3.4 0.4
+      name "rack_left_4_1"
+    }
+    Rack {
+      translation -2.5 3.3 0.4
+      name "rack_left_5_1"
+    }
+
+    # Tweede blok
+    Rack {
+      translation -2.5 2.8 0.4
+      name "rack_left_2_2"
+    }
+    Rack {
+      translation -2.5 2.7 0.4
+      name "rack_left_3_2"
+    }
+    Rack {
+      translation -2.5 2.2 0.4
+      name "rack_left_4_2"
+    }
+    Rack {
+      translation -2.5 2.1 0.4
+      name "rack_left_5_2"
+    }
+
+    # Derde blok
+    Rack {
+      translation -2.5 1.6 0.4
+      name "rack_left_2_3"
+    }
+    Rack {
+      translation -2.5 1.5 0.4
+      name "rack_left_3_3"
+    }
+    Rack {
+      translation -2.5 1.0 0.4
+      name "rack_left_4_3"
+    }
+    Rack {
+      translation -2.5 0.9 0.4
+      name "rack_left_5_3"
+    }
+
+    # Vierde blok
+    Rack {
+      translation -2.5 0.4 0.4
+      name "rack_left_2_4"
+    }
+    Rack {
+      translation -2.5 0.3 0.4
+      name "rack_left_3_4"
+    }
+    Rack {
+      translation -2.5 -0.2 0.4
+      name "rack_left_4_4"
+    }
+    Rack {
+      translation -2.5 -0.3 0.4
+      name "rack_left_5_4"
+    }
+
+    # Vijfde blok
+    Rack {
+      translation -2.5 -0.8 0.4
+      name "rack_left_2_5"
+    }
+    Rack {
+      translation -2.5 -0.9 0.4
+      name "rack_left_3_5"
+    }
+    Rack {
+      translation -2.5 -1.4 0.4
+      name "rack_left_4_5"
+    }
+    Rack {
+      translation -2.5 -1.5 0.4
+      name "rack_left_5_5"
+    }
+  ]
+}
+
+
+
 DEF robot_0 Robot {
   translation 1.1526536813981993 2.4141781203421373 -0.00024432529994644625
   rotation -0.0026448983721178857 0.0019333582502229355 -0.9999946333048381 -1.8828881499570969
@@ -1145,551 +1396,4 @@ DEF robot_0 Robot {
   supervisor TRUE
   linearVelocity -2.0120505981665707e-08 4.079977818302108e-08 -4.057640786543913e-10
   angularVelocity 8.954178374676975e-09 7.803225352042698e-09 -6.013744997737269e-08
-}
-Solid {
-  translation 3 4.5 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
-}
-
-Solid {
-  translation 3 4 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  name "solid(1)"
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
-}
-
-Solid {
-  translation 3 3.5 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  name "solid(2)"
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
-}
-
-Solid {
-  translation 3 3 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  name "solid(3)"
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
-}
-
-Solid {
-  translation 3 3 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  name "solid(5)"
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
-}
-
-Solid {
-  translation 3 2.5 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  name "solid(6)"
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
-}
-
-Solid {
-  translation 3 2 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  name "solid(7)"
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
-}
-
-Solid {
-  translation 3 1.5 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  name "solid(8)"
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
-}
-
-Solid {
-  translation 3 1 0.4
-  children [
-    # Plank boven
-    Shape {
-      geometry Box {
-        size 3 0.1 0.1
-      }
-      appearance PBRAppearance {
-        baseColor 0.7 0.7 0.7
-      }
-    }
-    # Plank onder
-    Transform {
-      translation 0 0 -0.3
-      children [
-        Shape {
-          geometry Box {
-            size 3 0.1 0.1
-          }
-          appearance PBRAppearance {
-            baseColor 0.7 0.7 0.7
-          }
-        }
-      ]
-    }
-    # Linkerpoot
-    Transform {
-      translation -1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-    # Rechterpoot
-    Transform {
-      translation 1.45 0 -0.15
-      children [
-        Shape {
-          geometry Box {
-            size 0.1 0.1 0.6
-          }
-          appearance PBRAppearance {
-            baseColor 0.5 0.5 0.5
-          }
-        }
-      ]
-    }
-  ]
-  name "solid(9)"
-  boundingObject Box {
-    size 1 0.2 0.6
-  }
 }
