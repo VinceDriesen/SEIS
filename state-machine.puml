@@ -1,0 +1,244 @@
+@startuml state-machine
+
+partition Process {
+    start
+    :Create Process;
+    if (explore == true?) then (yes)
+        :Add task TASK_EXPLORE;
+    endif
+    :start_robot;
+    fork
+        :process_start;
+    fork again
+        :mqtt_client;
+    end fork
+
+    partition process_start {
+        repeat
+            :robot_is_currently_busy = robot.step(TIME_STEP);
+            if (robot.step.TIME_STEP == -1) then (yes)
+                break
+            else
+                :robot_is_currently_busy = robot.update_task_execution();
+                if (robot_is_currently_busy == false) then (yes)
+                    :newTask = tasks.pop();
+                    :robot.execute_task(newTask);
+                endif
+            endif
+        repeat while (exception?) is (No) not (Yes)
+
+    stop
+}
+
+
+partition robot {
+
+    partition execute_task {
+        start
+        if (task_type == TASK_MOVE_TO) then (yes)
+            :return taskMoveTo(x, y);
+            end
+        elseif (task_type == TASK_ROTATION_REL) then (yes)
+            :return taskRotateRel(angle);
+            end
+        elseif (task_type == TASK_MOVE_REL) then (yes)
+            :return taskMoveRel(x, y);
+            end
+        elseif (task_type == TASK_EXPLORE) then (yes)
+            :return taskExplore();
+            :current_action = TASK_EXPLORE;
+            :return False;
+            end
+        else
+            :current_action = STATE_IDLE;
+            :return False;
+            end
+        endif
+    }
+
+    partition taskMoveTo {
+        start
+        if (current_action == TASK_MOVE_TO) then (yes)
+            :move_to_state = MOVE_TO_STATE_PLANNING;
+            :current_action = TASK_MOVE_TO;
+            :return True;
+            end
+        else
+            :return False;
+            end
+        endif
+    }
+
+    partition taskRotateRel {
+        start
+        if (current_action == TASK_ROTATION_REL) then (yes)
+            :current_action = ACTION_ROTATING;
+            :move_to_state = MOVE_TO_STATE_PLANNING;
+            :return True;
+            end
+        else
+            :return False;
+            end
+        endif
+    }
+
+    partition taskMoveRel {
+        start
+        if (current_action == TASK_MOVE_REL) then (yes)
+            :current_action = ACTION_MOVING;
+            :move_to_state = MOVE_TO_STATE_PLANNING;
+            :return True;
+            end
+        else
+            :return False;
+            end
+        endif
+    }
+
+    
+
+    partition update_task_execution {
+        start
+        if (current_action == STATE_IDLE) then (yes)
+            :return False;
+            end
+        elseif (current_action == ACTION_MOVING) then (yes)
+            :action_ongoing = _updateMoveAction();
+        elseif (current_action == ACTION_ROTATING) then (yes)
+            :action_ongoing = _updateRotateAction();
+        elseif (current_action == TASK_MOVE_TO) then (yes)
+            :action_ongoing = _updateMoveToAction();
+        elseif (current_action == TASK_EXPLORE) then (yes)
+            :action_ongoing = _updateExploreAction();
+        endif    
+
+        if (current_action != STATE_IDLE and not action_ongoing) then (yes)
+            if (was exploring and is done) then (yes)
+                :current_action = STATE_IDLE;
+            else
+                :current_action = TASK_EXPLORE;
+            endif
+        endif
+
+        :return (current_action != STATE_IDLE);
+        end
+    }
+
+    partition _updateMoveAction {
+        start
+        if (current_action == ACTION_MOVING) then (yes)
+            :_move();
+            if (target_reached) then (yes)
+                :return False;
+                end
+            endif
+        else
+            :return False;
+            end
+        endif
+        :return True;
+        end
+    }
+
+    partition _updateRotateAction {
+        start
+        if (current_action == ACTION_ROTATING) then (yes)
+            :_rotate();
+            if (current_heading <= ROTATION_TOLERANCE_RAD) then (yes)
+                :return False;
+                end
+            endif
+        else
+            :return False;
+            end
+        endif
+        :return True;
+        end
+    }
+
+    partition _updateMoveToAction {
+        start
+        if (current_action == TASK_MOVE_TO) then (no)
+            :return False;
+            end
+        endif
+
+        if (move_to_state == MOVE_TO_STATE_PLANNING) then (yes)
+
+            :find_path()
+            :A* to target;
+            :simplify_path();
+            :add_buffer();
+
+            if (path_found) then (yes)
+                :_move_to_path = simplify_path;
+                :_move_to_state = MOVE_TO_STATE_MOVING;
+                :return True;
+                end
+            else
+                :_move_to_state = MOVE_TO_STATE_FAILED;
+                :return False;
+                end
+            endif
+        elseif (move_to_state == MOVE_TO_STATE_MOVING) then (yes)
+            :move();
+            :return True;
+            end
+        else 
+            :move_to_state = MOVE_TO_STATE_FAILED;
+            :return False;
+            end
+        endif
+    }
+
+    partition _updateExploreAction {
+
+        start
+        if (current_action == TASK_EXPLORE) then (no)
+            :return False; 
+            end
+        elseif (explore_state == EXPLORE_STATE_START) then (yes)
+            :explore_state = EXPLORE_STATE_SCANNING;
+            :return True;
+            end
+        elseif (explore_state == EXPLORE_STATE_SCANNING) then (yes)
+            :perform_scan();
+            :explore_state = EXPLORE_STATE_PLANNING;
+            :return True;
+            end
+        elseif (explore_state == EXPLORE_STATE_PLANNING) then (yes)
+            :plan_path();
+            :select_frontier()
+            :find_best_candidate();
+            if (selected_candidate) then (yes)
+                :explore_state = EXPLORE_STATE_MOVING_TO_FRONTIER;
+                :return True;
+                end
+            endif
+        elseif (explore_state == EXPLORE_STATE_MOVING_TO_FRONTIER) then (yes)
+            if (current_action == TASK_EXPLORE) then (yes)
+                if (_move_to_success) then (yes)
+                    :explore_count = 0
+                    :explore_state = EXPLORE_STATE_SCANNING;
+                else
+                    :explore_count = explore_count + 1;
+                    if (explore_count > MAX_EXPLORE_COUNT) then (yes)
+                        :explore_state = EXPLORE_STATE_STUCK;
+                    else
+                        :explore_state = EXPLORE_STATE_PLANNING;
+                    endif
+                endif
+
+            :return True;
+            end
+            endif
+        endif
+        end
+    }
+
+}
+
+
+
+
+@enduml
