@@ -1147,7 +1147,7 @@ DEF robot_0 Robot {
   angularVelocity 8.954178374676975e-09 7.803225352042698e-09 -6.013744997737269e-08
 }
 Solid {
-  translation -0.01 1.34 0.2
+  translation -0.01 1 0.2
   children [
     Shape {
       geometry Box {
@@ -1160,44 +1160,120 @@ Solid {
   }
 }
 Solid {
-  translation 0 -1.7 0.2
+  translation -0.01 1.5 0.2
   children [
     Shape {
       geometry Box {
-        size 1 0.25 0.4
+        size 3 0.2 0.4
       }
     }
   ]
   name "solid(1)"
   boundingObject Box {
-    size 1 0.25 0.4
+    size 1 0.2 0.4
   }
 }
+
 Solid {
-  translation 0.5 0 0.2
+  translation -0.01 2 0.2
   children [
     Shape {
       geometry Box {
-        size 0.2 1 0.4
+        size 3 0.2 0.4
       }
     }
   ]
   name "solid(2)"
   boundingObject Box {
-    size 0.2 1 0.4
+    size 1 0.2 0.4
   }
 }
 Solid {
-  translation -0.5 0 0.2
+  translation -0.01 0.5 0.2
   children [
     Shape {
       geometry Box {
-        size 0.2 1 0.4
+        size 3 0.2 0.4
       }
     }
   ]
   name "solid(3)"
   boundingObject Box {
-    size 0.2 1 0.4
+    size 1 0.2 0.4
+  }
+}
+
+Solid {
+  translation -0.01 0 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 3 0.2 0.4
+      }
+    }
+  ]
+  name "solid(5)"
+  boundingObject Box {
+    size 1 0.2 0.4
+  }
+}
+
+Solid {
+  translation -0.01 -0.5 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 3 0.2 0.4
+      }
+    }
+  ]
+  name "solid(6)"
+  boundingObject Box {
+    size 1 0.2 0.4
+  }
+}
+
+Solid {
+  translation -0.01 -1 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 3 0.2 0.4
+      }
+    }
+  ]
+  name "solid(7)"
+  boundingObject Box {
+    size 1 0.2 0.4
+  }
+}
+
+Solid {
+  translation -0.01 -1.5 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 3 0.2 0.4
+      }
+    }
+  ]
+  name "solid(8)"
+  boundingObject Box {
+    size 1 0.2 0.4
+  }
+}
+
+Solid {
+  translation -0.01 -2 0.2
+  children [
+    Shape {
+      geometry Box {
+        size 3 0.2 0.4
+      }
+    }
+  ]
+  name "solid(9)"
+  boundingObject Box {
+    size 1 0.2 0.4
   }
 }
