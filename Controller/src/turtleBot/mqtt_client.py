@@ -1,4 +1,5 @@
 import os
+import time
 import paho.mqtt.client as mqtt
 import threading
 from .turtleBotStateMachine import TASK_MOVE_TO
@@ -19,7 +20,7 @@ class MQTTController(threading.Thread):
 
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected to MQTT broker with result code {rc}")
-        self.client.subscribe(f"robot/{self.robot_id}/job")
+        self.client.subscribe(f"robot/{self.robot_id}/jobs")
 
     def on_message(self, client, userdata, msg):
         try:
@@ -39,13 +40,22 @@ class MQTTController(threading.Thread):
             print(f"Error processing message: {e}")
 
     def publish_done(self, coordinates):
-        with self.lock():
+        with self.lock:
             x, y = coordinates
-            self.client.publish(f"robot/{self.robot_id}", f"done:{x:.2f},{y:.2f}")
+            self.client.publish(f"robot/{self.robot_id}/jobs", f"done:{x:.2f},{y:.2f}", qos=1)
+            
+            
+    def publish_location(self, coordinates):
+        with self.lock:
+            x, y = coordinates
+            self.client.publish(f'robot/{self.robot_id}/pos', f'pos: {x:.2f},{y:.2f}', qos=1)
+
 
     def run(self):
-        try:
-            self.client.connect(MQTT_BROKER, 1883, 60)
-            self.client.loop_forever()
-        except Exception as e:
-            print(f"Error in MQTTController run method: {e}")
+        while True:
+            try:
+                self.client.connect(MQTT_BROKER, 1883, 60)
+                self.client.loop_forever()
+            except Exception as e:
+                print(f"Connection lost: {e}, reconnecting in 5s...")
+                time.sleep(5)

@@ -1,55 +1,43 @@
-# Use a multi-stage build with uv for dependency management
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
-ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
-ENV UV_PYTHON_DOWNLOADS=0
+FROM ubuntu:24.04
 
+# Create app user and directory structure first
+RUN useradd -m app && \
+    mkdir /app && \
+    chown app:app /app
+
+# Set working directory (now properly owned by app)
 WORKDIR /app
 
-# Create a non-root user
-RUN useradd -m app
+# Install system dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    python3 python3-pip bash ca-certificates wget curl gnupg2 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml uv.lock /app/
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | bash && \
+    mv /root/.local/bin/uv /usr/local/bin/uv
 
-# Use caching for dependencies
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev
+# Install Webots
+RUN mkdir -p /etc/apt/keyrings && \
+    wget -qO- https://cyberbotics.com/Cyberbotics.asc | gpg --dearmor > /etc/apt/keyrings/cyberbotics.gpg && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/cyberbotics.gpg] https://cyberbotics.com/debian binary-amd64/" | tee /etc/apt/sources.list.d/Cyberbotics.list && \
+    apt-get update -y && \
+    apt-get install -y webots
 
-# Copy the project files and install dependencies
-ADD . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
+# Copy application files
+COPY --chown=app:app . .
+
+# Create virtual environment as app user
+USER app
+RUN uv venv .venv && \
     uv sync --frozen --no-dev
 
-# Ensure saved_models directory exists and set correct permissions
-RUN mkdir -p /app/saved_models && chown -R app:app /app/saved_models
-
-# Change ownership to the app user
-RUN chown -R app:app /app
-
-# Final stage: slim Python image without uv
-FROM python:3.13-slim-bookworm
-
-WORKDIR /app
-
-# Create the app user
-RUN useradd -m app
-
-# Copy built application from builder stage
-COPY --from=builder --chown=app:app /app /app
-
-# Ensure saved_models directory exists and set correct permissions
-RUN mkdir -p /app/saved_models && chown -R app:app /app/saved_models
-
-# Set up environment
+# Environment variables
 ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH="/app:$PYTHONPATH"
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# --- ENTRYPOINT ---
-# Expect environment variables:
-# - ROBOT_ID (set by docker-compose)
-# - WEBOTS_HOME (should be set externally too, or mounted in)s
-
-# Run controller using the run-controller.sh script without debug mode
-# CMD ["/bin/bash", "/app/run-controller.sh", "${ROBOT_ID}", "5678", "nodebug"]
-CMD /bin/bash /app/run-controller.sh "${ROBOT_ID}" "5678" "nodebug" "${IP_ADDRESS}"
+# Run controller
+CMD ["/bin/bash", "run-controller.sh"]

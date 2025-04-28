@@ -13,6 +13,7 @@ class Process:
         if self.robot_id == -1:
             raise ValueError("ROBOT_ID not set. Please set it in the environment.")
         self.robot: Supervisor = Supervisor()
+        print(f"Robot Supervisor Object: {self.robot}, Name: {self.robot.getName()}, Time Step: {self.robot.getBasicTimeStep()}")
         self.TIME_STEP = int(self.robot.getBasicTimeStep())
         self.MAX_SPEED = 6.28
         self.tasks = []
@@ -35,12 +36,13 @@ class Process:
         
         self.mqtt_client = MQTTController(self.robot_id, self.tasks, self._add_task)
         simulation_thread = Thread(target=self.start)
-        mqtt_thread = Thread(target=self.mqtt_client.run)
+        mqtt_thread = Thread(target=self.mqtt_client.run, daemon=True)
         
         simulation_thread.start()
         mqtt_thread.start()
+        
         simulation_thread.join()
-        mqtt_thread.join()
+        # mqtt_thread.join()
 
 
     def start(self):
@@ -49,7 +51,7 @@ class Process:
             print("\n--- Entering main Webots simulation loop ---")
             current_task = None
             while self.robot.step(self.TIME_STEP) != -1:
-                robot_is_currently_busy = self.bot.updateTaskExecution()
+                robot_is_currently_busy = self.bot.updateTaskExecution(self.mqtt_client.publish_location)
                 if not robot_is_currently_busy:
                     if current_task is not None:
                         if current_task['type'] == TASK_MOVE_TO:

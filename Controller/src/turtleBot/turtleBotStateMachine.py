@@ -287,7 +287,7 @@ class TurtleBotSM:
             self._current_task_details = None
             return False
 
-    def updateTaskExecution(self) -> bool:
+    def updateTaskExecution(self, pos_update_callback: callable) -> bool:
         """
         Called by the main Webots loop every time step.
         Performs odometry, updates sensor readings (implicitly via robot.step),
@@ -365,6 +365,9 @@ class TurtleBotSM:
                 )
             self.left_motor.setVelocity(0)
             self.right_motor.setVelocity(0)
+            
+        # Post position to mqtt topic
+        pos_update_callback((self.position[0], self.position[1]))
 
         return self._current_action != STATE_IDLE
 

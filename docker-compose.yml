@@ -36,10 +36,7 @@ services:
             - ROBOT_ID=0
             - MQTT_BROKER_URL=mosquitto-broker
             - WEBOTS_HOME=/usr/local/webots
-            - IP_ADDRESS=172.17.0.1
-        volumes:
-            - /usr/local/webots/:/usr/local/webots/:ro
-            - /tmp/webots:/tmp/webots:Z
+            - IP_ADDRESS=host.docker.internal
         networks:
             - default
 
