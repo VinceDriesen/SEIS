@@ -8,10 +8,9 @@ MQTT_BROKER = os.getenv("MQTT_BROKER_URL", "localhost")
 
 
 class MQTTController(threading.Thread):
-    def __init__(self, robot_id, command_queue: list, add_function: callable):
+    def __init__(self, robot_id, add_function: callable):
         super().__init__(daemon=True)
         self.robot_id = robot_id
-        self.command_queue = command_queue
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message

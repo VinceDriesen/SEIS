@@ -12,7 +12,8 @@ set -euo pipefail
 ROBOT_ID="${ROBOT_ID:-0}"
 DEBUG_PORT="${DEBUG_PORT:-5678}"
 MODE="${MODE:-nodebug}"
-IP_ADDRESS="${IP_ADDRESS:-127.0.0.1}"
+IP_ADDRESS="${IP_ADDRESS:-host.docker.internal}"
+WEBOTS_ROBOT_NAME="${WEBOTS_ROBOT_NAME:-ROBOT_0}"
 
 export ROBOT_ID
 WEBOTS_ROBOT_NAME="robot_${ROBOT_ID}"

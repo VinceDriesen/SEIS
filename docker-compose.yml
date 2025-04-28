@@ -37,6 +37,8 @@ services:
             - MQTT_BROKER_URL=mosquitto-broker
             - WEBOTS_HOME=/usr/local/webots
             - IP_ADDRESS=host.docker.internal
+            - WEBOTS_CONTROLLER_URL=tcp://${IP_ADDRESS}:1234
+            - WEBOTS_ROBOT_NAME=robot_0
         networks:
             - default
 
