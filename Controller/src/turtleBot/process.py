@@ -1,6 +1,6 @@
 from src.turtleBot.mqtt_client import MQTTController
 from .turtleBotStateMachine import TASK_EXPLORE, TASK_MOVE_TO, TurtleBotSM
-from controller import Robot, Supervisor, Node
+from controller import Supervisor
 import os
 from threading import Thread
 
@@ -17,7 +17,7 @@ class Process:
         self.MAX_SPEED = 6.28
         self.tasks = []
         if explore:
-            self.add_task({"type": TASK_EXPLORE, "params": {}})
+            self._add_task({"type": TASK_EXPLORE, "params": {}})
         self.start_robot()
 
 
@@ -33,7 +33,7 @@ class Process:
             max_speed=self.MAX_SPEED,
         )
         
-        mqtt_client = MQTTController(self.robot_id, self.tasks, self.add_task)
+        mqtt_client = MQTTController(self.robot_id, self.tasks, self._add_task)
         simulation_thread = Thread(target=self.start)
         mqtt_thread = Thread(target=mqtt_client.run)
         
@@ -48,7 +48,6 @@ class Process:
         try:
             print("\n--- Entering main Webots simulation loop ---")
             while self.robot.step(self.TIME_STEP) != -1:
-                self.checkForTasks()
                 robot_is_currently_busy = self.bot.updateTaskExecution()
                 if not robot_is_currently_busy:
                     print(f"Robot {self.name} is idle.")
@@ -76,13 +75,6 @@ class Process:
         return True
 
 
-    def checkForTasks(self):
-        while not self.queue.empty():
-            task = self.queue.get()
-            print(f"Received task: {task}")
-            self._add_task(task)
-
-
-    def add_task(self, task):
+    def _add_task(self, task):
         """Internal: Adds a task to the scheduler."""
         self.tasks.append(task)

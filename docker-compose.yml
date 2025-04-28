@@ -28,13 +28,16 @@ services:
             - backend
         restart: unless-stopped
 
-    robot-1:
-        container_name: robot-1
+    robot-0:
+        container_name: robot-0
         build:
             context: ./Controller
         environment:
-            - ROBOT_ID=1
+            - ROBOT_ID=0
             - MQTT_BROKER_URL=mosquitto-broker
+            - WEBOTS_HOME=/usr/local/webots
+        volumes:
+            - /usr/local/webots/:/usr/local/webots/:ro
         networks:
             - default
     
