@@ -1,4 +1,4 @@
-from multiprocessing import Queue
+from src.turtleBot.mqtt_client import MQTTController
 from .turtleBotStateMachine import TASK_EXPLORE, TASK_MOVE_TO, TurtleBotSM
 from controller import Robot, Supervisor, Node
 import os
@@ -6,22 +6,24 @@ from threading import Thread
 
 
 class Process:
-    def __init__(self, name, pid):
+    def __init__(self, name, pid, explore = False):
         self.name = name
         self.pid = pid
+        self.robot_id = os.getenv("ROBOT_ID", -1)
+        if self.robot_id == -1:
+            raise ValueError("ROBOT_ID not set. Please set it in the environment.")
         self.robot: Supervisor = Supervisor()
         self.TIME_STEP = int(self.robot.getBasicTimeStep())
         self.MAX_SPEED = 6.28
-        # self.ROBOT_ID = os.getenc("ROBOT_ID", -1)
         self.tasks = []
-        self.add_task({"type": TASK_EXPLORE, "params": {}})
-        self.ROBOT_ID = 0
-        if self.ROBOT_ID == -1:
-            raise ValueError("ROBOT_ID not set. Please set it in the environment.")
+        if explore:
+            self.add_task({"type": TASK_EXPLORE, "params": {}})
         self.start_robot()
+
 
     def __repr__(self):
         return f"Process(name={self.name}, pid={self.pid})"
+
 
     def start_robot(self):
         self.bot: TurtleBotSM = TurtleBotSM(
@@ -30,16 +32,16 @@ class Process:
             time_step=self.TIME_STEP,
             max_speed=self.MAX_SPEED,
         )
-        self.queue = Queue()
-        # mqtt_client = MQTTController(self.ROBOT_ID, queue)
+        
+        mqtt_client = MQTTController(self.robot_id, self.tasks, self.add_task)
         simulation_thread = Thread(target=self.start)
-        # mqtt_thread = Thread(
-        #     target=self.start_mqtt.run
-        # )
+        mqtt_thread = Thread(target=mqtt_client.run)
+        
         simulation_thread.start()
-        # mqtt_thread.start()
+        mqtt_thread.start()
         simulation_thread.join()
-        # mqtt_thread.join()
+        mqtt_thread.join()
+
 
     def start(self):
         print(f"Starting process {self.name} with PID {self.pid}")
@@ -67,16 +69,19 @@ class Process:
             traceback.print_exc()
             return False
 
+
     def stop(self):
         print(f"Stopping process {self.name}")
         print(f"Process {self.name} stopped.")
         return True
+
 
     def checkForTasks(self):
         while not self.queue.empty():
             task = self.queue.get()
             print(f"Received task: {task}")
             self._add_task(task)
+
 
     def add_task(self, task):
         """Internal: Adds a task to the scheduler."""

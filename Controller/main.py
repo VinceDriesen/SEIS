@@ -1,10 +1,14 @@
 import matplotlib
 from src.turtleBot.process import Process
-from src.turtleBot.turtleBotStateMachine import TASK_EXPLORE, TASK_MOVE_TO
+import debugpy
 
 matplotlib.use("TkAgg")
 
 if __name__ == "__main__":
+    debugpy.listen(5678)
+    print('debugpy waiting for client on port 5678…')
+    debugpy.wait_for_client()
+    
     process = None
     try:
         process = Process("RobotProcess", 1)

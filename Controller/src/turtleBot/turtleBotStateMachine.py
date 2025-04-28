@@ -1,13 +1,9 @@
-import threading
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
-from pathfinding.core.diagonal_movement import DiagonalMovement
-from matplotlib import pyplot as plt
 import numpy as np
 from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass, GPS
 import math
 from .lidar import LidarFunctions
-from collections import deque
 
 STATE_IDLE = "idle"
 ACTION_MOVING = "moving"
