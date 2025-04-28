@@ -51,4 +51,5 @@ ENV PYTHONUNBUFFERED=1
 # - WEBOTS_HOME (should be set externally too, or mounted in)s
 
 # Run controller using the run-controller.sh script without debug mode
-CMD ["/bin/bash", "/app/run-controller.sh", "${ROBOT_ID}", "5678", "nodebug"]
+# CMD ["/bin/bash", "/app/run-controller.sh", "${ROBOT_ID}", "5678", "nodebug"]
+CMD /bin/bash /app/run-controller.sh "${ROBOT_ID}" "5678" "nodebug" "${IP_ADDRESS}"

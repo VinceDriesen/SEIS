@@ -33,9 +33,9 @@ class Process:
             max_speed=self.MAX_SPEED,
         )
         
-        mqtt_client = MQTTController(self.robot_id, self.tasks, self._add_task)
+        self.mqtt_client = MQTTController(self.robot_id, self.tasks, self._add_task)
         simulation_thread = Thread(target=self.start)
-        mqtt_thread = Thread(target=mqtt_client.run)
+        mqtt_thread = Thread(target=self.mqtt_client.run)
         
         simulation_thread.start()
         mqtt_thread.start()
@@ -47,13 +47,22 @@ class Process:
         print(f"Starting process {self.name} with PID {self.pid}")
         try:
             print("\n--- Entering main Webots simulation loop ---")
+            current_task = None
             while self.robot.step(self.TIME_STEP) != -1:
                 robot_is_currently_busy = self.bot.updateTaskExecution()
                 if not robot_is_currently_busy:
+                    if current_task is not None:
+                        if current_task['type'] == TASK_MOVE_TO:
+                            x = current_task['params'].get('x')
+                            y = current_task['params'].get('y')
+                            self.mqtt_client.publish_done((x, y))
+                            current_task = None
                     print(f"Robot {self.name} is idle.")
+                    
                     if self.tasks:
                         newTask = self.tasks.pop(0)
                         self.bot.executeTask(newTask)
+                        current_task = newTask
                     else:
                         print("No tasks available for execution.")
 

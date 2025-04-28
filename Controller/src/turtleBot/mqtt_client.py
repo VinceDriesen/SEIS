@@ -15,6 +15,7 @@ class MQTTController(threading.Thread):
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.add_task = add_function
+        self.lock = threading.Lock()
 
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected to MQTT broker with result code {rc}")
@@ -38,8 +39,9 @@ class MQTTController(threading.Thread):
             print(f"Error processing message: {e}")
 
     def publish_done(self, coordinates):
-        x, y = coordinates
-        self.client.publish(f"robot/{self.robot_id}", f"done:{x:.2f},{y:.2f}")
+        with self.lock():
+            x, y = coordinates
+            self.client.publish(f"robot/{self.robot_id}", f"done:{x:.2f},{y:.2f}")
 
     def run(self):
         try:

@@ -12,10 +12,10 @@ if enable_debug:
     except ImportError:
         print("⚠️ debugpy not installed; continuing without debugger.")
 
-import matplotlib
+# import matplotlib
 from src.turtleBot.process import Process
 
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 
 if __name__ == "__main__":
     process = None

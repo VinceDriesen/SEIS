@@ -5,7 +5,7 @@ set -euo pipefail
 #   run_controller.sh
 #
 #   Usage:
-#     ./run_controller.sh [ROBOT_ID] [PORT] [MODE]
+#     ./run_controller.sh [ROBOT_ID] [PORT] [MODE] [IP_ADDRESS]
 #
 #   - SOURCES .env if present
 #   - Sets ROBOT_ID (defaults to 0)
@@ -24,8 +24,12 @@ fi
 ROBOT_ID="${1:-0}"
 DEBUG_PORT="${2:-5678}"
 MODE="${3:-debug}"
+IP_ADDRESS="${4:-"172.0.0.1"}"
 
 export ROBOT_ID
+
+echo $ROBOT_ID
+
 WEBOTS_ROBOT_NAME="robot_${ROBOT_ID}"
 
 # Check WEBOTS_HOME
@@ -54,7 +58,7 @@ cd "${PWD}"
 if [[ "$MODE" == "nodebug" ]]; then
   echo "▶ Running without debugging"
   if [ -n "$WEBOTS_CONTROLLER_BIN" ]; then
-    exec "$WEBOTS_CONTROLLER_BIN" --robot-name="$WEBOTS_ROBOT_NAME" \
+    exec "$WEBOTS_CONTROLLER_BIN" --protocol=tcp --ip-address="$IP_ADDRESS" --robot-name="$WEBOTS_ROBOT_NAME" \
       .venv/bin/python "${PWD}/main.py"
   else
     exec .venv/bin/python "${PWD}/main.py"
