@@ -18,18 +18,14 @@ RUN apt-get update && \
 RUN curl -LsSf https://astral.sh/uv/install.sh | bash && \
     mv /root/.local/bin/uv /usr/local/bin/uv
 
-# Install Webots
-RUN mkdir -p /etc/apt/keyrings && \
-    wget -qO- https://cyberbotics.com/Cyberbotics.asc | gpg --dearmor > /etc/apt/keyrings/cyberbotics.gpg && \
-    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/cyberbotics.gpg] https://cyberbotics.com/debian binary-amd64/" | tee /etc/apt/sources.list.d/Cyberbotics.list && \
-    apt-get update -y && \
-    apt-get install -y webots
-
 # Copy application files
 COPY --chown=app:app . .
 
 # Create virtual environment as app user
 USER app
+
+ENV USER=app
+
 RUN uv venv .venv && \
     uv sync --frozen --no-dev
 

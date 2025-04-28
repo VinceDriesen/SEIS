@@ -59,7 +59,6 @@ class Process:
             current_task = None
             print(f'first time_step: {self.robot.step(self.TIME_STEP)}')
             while self.robot.step(self.TIME_STEP) != -1:
-                print(f'Simulation Time: {self.robot.getTime()}')
                 robot_is_currently_busy = self.bot.updateTaskExecution(self.mqtt_client.publish_location)
                 
                 if not robot_is_currently_busy:

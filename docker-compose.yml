@@ -32,15 +32,16 @@ services:
         container_name: robot-0
         build:
             context: ./Controller
+        volumes:
+            - /usr/local/webots:/usr/local/webots:Z
+            - /tmp/webots/themen:/tmp/webots/app:Z
         environment:
             - ROBOT_ID=0
-            - MQTT_BROKER_URL=mosquitto-broker
+            - MQTT_BROKER_URL=localhost
             - WEBOTS_HOME=/usr/local/webots
-            - IP_ADDRESS=host.docker.internal
-            - WEBOTS_CONTROLLER_URL=tcp://${IP_ADDRESS}:1234
             - WEBOTS_ROBOT_NAME=robot_0
-        networks:
-            - default
+            - IP_ADDRESS=0.0.0.0
+        network_mode: host
 
     backend:
         container_name: backend

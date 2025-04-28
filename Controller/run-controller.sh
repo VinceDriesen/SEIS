@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ------------------------------------------------------------
-#   run_controller.sh
-# ------------------------------------------------------------
-
 # Load .env if exists
 [ -f .env ] && source .env
 
@@ -12,8 +8,8 @@ set -euo pipefail
 ROBOT_ID="${ROBOT_ID:-0}"
 DEBUG_PORT="${DEBUG_PORT:-5678}"
 MODE="${MODE:-nodebug}"
-IP_ADDRESS="${IP_ADDRESS:-host.docker.internal}"
 WEBOTS_ROBOT_NAME="${WEBOTS_ROBOT_NAME:-ROBOT_0}"
+IP_ADDRESS="${IP_ADDRESS:-0.0.0.0}"
 
 export ROBOT_ID
 WEBOTS_ROBOT_NAME="robot_${ROBOT_ID}"
@@ -40,8 +36,8 @@ PYTHON_BIN="/app/.venv/bin/python"
 if [[ "$MODE" == "nodebug" ]]; then
   echo "▶ Running without debugging"
   if [ -n "$WEBOTS_CONTROLLER_BIN" ]; then
-    exec "$WEBOTS_CONTROLLER_BIN" --protocol=tcp --ip-address="$IP_ADDRESS" \
-      --robot-name="$WEBOTS_ROBOT_NAME" "${PYTHON_BIN}" -u "${PWD}/main.py"
+    echo "Webots Found!"
+    exec "$WEBOTS_CONTROLLER_BIN" --protocol=tcp --ip-address="$IP_ADDRESS" --robot-name="$WEBOTS_ROBOT_NAME" "${PYTHON_BIN}" -u "${PWD}/main.py"
   else
     exec "${PYTHON_BIN}" -u "${PWD}/main.py"
   fi
@@ -49,7 +45,8 @@ else
   echo "▶ Running with debug adapter on port $DEBUG_PORT"
   export ENABLE_DEBUG=1 DEBUG_PORT
   if [ -n "$WEBOTS_CONTROLLER_BIN" ]; then
-    exec "$WEBOTS_CONTROLLER_BIN" --robot-name="$WEBOTS_ROBOT_NAME" \
+    echo "Webots Found!"
+    exec "$WEBOTS_CONTROLLER_BIN" --protocol=tcp --ip-address="$IP_ADDRESS" --robot-name="$WEBOTS_ROBOT_NAME" \
       "${PYTHON_BIN}" "${PWD}/main.py"
   else
     exec "${PYTHON_BIN}" -u "${PWD}/main.py"

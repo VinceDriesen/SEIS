@@ -47,7 +47,7 @@ class MQTTController(threading.Thread):
     def publish_location(self, coordinates):
         with self.lock:
             x, y = coordinates
-            self.client.publish(f'robot/{self.robot_id}/pos', f'pos: {x:.2f},{y:.2f}', qos=1)
+            self.client.publish(f'robot/{self.robot_id}/pos', f'pos:{x:.2f},{y:.2f}', qos=1)
 
 
     def run(self):
