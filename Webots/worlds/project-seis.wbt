@@ -18,7 +18,7 @@ TexturedBackground {
 TexturedBackgroundLight {
 }
 RectangleArena {
-  floorSize 5 5
+  floorSize 10 10
   wallThickness 0.05
   wallHeight 0.3
 }
@@ -1147,7 +1147,7 @@ DEF robot_0 Robot {
   angularVelocity 8.954178374676975e-09 7.803225352042698e-09 -6.013744997737269e-08
 }
 Solid {
-  translation -0.01 1 0.4
+  translation 3 4.5 0.4
   children [
     # Plank boven
     Shape {
@@ -1207,7 +1207,7 @@ Solid {
 }
 
 Solid {
-  translation -0.01 1.5 0.4
+  translation 3 4 0.4
   children [
     # Plank boven
     Shape {
@@ -1268,7 +1268,7 @@ Solid {
 }
 
 Solid {
-  translation -0.01 2 0.4
+  translation 3 3.5 0.4
   children [
     # Plank boven
     Shape {
@@ -1329,7 +1329,7 @@ Solid {
 }
 
 Solid {
-  translation -0.01 0.5 0.4
+  translation 3 3 0.4
   children [
     # Plank boven
     Shape {
@@ -1390,7 +1390,7 @@ Solid {
 }
 
 Solid {
-  translation -0.01 0 0.4
+  translation 3 3 0.4
   children [
     # Plank boven
     Shape {
@@ -1451,7 +1451,7 @@ Solid {
 }
 
 Solid {
-  translation -0.01 -0.5 0.4
+  translation 3 2.5 0.4
   children [
     # Plank boven
     Shape {
@@ -1512,7 +1512,7 @@ Solid {
 }
 
 Solid {
-  translation -0.01 -1 0.4
+  translation 3 2 0.4
   children [
     # Plank boven
     Shape {
@@ -1573,7 +1573,7 @@ Solid {
 }
 
 Solid {
-  translation -0.01 -1.5 0.4
+  translation 3 1.5 0.4
   children [
     # Plank boven
     Shape {
@@ -1634,7 +1634,7 @@ Solid {
 }
 
 Solid {
-  translation -0.01 -2 0.4
+  translation 3 1 0.4
   children [
     # Plank boven
     Shape {
