@@ -894,7 +894,7 @@ DEF robot_0 Robot {
     }
     DEF RIGHT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
-        position 4644.956229061877
+        position 4817.006509257947
         axis 0 1 0
         anchor 0 -0.08 0.033
       }
@@ -911,7 +911,7 @@ DEF robot_0 Robot {
       ]
       endPoint Solid {
         translation 0 -0.08 0.033
-        rotation 0 -1 0 6.171694251017085
+        rotation 0 1 0 2.515767958383828
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -1013,7 +1013,7 @@ DEF robot_0 Robot {
     }
     DEF LEFT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
-        position 7864.974879058173
+        position 7780.086662120363
         axis 0 1 0
         anchor 0 0.08 0.033
       }
@@ -1030,7 +1030,7 @@ DEF robot_0 Robot {
       ]
       endPoint Solid {
         translation 0 0.08 0.033
-        rotation 0.001167430098040234 -1.6472074449249506e-06 -0.9999993185518943 3.1415893668393466
+        rotation -0.9994296763456408 1.588799595657238e-06 -0.03376865465374129 3.1415892537719534
         children [
           DEF RIGHT_WHEEL Pose {
             rotation 1 0 0 -1.5708003061004252
@@ -1060,12 +1060,12 @@ DEF robot_0 Robot {
     }
     DEF CASTER_JOINT BallJoint {
       jointParameters BallJointParameters {
-        position 8315.192816393466
+        position 7819.346269780216
         anchor -0.081 0 0.004
       }
       endPoint Solid {
-        translation -0.08102608439837682 9.65725236257402e-06 0.003968491252103063
-        rotation -0.18620116983713364 0.03457370035904555 -0.9819031436932901 2.561077649272049
+        translation -0.0810210808275531 -7.134016677401434e-08 0.003984952975134229
+        rotation 0.35961662977257003 0.3352672477259813 -0.8707880064592436 -1.48212676747852
         children [
           Shape {
             appearance PBRAppearance {
@@ -1258,7 +1258,7 @@ DEF robot_0 Robot {
       translation -0.032 0 0.078
     }
   ]
-  name "TurtleBot3Burger"
+  name "robot_0"
   boundingObject Group {
     children [
       Pose {

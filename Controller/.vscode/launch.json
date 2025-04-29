@@ -10,7 +10,21 @@
             "envFile": "${workspaceFolder}/.env",
             "env": {
                 "ROBOT_ID": "0",
+                "WEBOTS_HOME": "${env:WEBOTS_HOME} --robot-name robot_${env:ROBOT_ID}"
             }
+        },
+        {
+            "name": "Debug robot_0",
+            "type": "debugpy",
+            "request": "attach",
+            "preLaunchTask": "Run robot_0 controller",
+            "connect": { "host": "localhost", "port": 5678 },
+            "pathMappings": [
+                {
+                "localRoot": "${workspaceFolder}",
+                "remoteRoot": "${workspaceFolder}"
+                }
+            ]
         }
     ]
 }

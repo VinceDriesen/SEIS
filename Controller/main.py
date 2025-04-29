@@ -1,13 +1,29 @@
-import matplotlib
-from src.turtleBot.process import Process
-from src.turtleBot.turtleBotStateMachine import TASK_EXPLORE, TASK_MOVE_TO
+import os
 
-matplotlib.use("TkAgg")
+# Optional debugging: only activate debugpy if ENABLE_DEBUG is set
+enable_debug = os.getenv("ENABLE_DEBUG", "").lower() in ("1", "true", "yes")
+if enable_debug:
+    try:
+        import debugpy
+
+        port = int(os.getenv("DEBUG_PORT", "5678"))
+        debugpy.listen(("0.0.0.0", port))
+        print(f"🐞 debugpy waiting for client on port {port}…")
+        debugpy.wait_for_client()
+    except ImportError:
+        print("⚠️ debugpy not installed; continuing without debugger.")
+
+# import matplotlib
+from src.turtleBot.process import Process
+
+# matplotlib.use("TkAgg")
 
 if __name__ == "__main__":
     process = None
     try:
-        process = Process("RobotProcess", 1)
+        # Read ROBOT_ID from environment, defaulting to 0
+        robot_id = int(os.getenv("ROBOT_ID", "0"))
+        process = Process("RobotProcess", robot_id, explore=False)
 
     except KeyboardInterrupt:
         print("Process interrupted by user (Ctrl+C). Stopping...")

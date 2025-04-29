@@ -2,7 +2,6 @@ import math
 from controller import Lidar
 import numpy as np
 import matplotlib.pyplot as plt
-import threading
 
 
 def bresenham(start, end):

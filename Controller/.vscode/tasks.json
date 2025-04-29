@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run robot_0 controller",
+      "type": "shell",
+      "command": "${workspaceFolder}/run-controller.sh",
+      "args": [
+        "0",      // Robot ID
+        "5678"    // Debug port
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "owner": "custom",
+          "pattern": {
+            "regexp": ".+",
+            "message": 0
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".+",
+            "endsPattern": "debugpy waiting for client on port 5678…"
+          }
+        }
+      ]
+    }
+  ]
+}
