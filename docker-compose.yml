@@ -28,20 +28,50 @@ services:
             - backend
         restart: unless-stopped
 
-    # robot-0:
-    #     container_name: robot-0
-    #     build:
-    #         context: ./Controller
-    #     volumes:
-    #         - /usr/local/webots:/usr/local/webots:Z
-    #         - /tmp/webots/themen:/tmp/webots/app:Z
-    #     environment:
-    #         - ROBOT_ID=0
-    #         - MQTT_BROKER_URL=localhost
-    #         - WEBOTS_HOME=/usr/local/webots
-    #         - WEBOTS_ROBOT_NAME=robot_0
-    #         - IP_ADDRESS=127.0.0.1
-    #     network_mode: host
+    robot-0:
+        container_name: robot-0
+        build:
+            context: ./Controller
+        volumes:
+            - /usr/local/webots:/usr/local/webots:Z
+            - /tmp/webots/themen:/tmp/webots/app:Z
+        environment:
+            - ROBOT_ID=0
+            - MQTT_BROKER_URL=localhost
+            - WEBOTS_HOME=/usr/local/webots
+            - WEBOTS_ROBOT_NAME=robot_0
+            - IP_ADDRESS=127.0.0.1
+        network_mode: host
+
+    robot-1:
+        container_name: robot-1
+        build:
+            context: ./Controller
+        volumes:
+            - /usr/local/webots:/usr/local/webots:Z
+            - /tmp/webots/themen:/tmp/webots/app:Z
+        environment:
+            - ROBOT_ID=1
+            - MQTT_BROKER_URL=localhost
+            - WEBOTS_HOME=/usr/local/webots
+            - WEBOTS_ROBOT_NAME=robot_1
+            - IP_ADDRESS=127.0.0.1
+        network_mode: host
+
+    robot-2:
+        container_name: robot-2
+        build:
+            context: ./Controller
+        volumes:
+            - /usr/local/webots:/usr/local/webots:Z
+            - /tmp/webots/themen:/tmp/webots/app:Z
+        environment:
+            - ROBOT_ID=2
+            - MQTT_BROKER_URL=localhost
+            - WEBOTS_HOME=/usr/local/webots
+            - WEBOTS_ROBOT_NAME=robot_2
+            - IP_ADDRESS=127.0.0.1
+        network_mode: host
 
     backend:
         container_name: backend
