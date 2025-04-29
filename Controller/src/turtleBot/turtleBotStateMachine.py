@@ -38,7 +38,7 @@ class TurtleBotSM:
     It handles the robot's sensors, motors, and state transitions.
     """
 
-    def __init__(self, name: str, robot: Robot, time_step: float, max_speed: float):
+    def __init__(self, name: str, robot: Robot, time_step: float, max_speed: float, robot_id: int):
         self.name = name
         self.robot = robot
         self.time_step = time_step
@@ -48,6 +48,7 @@ class TurtleBotSM:
         self.radius = 0.033
         self.distance_between_wheels = 0.1775
         self.firstRun = True
+        self.robot_id = robot_id
 
         self._enableSensors()
 
@@ -83,7 +84,7 @@ class TurtleBotSM:
 
         self.velocity_norm = 0.3
         self.nonMeasuredPosition = [0.0, 0.0, 0.0]
-        self.position = [0.0, 0.0, 0.0]
+        self.position = [0.0, float(self.robot_id), 0.0]
 
         self._move_to_success = False
 

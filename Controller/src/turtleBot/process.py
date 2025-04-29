@@ -39,6 +39,7 @@ class Process:
             robot=self.robot,
             time_step=self.TIME_STEP,
             max_speed=self.MAX_SPEED,
+            robot_id=self.robot_id,
         )
 
         self.mqtt_client = MQTTController(self.robot_id, self._add_task)
