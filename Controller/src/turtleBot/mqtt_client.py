@@ -58,7 +58,9 @@ class MQTTController(threading.Thread):
         while True:
             try:
                 self.client.connect(MQTT_BROKER, 1883, 60)
-                self.client.loop_forever()
+                self.client.loop_start()
+                while True:
+                    time.sleep(0.01)  # Yield control
             except Exception as e:
                 print(f"Connection lost: {e}, reconnecting in 5s...")
                 time.sleep(5)

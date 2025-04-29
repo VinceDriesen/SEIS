@@ -1,4 +1,4 @@
-from time import sleep
+from time import sleep, time
 from src.turtleBot.mqtt_client import MQTTController
 from .turtleBotStateMachine import TASK_EXPLORE, TASK_MOVE_TO, TurtleBotSM
 from controller import Robot
@@ -8,7 +8,7 @@ from threading import Thread
 
 
 class Process:
-    def __init__(self, name, pid, explore=False):
+    def __init__(self, name, pid, explore=True):
         self.name = name
         self.pid = pid
         self.robot_id = os.getenv("ROBOT_ID", -1)
@@ -43,25 +43,23 @@ class Process:
         )
 
         self.mqtt_client = MQTTController(self.robot_id, self._add_task)
-        simulation_thread = Thread(target=self.start, daemon=True)
-        mqtt_thread = Thread(target=self.mqtt_client.run, daemon=True)
+        simulation_thread = Thread(target=self.run_simulation)
 
+        # self.mqtt_client.start()
         simulation_thread.start()
-        mqtt_thread.start()
 
-        while True:
-            sleep(1)
+        simulation_thread.join()
 
-    def start(self):
+        # while True:
+        #     sleep(1)
+
+    def run_simulation(self):
         print(f"Starting process {self.name} with PID {self.pid}")
         try:
             print("\n--- Entering main Webots simulation loop ---")
             current_task = None
-            print(f"first time_step: {self.robot.step(self.TIME_STEP)}")
             while self.robot.step(self.TIME_STEP) != -1:
-                robot_is_currently_busy = self.bot.updateTaskExecution(
-                    self.mqtt_client.publish_location
-                )
+                robot_is_currently_busy = self.bot.updateTaskExecution()
 
                 if not robot_is_currently_busy:
                     if current_task is not None:
@@ -71,7 +69,6 @@ class Process:
                             self.mqtt_client.publish_done((x, y))
                             current_task = None
 
-                    # Get task from queue in thread-safe manner
                     try:
                         new_task = self.tasks.get(block=False)
                     except queue.Empty:
@@ -88,7 +85,6 @@ class Process:
         except Exception as e:
             print(f"Error in process {self.name} start sequence: {e}")
             import traceback
-
             traceback.print_exc()
             return False
 

@@ -13,6 +13,7 @@ IP_ADDRESS="${IP_ADDRESS:-0.0.0.0}"
 
 export ROBOT_ID
 WEBOTS_ROBOT_NAME="robot_${ROBOT_ID}"
+export WEBOTS_ROBOT_NAME
 
 # Validate Webots installation
 if [ -z "${WEBOTS_HOME:-}" ]; then
@@ -29,6 +30,8 @@ WEBOTS_CONTROLLER_BIN="${WEBOTS_HOME}/webots-controller"
 
 # Execution logic
 cd "${PWD}"
+
+export WEBOTS_CONTROLLER_URL="tcp://$IP_ADDRESS:1234/$WEBOTS_ROBOT_NAME"
 
 # Use absolute path to virtual environment Python
 PYTHON_BIN="/app/.venv/bin/python"
