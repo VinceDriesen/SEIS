@@ -3,15 +3,15 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
-EXTERNPROTO "Rack.proto"
+EXTERNPROTO "/home/themen/Documents/SEIS/Webots/worlds/Rack.proto"
 
 WorldInfo {
   physicsDisableLinearThreshold 0
   physicsDisableAngularThreshold 0
 }
 Viewpoint {
-  orientation -0.5343335202891438 0.5786226646843324 0.6161846322402187 1.9647686993120945
-  position -0.2099258749470167 -1.2112750963630758 9.030024168561162
+  orientation -0.5297059466721697 0.5294656877730755 0.6626293802202893 1.9716057111292797
+  position -0.3466477962784871 -5.310873812399038 23.253684900684053
   follow "rectangle arena"
 }
 TexturedBackground {
@@ -23,13 +23,8 @@ RectangleArena {
   wallThickness 0.05
   wallHeight 0.3
 }
-
-
-
-# Right row
 Group {
   children [
-    # Eerste blok
     Rack {
       translation 2.5 3.7 0
       name "rack_right_2_1"
@@ -46,8 +41,6 @@ Group {
       translation 2.5 2.8 0
       name "rack_right_5_1"
     }
-
-    # Tweede blok
     Rack {
       translation 2.5 2 0
       name "rack_right_2_2"
@@ -64,10 +57,8 @@ Group {
       translation 2.5 1.1 0
       name "rack_right_5_2"
     }
-
-    # Derde blok
     Rack {
-      translation 2.5 .3 0
+      translation 2.5 0.3 0
       name "rack_right_2_3"
     }
     Rack {
@@ -82,8 +73,6 @@ Group {
       translation 2.5 -0.5 0
       name "rack_right_5_3"
     }
-
-    # Vierde blok
     Rack {
       translation 2.5 -1.3 0
       name "rack_right_2_4"
@@ -100,8 +89,6 @@ Group {
       translation 2.5 -2.2 0
       name "rack_right_5_4"
     }
-
-    # Vijfde blok
     Rack {
       translation 2.5 -3 0
       name "rack_right_2_5"
@@ -118,15 +105,10 @@ Group {
       translation 2.5 -3.9 0
       name "rack_right_5_5"
     }
-  
   ]
 }
-
-
-# left row
 Group {
   children [
-    # Eerste blok
     Rack {
       translation -2.5 3.7 0
       name "rack_left_2_1"
@@ -143,8 +125,6 @@ Group {
       translation -2.5 2.8 0
       name "rack_left_5_1"
     }
-
-    # Tweede blok
     Rack {
       translation -2.5 2 0
       name "rack_left_2_2"
@@ -161,10 +141,8 @@ Group {
       translation -2.5 1.1 0
       name "rack_left_5_2"
     }
-
-    # Derde blok
     Rack {
-      translation -2.5 .3 0
+      translation -2.5 0.3 0
       name "rack_left_2_3"
     }
     Rack {
@@ -179,8 +157,6 @@ Group {
       translation -2.5 -0.5 0
       name "rack_left_5_3"
     }
-
-    # Vierde blok
     Rack {
       translation -2.5 -1.3 0
       name "rack_left_2_4"
@@ -199,14 +175,7 @@ Group {
     }
   ]
 }
-
-
-
-
-
 DEF robot_0 Robot {
-  translation 1.1526536813981993 2.4141781203421373 -0.00024432529994644625
-  rotation -0.0026448983721178857 0.0019333582502229355 -0.9999946333048381 -1.8828881499570969
   children [
     GPS {
       translation -0.03 0 0.1
@@ -1040,8 +1009,6 @@ DEF robot_0 Robot {
             0 0 0
           ]
         }
-        linearVelocity -1.6921392549705287e-08 3.675142285239488e-08 -4.0236517495012255e-10
-        angularVelocity 6.412133716160902e-09 6.98886046738031e-09 -6.01376473834937e-08
       }
     }
     DEF LEFT_JOINT HingeJoint {
@@ -1089,8 +1056,6 @@ DEF robot_0 Robot {
             0 0 0
           ]
         }
-        linearVelocity -1.9977504037864467e-08 4.622390377797793e-08 3.3127499923580353e-10
-        angularVelocity 5.7882987798909155e-09 6.787621940857716e-09 -6.013765216093725e-08
       }
     }
     DEF CASTER_JOINT BallJoint {
@@ -1114,8 +1079,6 @@ DEF robot_0 Robot {
         boundingObject USE CASTER_SPHERE
         physics Physics {
         }
-        linearVelocity -2.1522949612249383e-07 -4.337181856056732e-08 1.4220320036460097e-10
-        angularVelocity -3.084600187237753e-05 -7.248412780813427e-05 -0.011305173371075327
       }
     }
     DEF BODY Pose {
@@ -1295,7 +1258,7 @@ DEF robot_0 Robot {
       translation -0.032 0 0.078
     }
   ]
-  name "TurtleBot3Burger"
+  name "robot_0"
   boundingObject Group {
     children [
       Pose {
@@ -1325,6 +1288,4 @@ DEF robot_0 Robot {
   }
   controller "<extern>"
   supervisor TRUE
-  linearVelocity -2.0120505981665707e-08 4.079977818302108e-08 -4.057640786543913e-10
-  angularVelocity 8.954178374676975e-09 7.803225352042698e-09 -6.013744997737269e-08
 }
