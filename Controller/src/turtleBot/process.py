@@ -8,10 +8,10 @@ from threading import Thread
 
 
 class Process:
-    def __init__(self, name, pid, explore=True):
+    def __init__(self, name, pid, explore=False):
         self.name = name
         self.pid = pid
-        self.robot_id = os.getenv("ROBOT_ID", -1)
+        self.robot_id = int(os.getenv("ROBOT_ID", -1))
         if self.robot_id == -1:
             raise ValueError("ROBOT_ID not set. Please set it in the environment.")
 
@@ -24,9 +24,10 @@ class Process:
         print(f"timestep: {self.TIME_STEP}")
         self.MAX_SPEED = 6.28
         self.tasks = queue.Queue()
-
-        if explore:
+        print(f'Explore: {explore}')
+        if explore and self.robot_id == 0:
             self._add_task({"type": TASK_EXPLORE, "params": {}})
+            print("Added Exploration Task")
 
         self.start_robot()
 
@@ -34,18 +35,19 @@ class Process:
         return f"Process(name={self.name}, pid={self.pid})"
 
     def start_robot(self):
+        self.mqtt_client = MQTTController(self.robot_id, self._add_task)
+        
         self.bot = TurtleBotSM(
             name=f"exploration_bot",
             robot=self.robot,
             time_step=self.TIME_STEP,
             max_speed=self.MAX_SPEED,
             robot_id=self.robot_id,
+            mqtt_thread=self.mqtt_client
         )
-
-        self.mqtt_client = MQTTController(self.robot_id, self._add_task)
         simulation_thread = Thread(target=self.run_simulation)
 
-        # self.mqtt_client.start()
+        self.mqtt_client.start()
         simulation_thread.start()
 
         simulation_thread.join()
@@ -55,6 +57,7 @@ class Process:
 
     def run_simulation(self):
         print(f"Starting process {self.name} with PID {self.pid}")
+        has_explored = False
         try:
             print("\n--- Entering main Webots simulation loop ---")
             current_task = None
@@ -68,11 +71,18 @@ class Process:
                             y = current_task["params"].get("y")
                             self.mqtt_client.publish_done((x, y))
                             current_task = None
+                        if current_task["type"] == TASK_EXPLORE:
+                            if has_explored:
+                                continue
+                            print("Exploration Done")
+                            has_explored = True
+                            self.bot.save_occcupancy_map()
 
                     try:
                         new_task = self.tasks.get(block=False)
                     except queue.Empty:
-                        print(f"Robot {self.name} is idle. No tasks available.")
+                        pass
+                        # print(f"Robot {self.name} is idle. No tasks available.")
                     else:
                         print(f"Executing new task: {new_task}")
                         self.bot.executeTask(new_task)

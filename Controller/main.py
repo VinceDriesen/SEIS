@@ -23,7 +23,7 @@ if __name__ == "__main__":
     try:
         # Read ROBOT_ID from environment, defaulting to 0
         robot_id = int(os.getenv("ROBOT_ID", "0"))
-        process = Process("RobotProcess", robot_id, explore=False)
+        process = Process("RobotProcess", robot_id, explore=True)
 
     except KeyboardInterrupt:
         print("Process interrupted by user (Ctrl+C). Stopping...")

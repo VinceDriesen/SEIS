@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Load .env if exists
-[ -f .env ] && source .env
-
 # Parse arguments
 ROBOT_ID="${ROBOT_ID:-0}"
 DEBUG_PORT="${DEBUG_PORT:-5678}"
 MODE="${MODE:-nodebug}"
 WEBOTS_ROBOT_NAME="${WEBOTS_ROBOT_NAME:-ROBOT_0}"
 IP_ADDRESS="${IP_ADDRESS:-0.0.0.0}"
+WEBOTS_HOME="${WEBOTS_HOME}"
+# LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
+WEBOTS_ROBOT_NAME="robot_${ROBOT_ID}"
 
 export ROBOT_ID
-WEBOTS_ROBOT_NAME="robot_${ROBOT_ID}"
 export WEBOTS_ROBOT_NAME
+export WEBOTS_HOME
+export PYTHONPATH
+# export LD_LIBRARY_PATH
 
 # Validate Webots installation
 if [ -z "${WEBOTS_HOME:-}" ]; then

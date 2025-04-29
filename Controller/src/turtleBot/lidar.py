@@ -164,15 +164,36 @@ class OccupancyGrid:
 
         return [world_x, world_y]
 
-    def world_to_grid(self, world_coords, position):
-        grid_x = int(
-            np.floor(((world_coords[0] + self.map_size / 2) / self.map_resolution))
-        )
-        grid_y = int(
-            np.floor(((world_coords[1] + self.map_size / 2) / self.map_resolution))
-        )
-        return np.clip([grid_x, grid_y], 0, self.grid_cells - 1).astype(int)
+    def world_to_grid(self, world_coords):
+        """
+        Converts possibly out-of-bounds world (x,y) into valid grid (r,c).
+        Clamps any infinities or NaNs to the nearest edge.
+        """
+        x, y = world_coords
 
+        # 1) clamp to world extents
+        half = self.map_size / 2
+        if not math.isfinite(x):
+            x = half if x > 0 else -half
+        else:
+            x = max(min(x,  half), -half)
+
+        if not math.isfinite(y):
+            y = half if y > 0 else -half
+        else:
+            y = max(min(y,  half), -half)
+
+        # 2) convert to grid indices
+        gx = (x + half) / self.map_resolution
+        gy = (y + half) / self.map_resolution
+
+        # 3) floor, int, and clip
+        grid_x = int(np.floor(gx))
+        grid_y = int(np.floor(gy))
+        grid_x = np.clip(grid_x, 0, self.grid_cells - 1)
+        grid_y = np.clip(grid_y, 0, self.grid_cells - 1)
+
+        return np.array([grid_x, grid_y], dtype=int)
     def update_grid(self, sensor_pos, hits):
         """Werk de occupancy grid bij op basis van Lidar-metingen"""
         for hit in hits:
@@ -198,6 +219,48 @@ class OccupancyGrid:
         known = (prob_grid <= 0.3) | (prob_grid >= 0.7)
         explored = np.sum(known)
         return explored / self.grid.size >= self.coverage_threshold
+    
+    def save_occupancy_map(self, filepath: str, log_odds: bool = False):
+        """
+        Save the current occupancy grid to an image file.
+        
+        :param filepath: Path (including filename) where the image will be saved.
+        :param log_odds: If True, saves the raw log-odds grid; otherwise saves the probability grid.
+        """
+        if log_odds:
+            data = self.grid
+            title = 'Log-Odds Occupancy Grid'
+            cmap = 'RdBu'
+            vmin, vmax = -5, 5
+        else:
+            data = self.get_probability_grid()
+            title = 'Probability Occupancy Grid'
+            cmap = 'viridis'
+            vmin, vmax = 0.0, 1.0
+
+        fig, ax = plt.subplots(figsize=(6, 6))
+        extent = [
+            -self.map_size / 2, self.map_size / 2,
+            -self.map_size / 2, self.map_size / 2
+        ]
+        img = ax.imshow(
+            data.T,
+            origin='lower',
+            extent=extent,
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax,
+            interpolation='nearest'
+        )
+        ax.set_title(title)
+        ax.set_xlabel('X (m)')
+        ax.set_ylabel('Y (m)')
+        cbar = fig.colorbar(img, ax=ax)
+        cbar.set_label('Probability' if not log_odds else 'Log-Odds')
+
+        plt.tight_layout()
+        fig.savefig(filepath, dpi=300)
+        plt.close(fig)
 
 
 class LidarFunctions:
@@ -238,7 +301,7 @@ class LidarFunctions:
     def get_robot_position_grid(self, position):
         """Berekent de sensorpositie in de occupancy grid op basis van de absolute wereldcoördinaten"""
         return self.occupancyGrid.world_to_grid(
-            [position["x_value"], position["y_value"]], position
+            [position["x_value"], position["y_value"]]
         )
 
     def scan(self, lidarSensor: Lidar, position):
@@ -248,7 +311,7 @@ class LidarFunctions:
         global_coords = self.get_lidar_global_coord_values(lidarSensor, position)
 
         # Update grid met gescande punten
-        hits = [self.occupancyGrid.world_to_grid(c, position) for c in global_coords]
+        hits = [self.occupancyGrid.world_to_grid(c) for c in global_coords]
         self.occupancyGrid.update_grid(sensor_pos, hits)
 
     def visualize_grid(self):
@@ -301,3 +364,6 @@ class LidarFunctions:
             self.occupancyGrid.map_size / 2,
         ]
         return grid_prob.T, extent
+
+    def save_occupancy_map(self, filepath: str = 'occupancy_map.png', log_odds: bool = False):
+        self.occupancyGrid.save_occupancy_map(filepath)
