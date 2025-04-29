@@ -1,0 +1,101 @@
+#VRML_SIM R2025a utf8
+
+PROTO Rack [
+  field SFVec3f translation 0 0 0
+  field SFString name "rack"
+]
+{
+Solid {
+  translation IS translation
+  children [
+    # Vertical posts every meter (and on sides)
+    Transform {
+      translation -1.95 0 0.15
+      children [
+        Shape {
+          geometry Box { size 0.05 0.05 0.3 }
+          appearance PBRAppearance { baseColor 0.1 0.1 0.8 }
+        }
+      ]
+    }
+    Transform {
+      translation -0.95 0 0.15
+      children [
+        Shape {
+          geometry Box { size 0.05 0.05 0.3 }
+          appearance PBRAppearance { baseColor 0.1 0.1 0.8 }
+        }
+      ]
+    }
+    Transform {
+      translation 0.0 0 0.15
+      children [
+        Shape {
+          geometry Box { size 0.05 0.05 0.3 }
+          appearance PBRAppearance { baseColor 0.1 0.1 0.8 }
+        }
+      ]
+    }
+    Transform {
+      translation 0.95 0 0.15
+      children [
+        Shape {
+          geometry Box { size 0.05 0.05 0.3 }
+          appearance PBRAppearance { baseColor 0.1 0.1 0.8 }
+        }
+      ]
+    }
+    Transform {
+      translation 1.95 0 0.15
+      children [
+        Shape {
+          geometry Box { size 0.05 0.05 0.3 }
+          appearance PBRAppearance { baseColor 0.1 0.1 0.8 }
+        }
+      ]
+    }
+
+    # Bottom beam
+    Transform {
+      translation 0 0 0.05
+      children [
+        Shape {
+          geometry Box { size 4 0.05 0.01 }
+          appearance PBRAppearance { baseColor 0.8 0.1 0.1 }
+        }
+      ]
+    }
+    # Middle beam
+    Transform {
+      translation 0 0 0.15
+      children [
+        Shape {
+          geometry Box { size 4 0.05 0.01 }
+          appearance PBRAppearance { baseColor 0.8 0.1 0.1 }
+        }
+      ]
+    }
+    # Top beam
+    Transform {
+      translation 0 0 0.25
+      children [
+        Shape {
+          geometry Box { size 4 0.05 0.01 }
+          appearance PBRAppearance { baseColor 0.8 0.1 0.1 }
+        }
+      ]
+    }
+  ]
+  name IS name
+  boundingObject Group {
+    children [
+      Transform {
+        translation 0 0 0.15
+        children [
+          Box { size 4 0.1 0.3 }
+        ]
+      }
+    ]
+  }
+}
+}
