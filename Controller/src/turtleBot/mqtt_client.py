@@ -28,27 +28,31 @@ class MQTTController(threading.Thread):
                 _, coords = payload.split(":")
                 x, y = map(float, coords.split(","))
                 print(f"Received job: Move to ({x}, {y})")
-                self.add_task({
-                    'type': TASK_MOVE_TO,
-                    'params': {
-                        'x': x,
-                        'y': y,
+                self.add_task(
+                    {
+                        "type": TASK_MOVE_TO,
+                        "params": {
+                            "x": x,
+                            "y": y,
+                        },
                     }
-                })
+                )
         except Exception as e:
             print(f"Error processing message: {e}")
 
     def publish_done(self, coordinates):
         with self.lock:
             x, y = coordinates
-            self.client.publish(f"robot/{self.robot_id}/jobs", f"done:{x:.2f},{y:.2f}", qos=1)
-            
-            
+            self.client.publish(
+                f"robot/{self.robot_id}/jobs", f"done:{x:.2f},{y:.2f}", qos=1
+            )
+
     def publish_location(self, coordinates):
         with self.lock:
             x, y = coordinates
-            self.client.publish(f'robot/{self.robot_id}/pos', f'pos:{x:.2f},{y:.2f}', qos=1)
-
+            self.client.publish(
+                f"robot/{self.robot_id}/pos", f"pos:{x:.2f},{y:.2f}", qos=1
+            )
 
     def run(self):
         while True:

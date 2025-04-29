@@ -184,7 +184,6 @@ class TurtleBotSM:
             self._current_action = STATE_IDLE
             return False
 
-
     def _taskExplore(self, task_params: dict):
         self._explore_max_consecutive_failures = task_params.get(
             "max_consecutive_failures", 10
@@ -194,8 +193,7 @@ class TurtleBotSM:
         self._explore_state = EXPLORE_STATE_START
         print(f"Robot {self.name}: Initiated explore task")
         return True
-    
-    
+
     def executeTask(self, task: dict) -> bool:
         """
         Called by the scheduler to assign a new task.
@@ -248,7 +246,6 @@ class TurtleBotSM:
             pos_update_callback((self.position[0], self.position[1]))
             return self._current_action != STATE_IDLE
 
-        
     def _fix_robot_odometry(self):
         current_left_encoder = self.leftMotorSens.getValue()
         current_right_encoder = self.rightMotorSens.getValue()
@@ -276,8 +273,6 @@ class TurtleBotSM:
         else:
             self.position[2] = self.normAngle(self.position[2] + delta_theta_odometry)
 
-        
-
     def updateTaskExecution(self) -> bool:
         """
         Called by the main Webots loop every time step.
@@ -295,9 +290,9 @@ class TurtleBotSM:
 
         # Update odometry
         self._fix_robot_odometry()
-        
+
         action_ongoing = False
-        
+
         action_options = {
             ACTION_MOVING: self._updateMovingAction,
             ACTION_ROTATING: self._updateRotatingAction,
@@ -367,9 +362,9 @@ class TurtleBotSM:
     def _updateRotatingAction(self) -> bool:
         """Updates rotation progress. Returns True if ongoing."""
         if self._current_action != ACTION_ROTATING:
-            return False  
+            return False
 
-        current_heading = self.position[2]  
+        current_heading = self.position[2]
 
         error = self.normalizeAngle(self._rotate_target_angle_rad - current_heading)
 
@@ -377,16 +372,18 @@ class TurtleBotSM:
             print(
                 f"Robot {self.name}: Rotation finished. Current heading {math.degrees(current_heading):.2f}, Target {math.degrees(self._rotate_target_angle_rad):.2f}"
             )
-            return False  
+            return False
 
-        return True 
-    
+        return True
+
     def _selectCandidate(self, grid_obj, current_theta, current_pos_dict):
         frontier_cells_rc = grid_obj.find_frontier_cells()
 
         if not frontier_cells_rc:
-            raise RuntimeError("No frontier cells found. Check the occupancy grid. This should not be possible!")
-        
+            raise RuntimeError(
+                "No frontier cells found. Check the occupancy grid. This should not be possible!"
+            )
+
         candidate_info = []
         entropy_grid = grid_obj.get_entropy_grid()
 
@@ -428,8 +425,10 @@ class TurtleBotSM:
             )
 
         if not candidate_info:
-            raise RuntimeError("No candidate info found. Check the occupancy grid. This should not be possible!")
-        
+            raise RuntimeError(
+                "No candidate info found. Check the occupancy grid. This should not be possible!"
+            )
+
         candidate_info.sort(key=lambda x: x["utility"], reverse=True)
 
         selected_candidate = None
@@ -443,25 +442,27 @@ class TurtleBotSM:
                 self._explore_processed_targets.add(target_key)
                 break
         return selected_candidate
-    
+
     def _exploreStatePlanning(self) -> bool:
         grid_obj = self.lidar.occupancyGrid
         current_pos_dict = self.getGpsPosition()
         current_theta = current_pos_dict["theta_value"]
 
-        selected_candidate = self._selectCandidate(grid_obj, current_theta, current_pos_dict)
+        selected_candidate = self._selectCandidate(
+            grid_obj, current_theta, current_pos_dict
+        )
 
         if selected_candidate:
             target_world_pos = selected_candidate["world"]
 
-            self._current_action = TASK_MOVE_TO 
+            self._current_action = TASK_MOVE_TO
             move_init_success = self.startMoveTo(
                 target_world_pos[0], target_world_pos[1]
             )
 
             if move_init_success:
-                self._explore_state = EXPLORE_STATE_MOVING_TO_FRONTIER  
-                return True  
+                self._explore_state = EXPLORE_STATE_MOVING_TO_FRONTIER
+                return True
             else:
                 raise RuntimeError(
                     "Failed to initiate move_to action. Check the move_to state machine."
@@ -485,7 +486,7 @@ class TurtleBotSM:
             raise RuntimeError(
                 "No candidate found for exploration. Check the occupancy grid."
             )
-            
+
     def _exploreMovingToFrontier(self) -> bool:
         if self._current_action != TASK_EXPLORE:
             return False
@@ -493,14 +494,10 @@ class TurtleBotSM:
             print(
                 f"Robot {self.name}: Successfully moved to frontier. Resuming exploration."
             )
-            self._explore_consecutive_pathfinding_failures = 0 
-            self._explore_state = (
-                EXPLORE_STATE_SCANNING
-            )
+            self._explore_consecutive_pathfinding_failures = 0
+            self._explore_state = EXPLORE_STATE_SCANNING
         else:
-            print(
-                f"Robot {self.name}: Failed to move to frontier. Handling failure."
-            )
+            print(f"Robot {self.name}: Failed to move to frontier. Handling failure.")
             self._explore_consecutive_pathfinding_failures += 1
             if (
                 self._explore_consecutive_pathfinding_failures
@@ -549,15 +546,13 @@ class TurtleBotSM:
 
     def startMoveTo(self, x: float, y: float) -> bool:
         self._move_to_target_pos = [x, y]
-        self._move_to_state = (
-            MOVE_TO_STATE_PLANNING
-        )
+        self._move_to_state = MOVE_TO_STATE_PLANNING
         self._move_to_path = None
         self._move_to_path_index = 0
-        self._move_to_success = False 
+        self._move_to_success = False
 
         return True
-    
+
     def _pathFinding(self):
         current_pos = self.getGpsPosition()
         target_pos = self._move_to_target_pos
@@ -639,24 +634,22 @@ class TurtleBotSM:
             print(f"Error during move_to planning: {e}")
             self._move_to_state = MOVE_TO_STATE_FAILED
             return False
-        
+
     def _moveAndRotate(self):
         current_pos = self.getGpsPosition()
         next_waypoint_grid = self._move_to_path[self._move_to_path_index + 1]
 
         if not hasattr(self, "_last_grid_shape") or self._last_grid_shape is None:
-            print(
-                f"Robot {self.name}: ERROR: No grid shape available for pathfinding."
-            )
+            print(f"Robot {self.name}: ERROR: No grid shape available for pathfinding.")
             self._move_to_state = MOVE_TO_STATE_FAILED
             return False
 
-        next_waypoint_world_x = (next_waypoint_grid.x) / (
-            self._last_grid_shape[1]
-        ) * (self._last_extent[1] - self._last_extent[0]) + self._last_extent[0]
-        next_waypoint_world_y = (next_waypoint_grid.y) / (
-            self._last_grid_shape[0]
-        ) * (self._last_extent[3] - self._last_extent[2]) + self._last_extent[2]
+        next_waypoint_world_x = (next_waypoint_grid.x) / (self._last_grid_shape[1]) * (
+            self._last_extent[1] - self._last_extent[0]
+        ) + self._last_extent[0]
+        next_waypoint_world_y = (next_waypoint_grid.y) / (self._last_grid_shape[0]) * (
+            self._last_extent[3] - self._last_extent[2]
+        ) + self._last_extent[2]
 
         dist_to_next_waypoint = math.sqrt(
             (current_pos["x_value"] - next_waypoint_world_x) ** 2
@@ -737,9 +730,7 @@ class TurtleBotSM:
     def addBufferToGrid(self, grid, extent, buffer_distance=0.2):
         """Verbeterde versie met gegarandeerde minimale buffer"""
         cell_size = (extent[1] - extent[0]) / grid.shape[1]
-        buffer_cells = max(
-            1, int(round(buffer_distance / cell_size))
-        ) 
+        buffer_cells = max(1, int(round(buffer_distance / cell_size)))
 
         y, x = np.ogrid[
             -buffer_cells : buffer_cells + 1, -buffer_cells : buffer_cells + 1
@@ -773,7 +764,7 @@ class TurtleBotSM:
         matrix = np.array(
             [[1 if node.walkable else 0 for node in col] for col in grid.nodes]
         )
-        matrix = matrix 
+        matrix = matrix
 
         if path:
             for node in path:
