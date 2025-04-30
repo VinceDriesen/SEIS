@@ -1,7 +1,7 @@
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 import numpy as np
-from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass, GPS
+from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass
 import math
 from .lidar import LidarFunctions
 
@@ -36,9 +36,14 @@ class TurtleBot:
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
 
-        x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
-        theta = self.get_heading_from_compass()  # Updated heading
-        self.position = list((x_gps, y_gps, theta))
+        # x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
+        # theta = self.get_heading_from_compass()  # Updated heading
+        # self.position = list((x_gps, y_gps, theta))
+        
+        self.position = [0.0,0.0,0.0]
+        self.previous_left_encoder = 0.0        
+        self.previous_right_encoder = 0.0        
+        
         self.lidarFunc = LidarFunctions()
 
         # Parameter om max velocity mee te vermenigvuldigen
@@ -67,7 +72,9 @@ class TurtleBot:
         self.lidarMotor2: Motor = self.robot.getDevice("LDS-01_secondary_motor")
 
         self.compass: Compass = self.robot.getDevice("compass")
-        self.gps: GPS = self.robot.getDevice("gps")
+        
+        # GPS niet meer nodig
+        # self.gps: GPS = self.robot.getDevice("gps")
 
         self.frontDistSens.enable(self.timeStep)
         self.rearDistSens.enable(self.timeStep)
@@ -77,7 +84,9 @@ class TurtleBot:
         self.rightMotorSens.enable(self.timeStep)
         self.lidarSens.enable(self.timeStep)
         self.compass.enable(self.timeStep)
-        self.gps.enable(self.timeStep)
+        
+        # GPS niet meer nodig
+        # self.gps.enable(self.timeStep)
 
     def get_heading_from_compass(self):
         x, y, _ = self.compass.getValues()
@@ -89,8 +98,9 @@ class TurtleBot:
     def start_lidar(self):
         self.lidarFunc.scan(self.lidarSens, self.get_position())
 
-    def get_gps_position(self):
-        return self.gps.getValues()
+    # Gps niet meer nodig 
+    # def get_gps_position(self):
+    #     return self.gps.getValues()
 
     def get_position(self) -> dict[str, float]:
         return {
@@ -203,35 +213,35 @@ class TurtleBot:
 
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
+    # GPS niet meer nodig
+    # def fix_position(self):
+    #     """
+    #     Fix the position of the robot in the map.
+    #     This function is used to correct the position of the robot in the occupancy map.
+    #     """
 
-    def fix_position(self):
-        """
-        Fix the position of the robot in the map.
-        This function is used to correct the position of the robot in the occupancy map.
-        """
+    #     x_gps, y_gps, _ = self.get_gps_position()
 
-        x_gps, y_gps, _ = self.get_gps_position()
+    #     # Calculate the difference between the current position and the target position
+    #     dx = self.nonMeasuredPosition[0] - x_gps
 
-        # Calculate the difference between the current position and the target position
-        dx = self.nonMeasuredPosition[0] - x_gps
-
-        if abs(dx) > 0.05:
-            print(f"correcting dx: {dx}")
-            self.move_position(dx, 0, 0, safePosition=False)
-        x_gps, y_gps, _ = self.get_gps_position()
-        dy = self.nonMeasuredPosition[1] - y_gps
-        if abs(dy) > 0.05:
-            print(f"correcting dy: {dy}")
-            self.move_position(0, dy, 0, safePosition=False)
-        rotation = self.get_heading_from_compass()
-        d_rot = self.nonMeasuredPosition[2] - rotation
-        if d_rot < -math.pi:
-            d_rot += 2 * math.pi
-        if d_rot > math.pi:
-            d_rot -= 2 * math.pi
-        if abs(d_rot) > 0.03:
-            print(f"correcting d_rot: {d_rot}")
-            self.move_position(0, 0, d_rot, safePosition=False)
+    #     if abs(dx) > 0.05:
+    #         print(f"correcting dx: {dx}")
+    #         self.move_position(dx, 0, 0, safePosition=False)
+    #     x_gps, y_gps, _ = self.get_gps_position()
+    #     dy = self.nonMeasuredPosition[1] - y_gps
+    #     if abs(dy) > 0.05:
+    #         print(f"correcting dy: {dy}")
+    #         self.move_position(0, dy, 0, safePosition=False)
+    #     rotation = self.get_heading_from_compass()
+    #     d_rot = self.nonMeasuredPosition[2] - rotation
+    #     if d_rot < -math.pi:
+    #         d_rot += 2 * math.pi
+    #     if d_rot > math.pi:
+    #         d_rot -= 2 * math.pi
+    #     if abs(d_rot) > 0.03:
+    #         print(f"correcting d_rot: {d_rot}")
+    #         self.move_position(0, 0, d_rot, safePosition=False)
 
     def simplify_path(self, path, grid):
         """
@@ -534,14 +544,16 @@ class TurtleBot:
         if not safePosition and (angle is None or angle == 0):
             self._rotate(-rotation_needed)
 
-        x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
-        self.position[0] = x_gps
-        self.position[1] = y_gps  # Now using Y for vertical in 2D map
-        self.position[2] = self.get_heading_from_compass()  # Updated heading
+        # GPS niet meer nodig
+        # x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
+        # self.position[0] = x_gps
+        # self.position[1] = y_gps  # Now using Y for vertical in 2D map
+        # self.position[2] = self.get_heading_from_compass()  # Updated heading
 
-        print(f"Position: {self.get_position()}")
+        print(f"Position (odometry-base): {self.get_position()}")
 
-        self.fix_position()
+        # GPS niet meer nodig (eerder verwijderd)
+        # self.fix_position()
 
     def normalizeAngle(self, angle):
         return angle % (2 * math.pi)

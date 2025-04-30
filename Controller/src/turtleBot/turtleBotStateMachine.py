@@ -2,7 +2,7 @@ from typing import Set
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 import numpy as np
-from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass, GPS
+from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass
 import math
 from .lidar import LidarFunctions
 from .racks import RackAreaMap
@@ -107,16 +107,21 @@ class TurtleBotSM:
 
     def _initalizeSub(self):
         print("Initializing special sub!")
-
+        
+        self.position = [0.0, float(self.robot_id), 0.0]
+        compass_val = self.getHeadingFromCompass()
+        if compass_val is not None:
+            self.position[2] = compass_val
+        print(f"Robot {self.name}: Initial estimated position: {self.getEstimatedPosition()}")
         # GPS dingen
-        gps_values = self.gps.getValues()
-        if gps_values:
-            self.position[0] = gps_values[0]
-            self.position[1] = gps_values[1]
-            compass_val = self.getHeadingFromCompass()
-            if compass_val:
-                self.position[2] = compass_val
-        print(f"Robot {self.name}: Initial estimated position: {self.getGpsPosition()}")
+        # gps_values = self.gps.getValues()
+        # if gps_values:
+            # self.position[0] = gps_values[0]
+            # self.position[1] = gps_values[1]
+            # compass_val = self.getHeadingFromCompass()
+            # if compass_val:
+                # self.position[2] = compass_val
+        # print(f"Robot {self.name}: Initial estimated position: {self.getGpsPosition()}")
 
     def _enableSensors(self):
         """Enables all sensors."""
@@ -136,7 +141,7 @@ class TurtleBotSM:
         self.lidarMotor2: Motor = self.robot.getDevice("LDS-01_secondary_motor")
 
         self.compass: Compass = self.robot.getDevice("compass")
-        self.gps: GPS = self.robot.getDevice("gps")
+        # self.gps: GPS = self.robot.getDevice("gps")
 
         self.frontDistSens.enable(self.time_step)
         self.rearDistSens.enable(self.time_step)
@@ -146,7 +151,7 @@ class TurtleBotSM:
         self.rightMotorSens.enable(self.time_step)
         self.lidarSens.enable(self.time_step)
         self.compass.enable(self.time_step)
-        self.gps.enable(self.time_step)
+        # self.gps.enable(self.time_step)
 
     def getHeadingFromCompass(self) -> float | None:
         """
@@ -167,16 +172,15 @@ class TurtleBotSM:
                 newAngle -= 2 * math.pi
         return newAngle
 
-    def getGpsPosition(self) -> list[str, float]:
+    def getEstimatedPosition(self) -> list[str, float]:
         """
-        Returns the GPS position of the robot.
+        Returns the estimated position of the robot based on odometry and (initial) compass.
         """
         return {
             "x_value": self.position[0],
             "y_value": self.position[1],
             "theta_value": self.position[2],
         }
-        # return self.gps.getValues()
 
     def isBusy(self) -> bool:
         """
@@ -265,11 +269,11 @@ class TurtleBotSM:
         self.position[0] += delta_distance_linear * math.cos(heading_for_odometry)
         self.position[1] += delta_distance_linear * math.sin(heading_for_odometry)
 
-        compass_heading = self.getHeadingFromCompass()
-        if compass_heading is not None:
-            self.position[2] = compass_heading
-        else:
-            self.position[2] = self.normAngle(self.position[2] + delta_theta_odometry)
+        # compass_heading = self.getHeadingFromCompass()
+        # if compass_heading is not None:
+        #     self.position[2] = compass_heading
+        # else:
+        self.position[2] = self.normAngle(self.position[2] + delta_theta_odometry)
 
     def updateTaskExecution(self) -> bool:
         """
@@ -449,7 +453,7 @@ class TurtleBotSM:
 
     def _exploreStatePlanning(self) -> bool:
         grid_obj = self.lidar.occupancyGrid
-        current_pos_dict = self.getGpsPosition()
+        current_pos_dict = self.getEstimatedPosition()
         current_theta = current_pos_dict["theta_value"]
 
         selected_candidate = self._selectCandidate(
@@ -524,7 +528,7 @@ class TurtleBotSM:
             return True
 
         elif self._explore_state == EXPLORE_STATE_SCANNING:
-            current_pos_dict = self.getGpsPosition()
+            current_pos_dict = self.getEstimatedPosition()
             self.lidar.scan(self.lidarSens, current_pos_dict)
             self._explore_state = EXPLORE_STATE_PLANNING
             return True
@@ -558,7 +562,7 @@ class TurtleBotSM:
         return True
 
     def _pathFinding(self):
-        current_pos = self.getGpsPosition()
+        current_pos = self.getEstimatedPosition()
         target_pos = self._move_to_target_pos
 
         grid_prob, extent = self.lidar.get_occupancy_grid()
@@ -668,7 +672,7 @@ class TurtleBotSM:
             pass
 
     def _moveAndRotate(self):
-        current_pos = self.getGpsPosition()
+        current_pos = self.getEstimatedPosition()
         next_waypoint_grid = self._move_to_path[self._move_to_path_index + 1]
 
         if not hasattr(self, "_last_grid_shape") or self._last_grid_shape is None:
