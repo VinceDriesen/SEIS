@@ -1,9 +1,11 @@
+from typing import Set
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 import numpy as np
-from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass, GPS
+from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass
 import math
 from .lidar import LidarFunctions
+from .racks import RackAreaMap
 
 STATE_IDLE = "idle"
 ACTION_MOVING = "moving"
@@ -38,7 +40,7 @@ class TurtleBotSM:
     It handles the robot's sensors, motors, and state transitions.
     """
 
-    def __init__(self, name: str, robot: Robot, time_step: float, max_speed: float):
+    def __init__(self, name: str, robot: Robot, time_step: float, max_speed: float, robot_id: int, mqtt_thread):
         self.name = name
         self.robot = robot
         self.time_step = time_step
@@ -48,6 +50,11 @@ class TurtleBotSM:
         self.radius = 0.033
         self.distance_between_wheels = 0.1775
         self.firstRun = True
+        self.robot_id = robot_id
+        self.rack_map = RackAreaMap()
+        self.mqtt_thread = mqtt_thread
+        
+        self._reservated_racks: Set[int] = set()
 
         self._enableSensors()
 
@@ -74,16 +81,20 @@ class TurtleBotSM:
         self._move_to_path: list | None = None
         self._move_to_path_index = 0
         self._move_to_state: str | None = None
-
+        
         self._explore_state: str | None = None
         self._explore_processed_targets: set = set()
         self._explore_count = 0
         self._explore_consecutive_pathfinding_failures = 0
-        self._explore_max_consecutive_failures = 10
+        self._explore_stagnation_count = 0
+        self._explore_num_candidates = 30
+        self._explore_cost_alpha = 1.0
+        self._explore_max_consecutive_failures = 50
+        self._explore_max_stagnation_iterations = 5
 
         self.velocity_norm = 0.3
         self.nonMeasuredPosition = [0.0, 0.0, 0.0]
-        self.position = [0.0, 0.0, 0.0]
+        self.position = [0.0, float(self.robot_id), 0.0]
 
         self._move_to_success = False
 
@@ -96,16 +107,21 @@ class TurtleBotSM:
 
     def _initalizeSub(self):
         print("Initializing special sub!")
-
+        
+        self.position = [0.0, float(self.robot_id), 0.0]
+        compass_val = self.getHeadingFromCompass()
+        if compass_val is not None:
+            self.position[2] = compass_val
+        print(f"Robot {self.name}: Initial estimated position: {self.getEstimatedPosition()}")
         # GPS dingen
-        gps_values = self.gps.getValues()
-        if gps_values:
-            self.position[0] = gps_values[0]
-            self.position[1] = gps_values[1]
-            compass_val = self.getHeadingFromCompass()
-            if compass_val:
-                self.position[2] = compass_val
-        print(f"Robot {self.name}: Initial estimated position: {self.getGpsPosition()}")
+        # gps_values = self.gps.getValues()
+        # if gps_values:
+            # self.position[0] = gps_values[0]
+            # self.position[1] = gps_values[1]
+            # compass_val = self.getHeadingFromCompass()
+            # if compass_val:
+                # self.position[2] = compass_val
+        # print(f"Robot {self.name}: Initial estimated position: {self.getGpsPosition()}")
 
     def _enableSensors(self):
         """Enables all sensors."""
@@ -125,7 +141,7 @@ class TurtleBotSM:
         self.lidarMotor2: Motor = self.robot.getDevice("LDS-01_secondary_motor")
 
         self.compass: Compass = self.robot.getDevice("compass")
-        self.gps: GPS = self.robot.getDevice("gps")
+        # self.gps: GPS = self.robot.getDevice("gps")
 
         self.frontDistSens.enable(self.time_step)
         self.rearDistSens.enable(self.time_step)
@@ -135,7 +151,7 @@ class TurtleBotSM:
         self.rightMotorSens.enable(self.time_step)
         self.lidarSens.enable(self.time_step)
         self.compass.enable(self.time_step)
-        self.gps.enable(self.time_step)
+        # self.gps.enable(self.time_step)
 
     def getHeadingFromCompass(self) -> float | None:
         """
@@ -149,19 +165,22 @@ class TurtleBotSM:
         heading = math.atan2(x_c, y_c)
         return self.normAngle(heading)
 
-    def normAngle(self, angle: float) -> float:
-        return angle % (2 * math.pi)
+    def normAngle(self, angle: float, rotate = False) -> float:
+        newAngle = angle % (2 * math.pi)
+        if rotate:
+            if newAngle > math.pi:
+                newAngle -= 2 * math.pi
+        return newAngle
 
-    def getGpsPosition(self) -> list[str, float]:
+    def getEstimatedPosition(self) -> list[str, float]:
         """
-        Returns the GPS position of the robot.
+        Returns the estimated position of the robot based on odometry and (initial) compass.
         """
         return {
             "x_value": self.position[0],
             "y_value": self.position[1],
             "theta_value": self.position[2],
         }
-        # return self.gps.getValues()
 
     def isBusy(self) -> bool:
         """
@@ -229,23 +248,6 @@ class TurtleBotSM:
             self._current_action = STATE_IDLE
             return False
 
-    def updateTaskExecution(self, pos_update_callback: callable) -> bool:
-        """
-        Called by the main Webots loop every time step.
-        Performs odometry, updates sensor readings (implicitly via robot.step),
-        and executes one step of the current action's state machine.
-        Returns True if a task is ongoing, False if idle.
-        """
-
-        if self._is_first_update:
-            self._initalizeSub()
-            self._prev_left_encoder = self.leftMotorSens.getValue()
-            self._prev_right_encoder = self.rightMotorSens.getValue()
-            self._is_first_update = False
-            # Post position to mqtt topic
-            pos_update_callback((self.position[0], self.position[1]))
-            return self._current_action != STATE_IDLE
-
     def _fix_robot_odometry(self):
         current_left_encoder = self.leftMotorSens.getValue()
         current_right_encoder = self.rightMotorSens.getValue()
@@ -267,11 +269,11 @@ class TurtleBotSM:
         self.position[0] += delta_distance_linear * math.cos(heading_for_odometry)
         self.position[1] += delta_distance_linear * math.sin(heading_for_odometry)
 
-        compass_heading = self.getHeadingFromCompass()
-        if compass_heading is not None:
-            self.position[2] = compass_heading
-        else:
-            self.position[2] = self.normAngle(self.position[2] + delta_theta_odometry)
+        # compass_heading = self.getHeadingFromCompass()
+        # if compass_heading is not None:
+        #     self.position[2] = compass_heading
+        # else:
+        self.position[2] = self.normAngle(self.position[2] + delta_theta_odometry)
 
     def updateTaskExecution(self) -> bool:
         """
@@ -318,6 +320,9 @@ class TurtleBotSM:
             ):
                 self._move_to_success = True
                 print(f"Robot {self.name}: Move to task completed successfully.")
+                if self.mqtt_thread.handle_rack_reservation(self._reservated_racks, reservation=False):
+                    self._reservated_racks = set()
+                
             if self._explore_state == EXPLORE_STATE_MOVING_TO_FRONTIER:
                 self._current_action = TASK_EXPLORE
                 print(
@@ -326,6 +331,9 @@ class TurtleBotSM:
             self.left_motor.setVelocity(0)
             self.right_motor.setVelocity(0)
 
+        # Post position to mqtt topic
+        self.mqtt_thread.publish_location((self.position[0], self.position[1]))
+        
         return self._current_action != STATE_IDLE
 
     def _updateMovingAction(self) -> bool:
@@ -366,7 +374,7 @@ class TurtleBotSM:
 
         current_heading = self.position[2]
 
-        error = self.normalizeAngle(self._rotate_target_angle_rad - current_heading)
+        error = self.normAngle(self._rotate_target_angle_rad - current_heading, rotate=True)
 
         if abs(error) <= ROTATION_TOLERANCE_RAD:
             print(
@@ -375,7 +383,7 @@ class TurtleBotSM:
             return False
 
         return True
-
+    
     def _selectCandidate(self, grid_obj, current_theta, current_pos_dict):
         frontier_cells_rc = grid_obj.find_frontier_cells()
 
@@ -445,7 +453,7 @@ class TurtleBotSM:
 
     def _exploreStatePlanning(self) -> bool:
         grid_obj = self.lidar.occupancyGrid
-        current_pos_dict = self.getGpsPosition()
+        current_pos_dict = self.getEstimatedPosition()
         current_theta = current_pos_dict["theta_value"]
 
         selected_candidate = self._selectCandidate(
@@ -520,7 +528,7 @@ class TurtleBotSM:
             return True
 
         elif self._explore_state == EXPLORE_STATE_SCANNING:
-            current_pos_dict = self.getGpsPosition()
+            current_pos_dict = self.getEstimatedPosition()
             self.lidar.scan(self.lidarSens, current_pos_dict)
             self._explore_state = EXPLORE_STATE_PLANNING
             return True
@@ -554,7 +562,7 @@ class TurtleBotSM:
         return True
 
     def _pathFinding(self):
-        current_pos = self.getGpsPosition()
+        current_pos = self.getEstimatedPosition()
         target_pos = self._move_to_target_pos
 
         grid_prob, extent = self.lidar.get_occupancy_grid()
@@ -577,6 +585,14 @@ class TurtleBotSM:
             return np.clip(grid_x, 0, grid_width - 1), np.clip(
                 grid_y, 0, grid_height - 1
             )
+            
+        def grid_to_real(grid_x, grid_y, grid_shape, grid_extent):
+            grid_height, grid_width = grid_shape
+            xmin, xmax, ymin, ymax = grid_extent
+
+            real_x = xmin + (grid_x / grid_width) * (xmax - xmin)
+            real_y = ymin + (grid_y / grid_height) * (ymax - ymin)
+            return real_x, real_y
 
         start_x_grid, start_y_grid = real_to_grid(
             current_pos["x_value"],
@@ -612,14 +628,31 @@ class TurtleBotSM:
             if path:
                 simplified_path = self.simplifyPath(path, grid)
                 if simplified_path:
-                    self._move_to_path = simplified_path
-                    self._move_to_path_index = 0
-                    self._move_to_state = MOVE_TO_STATE_MOVING
+                    racks: Set[int] = set()
+                    
+                    for gx, gy in simplified_path:
+                        rx, ry = grid_to_real(gx, gy, buffered_grid_np.shape, extent)
+                        rack_index = self.rack_map.find_area(rx, ry)
+                        if rack_index is not None:
+                            racks.add(rack_index)
+                    
+                    if len(racks) != 0:
+                        print(f'Found racks: {racks}')
+                        reservated: bool = self.mqtt_thread.handle_rack_reservation(racks)
+                        if reservated:
+                            self._move_to_path = simplified_path
+                            self._move_to_path_index = 0
+                            self._move_to_state = MOVE_TO_STATE_MOVING
 
-                    self._last_grid_shape = buffered_grid_np.shape
-                    self._last_extent = extent
-                    print(f"Simplified path found with runs: {runs}")
-                    return True
+                            self._last_grid_shape = buffered_grid_np.shape
+                            self._last_extent = extent
+                            self._reservated_racks = racks
+                            print(f"Simplified path found with runs: {runs}")
+                            return True
+                        else: 
+                            self._move_to_state= MOVE_TO_STATE_FAILED
+                            print(f'Couldn\'t Reserver Racks: {racks}')
+                            return False
                 else:
                     self._move_to_state = MOVE_TO_STATE_FAILED
                     raise RuntimeError(
@@ -634,9 +667,12 @@ class TurtleBotSM:
             print(f"Error during move_to planning: {e}")
             self._move_to_state = MOVE_TO_STATE_FAILED
             return False
+        
+        finally:
+            pass
 
     def _moveAndRotate(self):
-        current_pos = self.getGpsPosition()
+        current_pos = self.getEstimatedPosition()
         next_waypoint_grid = self._move_to_path[self._move_to_path_index + 1]
 
         if not hasattr(self, "_last_grid_shape") or self._last_grid_shape is None:
@@ -726,7 +762,7 @@ class TurtleBotSM:
             self._move_to_state = MOVE_TO_STATE_FAILED
             print("Move to task failed.")
             return False
-
+    
     def addBufferToGrid(self, grid, extent, buffer_distance=0.2):
         """Verbeterde versie met gegarandeerde minimale buffer"""
         cell_size = (extent[1] - extent[0]) / grid.shape[1]
@@ -862,3 +898,6 @@ class TurtleBotSM:
             if not grid.node(x, y).walkable:
                 return False
         return True
+    
+    def save_occcupancy_map(self):
+        self.lidar.save_occupancy_map()

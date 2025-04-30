@@ -1,63 +1,89 @@
 version: '3.8'
 
+#— Shared robot‐service defaults
+x-robot-common: &robot-common
+  build: ./Controller
+  env_file:
+    - .env
+  volumes:
+    - ${WEBOTS_HOME}:${WEBOTS_HOME}:Z
+    - /tmp/webots/${USER}:/tmp/webots/app:Z
+  network_mode: host
+  restart: unless-stopped
+  environment:
+    - WEBOTS_HOME
+    - IP_ADDRESS
+  depends_on:
+    - mosquitto
+
 services:
-    mosquitto:
-        container_name: mosquitto-broker
-        image: docker.io/eclipse-mosquitto:latest
-        ports:
-            - "1883:1883"
-        volumes:
-            - ./mqtt_broker/mosquitto/config:/mosquitto/config:Z
-            - ./mqtt_broker/mosquitto/data:/mosquitto/data:Z
-            - ./mqtt_broker/mosquitto/log:/mosquitto/log:Z
-        restart: unless-stopped
-        networks:
-            - default
-        
-    seis-dashboard:
-        container_name: seis-dashboard
-        build:
-            context: ./seis-dashboard
-        ports:
-            - "5173:5173"
-        environment:
-            - BASE_URL=http://backend:8000
-        networks:
-            - default
-        depends_on:
-            - backend
-        restart: unless-stopped
+  mosquitto:
+    container_name: mosquitto-broker
+    image: eclipse-mosquitto:latest
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mqtt_broker/mosquitto/config:/mosquitto/config:Z
+      - ./mqtt_broker/mosquitto/data:/mosquitto/data:Z
+      - ./mqtt_broker/mosquitto/log:/mosquitto/log:Z
+    restart: unless-stopped
+    networks:
+      - seis
 
-    robot-0:
-        container_name: robot-0
-        build:
-            context: ./Controller
-        volumes:
-            - /usr/local/webots:/usr/local/webots:Z
-            - /tmp/webots/themen:/tmp/webots/app:Z
-        environment:
-            - ROBOT_ID=0
-            - MQTT_BROKER_URL=localhost
-            - WEBOTS_HOME=/usr/local/webots
-            - WEBOTS_ROBOT_NAME=robot_0
-            - IP_ADDRESS=0.0.0.0
-        network_mode: host
+  backend:
+    container_name: backend
+    build: ./backend-server
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - MQTT_BROKER_URL
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+    networks:
+      - seis
 
-    backend:
-        container_name: backend
-        build:
-            context: ./backend-server
-        ports:
-            - "8000:8000"
-        environment:
-            - MQTT_BROKER_URL=mosquitto
-        networks:
-            - default
-        depends_on:
-            - mosquitto
-    
+  seis-dashboard:
+    container_name: seis-dashboard
+    build: ./seis-dashboard
+    ports:
+      - "5173:5173"
+    env_file:
+      - .env
+    environment:
+      - BASE_URL
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - seis
 
+  robot-0:
+    <<: *robot-common
+    container_name: robot-0
+    environment:
+      - MQTT_BROKER_URL=localhost
+      - ROBOT_ID=0
+      - WEBOTS_ROBOT_NAME=robot_0
+
+  robot-1:
+    <<: *robot-common
+    container_name: robot-1
+    environment:
+      - MQTT_BROKER_URL=localhost
+      - ROBOT_ID=1
+      - WEBOTS_ROBOT_NAME=robot_1
+
+  robot-2:
+    <<: *robot-common
+    container_name: robot-2
+    environment:
+      - MQTT_BROKER_URL=localhost
+      - ROBOT_ID=2
+      - WEBOTS_ROBOT_NAME=robot_2
 
 networks:
-    default:
-        driver: bridge
+  seis:
+    driver: bridge

@@ -1,8 +1,10 @@
 import type { paths, components } from "$lib/types/schema";
+import { env } from "$env/dynamic/private";
 import createClient from "openapi-fetch";
 
-const BASE_URL = process.env.BASE_URL || "http://localhost:8000";
-const client = createClient<paths>({ baseUrl: BASE_URL });
+console.log(env.BASE_URL)
+
+const client = createClient<paths>({ baseUrl: env.BASE_URL });
 
 export type Job = components['schemas']['RobotJob']
 

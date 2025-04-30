@@ -6,7 +6,7 @@ import time
 from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 import uuid
-
+from .logic.racks import RackAreaReservation, RackAreaMap
 
 @dataclass
 class RobotJob:
@@ -39,6 +39,8 @@ class MQTTManager(threading.Thread):
         # Initialize robots with IDs 0, 1, 2
         for robot_id in ["0", "1", "2"]:
             self.robots[robot_id] = {"jobs": [], "position": None}
+            
+        self.rack_reservator = RackAreaReservation(RackAreaMap())
 
     def _setup_logging(self):
         logging.basicConfig(
@@ -50,6 +52,7 @@ class MQTTManager(threading.Thread):
         self.logger.info(f"Connected to MQTT broker (code {rc})")
         client.subscribe("robot/+/jobs")
         client.subscribe("robot/+/pos")
+        client.subscribe("robot/+/racks")
 
     def _on_message(self, client, userdata, msg):
         try:
@@ -67,6 +70,8 @@ class MQTTManager(threading.Thread):
                     self._handle_job_message(robot_id, payload)
                 elif msg_type == "pos":
                     self._handle_position_message(robot_id, payload)
+                elif msg_type == "racks":
+                    self._handle_rack_reservation(robot_id, payload)
 
         except Exception as e:
             self.logger.error(f"Error processing message: {str(e)}")
@@ -98,6 +103,50 @@ class MQTTManager(threading.Thread):
             )
         except ValueError:
             self.logger.error(f"Invalid position format: {payload}")
+            
+    def _handle_rack_reservation(self, robot_id: str, payload: str):
+        try:
+            if payload.startswith("reserve:"):
+                ids = payload.split(":")[1].split(",")
+                id_list = [int(id) for id in ids]
+
+                can_reserve = True
+                for id in id_list:
+                    if self.rack_reservator.is_reserved(id):
+                        if self.rack_reservator.robot_at(id) != robot_id:
+                            can_reserve = False
+                            break
+
+                if can_reserve:
+                    for id in id_list:
+                        self.rack_reservator.reserve(id, robot_id)
+                    self.logger.info(f"Rack reservation for {robot_id}: {id_list}")
+                    self.client.publish(f"robot/{robot_id}/racks", f"done", qos=1)
+                else:
+                    self.logger.info(f"Reservation failed for {robot_id}, already occupied: {id_list}")
+                    self.client.publish(f"robot/{robot_id}/racks", f"occupied:{','.join(map(str, id_list))}", qos=1)
+            else:
+                self._hande_rack_freeing(robot_id, payload)
+        except Exception as e:
+            self.logger.error(f"Error in rack reservation for {robot_id}: {e}")
+            self.client.publish(f"robot/{robot_id}/racks", "error", qos=1)
+
+
+    def _hande_rack_freeing(self, robot_id: str, payload: str):
+        try:
+            if payload.startswith("free:"):
+                ids = payload.split(":")[1].split(",")
+                id_list = [int(id) for id in ids]
+                
+                for id in id_list:
+                    self.rack_reservator.free_by_index(id)
+                   
+                self.client.publish(f"robot/{robot_id}/racks", f"done", qos=1)
+
+        except ValueError:
+            self.logger.error(f"Invalid Free Format: {payload}")
+    
+    # TODO: Rest Area x=-3,y=-4
 
     def run(self):
         try:
