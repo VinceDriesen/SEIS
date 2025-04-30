@@ -40,7 +40,15 @@ class TurtleBotSM:
     It handles the robot's sensors, motors, and state transitions.
     """
 
-    def __init__(self, name: str, robot: Robot, time_step: float, max_speed: float, robot_id: int, mqtt_thread):
+    def __init__(
+        self,
+        name: str,
+        robot: Robot,
+        time_step: float,
+        max_speed: float,
+        robot_id: int,
+        mqtt_thread,
+    ):
         self.name = name
         self.robot = robot
         self.time_step = time_step
@@ -53,7 +61,7 @@ class TurtleBotSM:
         self.robot_id = robot_id
         self.rack_map = RackAreaMap()
         self.mqtt_thread = mqtt_thread
-        
+
         self._reservated_racks: Set[int] = set()
 
         self._enableSensors()
@@ -81,7 +89,7 @@ class TurtleBotSM:
         self._move_to_path: list | None = None
         self._move_to_path_index = 0
         self._move_to_state: str | None = None
-        
+
         self._explore_state: str | None = None
         self._explore_processed_targets: set = set()
         self._explore_count = 0
@@ -107,20 +115,22 @@ class TurtleBotSM:
 
     def _initalizeSub(self):
         print("Initializing special sub!")
-        
+
         self.position = [0.0, float(self.robot_id), 0.0]
         compass_val = self.getHeadingFromCompass()
         if compass_val is not None:
             self.position[2] = compass_val
-        print(f"Robot {self.name}: Initial estimated position: {self.getEstimatedPosition()}")
+        print(
+            f"Robot {self.name}: Initial estimated position: {self.getEstimatedPosition()}"
+        )
         # GPS dingen
         # gps_values = self.gps.getValues()
         # if gps_values:
-            # self.position[0] = gps_values[0]
-            # self.position[1] = gps_values[1]
-            # compass_val = self.getHeadingFromCompass()
-            # if compass_val:
-                # self.position[2] = compass_val
+        # self.position[0] = gps_values[0]
+        # self.position[1] = gps_values[1]
+        # compass_val = self.getHeadingFromCompass()
+        # if compass_val:
+        # self.position[2] = compass_val
         # print(f"Robot {self.name}: Initial estimated position: {self.getGpsPosition()}")
 
     def _enableSensors(self):
@@ -165,7 +175,7 @@ class TurtleBotSM:
         heading = math.atan2(x_c, y_c)
         return self.normAngle(heading)
 
-    def normAngle(self, angle: float, rotate = False) -> float:
+    def normAngle(self, angle: float, rotate=False) -> float:
         newAngle = angle % (2 * math.pi)
         if rotate:
             if newAngle > math.pi:
@@ -320,9 +330,11 @@ class TurtleBotSM:
             ):
                 self._move_to_success = True
                 print(f"Robot {self.name}: Move to task completed successfully.")
-                if self.mqtt_thread.handle_rack_reservation(self._reservated_racks, reservation=False):
+                if self.mqtt_thread.handle_rack_reservation(
+                    self._reservated_racks, reservation=False
+                ):
                     self._reservated_racks = set()
-                
+
             if self._explore_state == EXPLORE_STATE_MOVING_TO_FRONTIER:
                 self._current_action = TASK_EXPLORE
                 print(
@@ -333,7 +345,7 @@ class TurtleBotSM:
 
         # Post position to mqtt topic
         self.mqtt_thread.publish_location((self.position[0], self.position[1]))
-        
+
         return self._current_action != STATE_IDLE
 
     def _updateMovingAction(self) -> bool:
@@ -374,7 +386,9 @@ class TurtleBotSM:
 
         current_heading = self.position[2]
 
-        error = self.normAngle(self._rotate_target_angle_rad - current_heading, rotate=True)
+        error = self.normAngle(
+            self._rotate_target_angle_rad - current_heading, rotate=True
+        )
 
         if abs(error) <= ROTATION_TOLERANCE_RAD:
             print(
@@ -383,7 +397,7 @@ class TurtleBotSM:
             return False
 
         return True
-    
+
     def _selectCandidate(self, grid_obj, current_theta, current_pos_dict):
         frontier_cells_rc = grid_obj.find_frontier_cells()
 
@@ -585,7 +599,7 @@ class TurtleBotSM:
             return np.clip(grid_x, 0, grid_width - 1), np.clip(
                 grid_y, 0, grid_height - 1
             )
-            
+
         def grid_to_real(grid_x, grid_y, grid_shape, grid_extent):
             grid_height, grid_width = grid_shape
             xmin, xmax, ymin, ymax = grid_extent
@@ -629,16 +643,18 @@ class TurtleBotSM:
                 simplified_path = self.simplifyPath(path, grid)
                 if simplified_path:
                     racks: Set[int] = set()
-                    
+
                     for gx, gy in simplified_path:
                         rx, ry = grid_to_real(gx, gy, buffered_grid_np.shape, extent)
                         rack_index = self.rack_map.find_area(rx, ry)
                         if rack_index is not None:
                             racks.add(rack_index)
-                    
+
                     if len(racks) != 0:
-                        print(f'Found racks: {racks}')
-                        reservated: bool = self.mqtt_thread.handle_rack_reservation(racks)
+                        print(f"Found racks: {racks}")
+                        reservated: bool = self.mqtt_thread.handle_rack_reservation(
+                            racks
+                        )
                         if reservated:
                             self._move_to_path = simplified_path
                             self._move_to_path_index = 0
@@ -649,9 +665,9 @@ class TurtleBotSM:
                             self._reservated_racks = racks
                             print(f"Simplified path found with runs: {runs}")
                             return True
-                        else: 
-                            self._move_to_state= MOVE_TO_STATE_FAILED
-                            print(f'Couldn\'t Reserver Racks: {racks}')
+                        else:
+                            self._move_to_state = MOVE_TO_STATE_FAILED
+                            print(f"Couldn't Reserver Racks: {racks}")
                             return False
                 else:
                     self._move_to_state = MOVE_TO_STATE_FAILED
@@ -667,7 +683,7 @@ class TurtleBotSM:
             print(f"Error during move_to planning: {e}")
             self._move_to_state = MOVE_TO_STATE_FAILED
             return False
-        
+
         finally:
             pass
 
@@ -762,7 +778,7 @@ class TurtleBotSM:
             self._move_to_state = MOVE_TO_STATE_FAILED
             print("Move to task failed.")
             return False
-    
+
     def addBufferToGrid(self, grid, extent, buffer_distance=0.2):
         """Verbeterde versie met gegarandeerde minimale buffer"""
         cell_size = (extent[1] - extent[0]) / grid.shape[1]
@@ -898,6 +914,6 @@ class TurtleBotSM:
             if not grid.node(x, y).walkable:
                 return False
         return True
-    
+
     def save_occcupancy_map(self):
         self.lidar.save_occupancy_map()

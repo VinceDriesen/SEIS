@@ -25,7 +25,7 @@ class Process:
         print(f"timestep: {self.TIME_STEP}")
         self.MAX_SPEED = 6.28
         self.tasks = queue.Queue()
-        print(f'Explore: {explore}')
+        print(f"Explore: {explore}")
         if explore and self.robot_id == 0:
             self._add_task({"type": TASK_EXPLORE, "params": {}})
             print("Added Exploration Task")
@@ -37,14 +37,14 @@ class Process:
 
     def start_robot(self):
         self.mqtt_client = MQTTController(self.robot_id, self._add_task)
-        
+
         self.bot = TurtleBotSM(
             name=f"exploration_bot",
             robot=self.robot,
             time_step=self.TIME_STEP,
             max_speed=self.MAX_SPEED,
             robot_id=self.robot_id,
-            mqtt_thread=self.mqtt_client
+            mqtt_thread=self.mqtt_client,
         )
         simulation_thread = Thread(target=self.run_simulation)
 
@@ -61,21 +61,22 @@ class Process:
         has_explored = False
         log_interval = 1.0  # Log elke seconde (aanpasbaar)
         last_log_time = time()
-        
+
         try:
             print("\n--- Entering main Webots simulation loop ---")
             current_task = None
             while self.robot.step(self.TIME_STEP) != -1:
                 robot_is_currently_busy = self.bot.updateTaskExecution()
 
-
                 # Logger for positions
                 current_time = time()
                 if current_time - last_log_time >= log_interval:
                     position = self.bot.getEstimatedPosition()
-                    print(f"Robot {self.bot.name} - Position: x={position['x_value']:.3f}, y={position['y_value']:.3f}, theta={math.degrees(position['theta_value']):.2f} deg")
+                    print(
+                        f"Robot {self.bot.name} - Position: x={position['x_value']:.3f}, y={position['y_value']:.3f}, theta={math.degrees(position['theta_value']):.2f} deg"
+                    )
                     last_log_time = current_time
-                ################################### 
+                ###################################
 
                 if not robot_is_currently_busy:
                     if current_task is not None:
@@ -108,6 +109,7 @@ class Process:
         except Exception as e:
             print(f"Error in process {self.name} start sequence: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
