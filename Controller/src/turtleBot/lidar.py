@@ -176,12 +176,12 @@ class OccupancyGrid:
         if not math.isfinite(x):
             x = half if x > 0 else -half
         else:
-            x = max(min(x,  half), -half)
+            x = max(min(x, half), -half)
 
         if not math.isfinite(y):
             y = half if y > 0 else -half
         else:
-            y = max(min(y,  half), -half)
+            y = max(min(y, half), -half)
 
         # 2) convert to grid indices
         gx = (x + half) / self.map_resolution
@@ -194,6 +194,7 @@ class OccupancyGrid:
         grid_y = np.clip(grid_y, 0, self.grid_cells - 1)
 
         return np.array([grid_x, grid_y], dtype=int)
+
     def update_grid(self, sensor_pos, hits):
         """Werk de occupancy grid bij op basis van Lidar-metingen"""
         for hit in hits:
@@ -219,44 +220,46 @@ class OccupancyGrid:
         known = (prob_grid <= 0.3) | (prob_grid >= 0.7)
         explored = np.sum(known)
         return explored / self.grid.size >= self.coverage_threshold
-    
+
     def save_occupancy_map(self, filepath: str, log_odds: bool = False):
         """
         Save the current occupancy grid to an image file.
-        
+
         :param filepath: Path (including filename) where the image will be saved.
         :param log_odds: If True, saves the raw log-odds grid; otherwise saves the probability grid.
         """
         if log_odds:
             data = self.grid
-            title = 'Log-Odds Occupancy Grid'
-            cmap = 'RdBu'
+            title = "Log-Odds Occupancy Grid"
+            cmap = "RdBu"
             vmin, vmax = -5, 5
         else:
             data = self.get_probability_grid()
-            title = 'Probability Occupancy Grid'
-            cmap = 'viridis'
+            title = "Probability Occupancy Grid"
+            cmap = "viridis"
             vmin, vmax = 0.0, 1.0
 
         fig, ax = plt.subplots(figsize=(6, 6))
         extent = [
-            -self.map_size / 2, self.map_size / 2,
-            -self.map_size / 2, self.map_size / 2
+            -self.map_size / 2,
+            self.map_size / 2,
+            -self.map_size / 2,
+            self.map_size / 2,
         ]
         img = ax.imshow(
             data.T,
-            origin='lower',
+            origin="lower",
             extent=extent,
             cmap=cmap,
             vmin=vmin,
             vmax=vmax,
-            interpolation='nearest'
+            interpolation="nearest",
         )
         ax.set_title(title)
-        ax.set_xlabel('X (m)')
-        ax.set_ylabel('Y (m)')
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
         cbar = fig.colorbar(img, ax=ax)
-        cbar.set_label('Probability' if not log_odds else 'Log-Odds')
+        cbar.set_label("Probability" if not log_odds else "Log-Odds")
 
         plt.tight_layout()
         fig.savefig(filepath, dpi=300)
@@ -365,5 +368,7 @@ class LidarFunctions:
         ]
         return grid_prob.T, extent
 
-    def save_occupancy_map(self, filepath: str = 'occupancy_map.png', log_odds: bool = False):
+    def save_occupancy_map(
+        self, filepath: str = "occupancy_map.png", log_odds: bool = False
+    ):
         self.occupancyGrid.save_occupancy_map(filepath)

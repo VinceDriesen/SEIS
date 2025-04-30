@@ -2,8 +2,13 @@ from typing import List, Tuple, Optional
 
 
 class RackArea:
-    def __init__(self, top_right: Tuple[float, float], bottom_right: Tuple[float, float],
-                 top_left: Tuple[float, float], bottom_left: Tuple[float, float]):
+    def __init__(
+        self,
+        top_right: Tuple[float, float],
+        bottom_right: Tuple[float, float],
+        top_left: Tuple[float, float],
+        bottom_left: Tuple[float, float],
+    ):
         self.points = [top_right, bottom_right, top_left, bottom_left]
         xs = [p[0] for p in self.points]
         ys = [p[1] for p in self.points]

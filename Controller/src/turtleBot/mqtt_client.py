@@ -57,9 +57,7 @@ class MQTTController(threading.Thread):
                 return
             self._last_coordinates = coordinates
             x, y = coordinates
-            self.client.publish(
-                f"robot/{self.robot_id}/pos", f"{x:.2f},{y:.2f}", qos=1
-            )
+            self.client.publish(f"robot/{self.robot_id}/pos", f"{x:.2f},{y:.2f}", qos=1)
 
     def handle_rack_reservation(self, racks: set, reservation=True) -> bool:
         response_event = threading.Event()
@@ -76,7 +74,7 @@ class MQTTController(threading.Thread):
 
         topic = f"robot/{self.robot_id}/racks"
         rack_list_str = ",".join(map(str, sorted(racks)))
-        
+
         if reservation:
             # Publish Message
             self.client.publish(topic, f"reserve:{rack_list_str}", qos=1)
@@ -84,7 +82,7 @@ class MQTTController(threading.Thread):
         else:
             self.client.publish(topic, f"free:{rack_list_str}", qos=1)
             print("Freeing Racks")
-            
+
         # Subscribe for callback
         self.client.subscribe(topic)
         self.client.message_callback_add(topic, on_rack_reply)
@@ -92,7 +90,7 @@ class MQTTController(threading.Thread):
         # Start the loop in a separate thread if it's not already running
         self.client.loop_start()
         print("Waiting for response...")
-        
+
         success = response_event.wait(timeout=5)
         self.client.message_callback_remove(topic)
         self.client.unsubscribe(topic)
@@ -102,8 +100,8 @@ class MQTTController(threading.Thread):
             print("Rack reservation timed out")
             return False
 
-        return response.lower() == "done"        
-    
+        return response.lower() == "done"
+
     def run(self):
         while True:
             try:

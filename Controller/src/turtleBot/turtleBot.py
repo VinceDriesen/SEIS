@@ -39,11 +39,11 @@ class TurtleBot:
         # x_gps, y_gps, _ = self.get_gps_position()  # Ignore Z coordinate
         # theta = self.get_heading_from_compass()  # Updated heading
         # self.position = list((x_gps, y_gps, theta))
-        
-        self.position = [0.0,0.0,0.0]
-        self.previous_left_encoder = 0.0        
-        self.previous_right_encoder = 0.0        
-        
+
+        self.position = [0.0, 0.0, 0.0]
+        self.previous_left_encoder = 0.0
+        self.previous_right_encoder = 0.0
+
         self.lidarFunc = LidarFunctions()
 
         # Parameter om max velocity mee te vermenigvuldigen
@@ -72,7 +72,7 @@ class TurtleBot:
         self.lidarMotor2: Motor = self.robot.getDevice("LDS-01_secondary_motor")
 
         self.compass: Compass = self.robot.getDevice("compass")
-        
+
         # GPS niet meer nodig
         # self.gps: GPS = self.robot.getDevice("gps")
 
@@ -84,7 +84,7 @@ class TurtleBot:
         self.rightMotorSens.enable(self.timeStep)
         self.lidarSens.enable(self.timeStep)
         self.compass.enable(self.timeStep)
-        
+
         # GPS niet meer nodig
         # self.gps.enable(self.timeStep)
 
@@ -98,7 +98,7 @@ class TurtleBot:
     def start_lidar(self):
         self.lidarFunc.scan(self.lidarSens, self.get_position())
 
-    # Gps niet meer nodig 
+    # Gps niet meer nodig
     # def get_gps_position(self):
     #     return self.gps.getValues()
 
@@ -213,6 +213,7 @@ class TurtleBot:
 
         self.leftMotor.setVelocity(0)
         self.rightMotor.setVelocity(0)
+
     # GPS niet meer nodig
     # def fix_position(self):
     #     """
