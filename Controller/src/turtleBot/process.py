@@ -5,6 +5,7 @@ from controller import Robot
 import os
 import queue
 from threading import Thread
+import math
 
 
 class Process:
@@ -58,11 +59,23 @@ class Process:
     def run_simulation(self):
         print(f"Starting process {self.name} with PID {self.pid}")
         has_explored = False
+        log_interval = 1.0  # Log elke seconde (aanpasbaar)
+        last_log_time = time()
+        
         try:
             print("\n--- Entering main Webots simulation loop ---")
             current_task = None
             while self.robot.step(self.TIME_STEP) != -1:
                 robot_is_currently_busy = self.bot.updateTaskExecution()
+
+
+                # Logger for positions
+                current_time = time()
+                if current_time - last_log_time >= log_interval:
+                    position = self.bot.getEstimatedPosition()
+                    print(f"Robot {self.bot.name} - Position: x={position['x_value']:.3f}, y={position['y_value']:.3f}, theta={math.degrees(position['theta_value']):.2f} deg")
+                    last_log_time = current_time
+                ################################### 
 
                 if not robot_is_currently_busy:
                     if current_task is not None:
