@@ -8,9 +8,9 @@ PROTO Rack [
 Solid {
   translation IS translation
   children [
-    # Vertical posts every meter (and on sides)
+    # Vertical posts every ~0.375m (1.5m / 4) and on ends
     Transform {
-      translation -1.95 0 0.15
+      translation -0.75 0 0.15
       children [
         Shape {
           geometry Box { size 0.05 0.05 0.3 }
@@ -19,7 +19,7 @@ Solid {
       ]
     }
     Transform {
-      translation -0.95 0 0.15
+      translation -0.375 0 0.15
       children [
         Shape {
           geometry Box { size 0.05 0.05 0.3 }
@@ -37,7 +37,7 @@ Solid {
       ]
     }
     Transform {
-      translation 0.95 0 0.15
+      translation 0.375 0 0.15
       children [
         Shape {
           geometry Box { size 0.05 0.05 0.3 }
@@ -46,7 +46,7 @@ Solid {
       ]
     }
     Transform {
-      translation 1.95 0 0.15
+      translation 0.75 0 0.15
       children [
         Shape {
           geometry Box { size 0.05 0.05 0.3 }
@@ -60,7 +60,7 @@ Solid {
       translation 0 0 0.05
       children [
         Shape {
-          geometry Box { size 4 0.05 0.01 }
+          geometry Box { size 1.5 0.05 0.01 }
           appearance PBRAppearance { baseColor 0.8 0.1 0.1 }
         }
       ]
@@ -70,7 +70,7 @@ Solid {
       translation 0 0 0.15
       children [
         Shape {
-          geometry Box { size 4 0.05 0.01 }
+          geometry Box { size 1.5 0.05 0.01 }
           appearance PBRAppearance { baseColor 0.8 0.1 0.1 }
         }
       ]
@@ -80,7 +80,7 @@ Solid {
       translation 0 0 0.25
       children [
         Shape {
-          geometry Box { size 4 0.05 0.01 }
+          geometry Box { size 1.5 0.05 0.01 }
           appearance PBRAppearance { baseColor 0.8 0.1 0.1 }
         }
       ]
@@ -92,7 +92,7 @@ Solid {
       Transform {
         translation 0 0 0.15
         children [
-          Box { size 4 0.1 0.3 }
+          Box { size 1.5 0.1 0.3 }
         ]
       }
     ]
