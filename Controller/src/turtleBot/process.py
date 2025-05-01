@@ -97,6 +97,8 @@ class Process:
                             print("Exploration Done")
                             has_explored = True
                             img_base64 = self.bot.save_occcupancy_map()
+                            occupancy_map = self.bot.lidar.get_occupancy_grid()
+                            self.mqtt_client.sync_occupancy_map(occupancy_map)
                             self.mqtt_client.publish_exploration_done(img_base64)
 
 

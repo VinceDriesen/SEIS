@@ -349,6 +349,14 @@ class LidarFunctions:
             img.set_data(grid_data)
             img.set_clim(vmin=-2, vmax=2)  # Zorgt dat de kleuren consistent blijven
             plt.pause(0.1)
+            
+    def set_occupancy_grid(self, occupancy_map):
+        """
+        Zet de occupancy grid in de Lidar klasse
+        :param occupancy_map: Occupancy map in base64 formaat
+        """
+        # Decodeer de base64 string
+        self.occupancyGrid.grid = occupancy_map
 
     def get_occupancy_grid(self):
         """

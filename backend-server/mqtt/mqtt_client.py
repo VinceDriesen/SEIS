@@ -88,6 +88,16 @@ class MQTTManager(threading.Thread):
             img_base64 = payload.split("done:exploration_image:")[1]
             self.robots[robot_id]["occupancy_image"] = img_base64
             self.logger.info(f"Received occupancy map image from {robot_id}")
+            
+        elif payload.startswith("done:occupancy_map:"):
+            occupancy_map = payload.split("done:occupancy_map:")[1]
+            self.robots[robot_id]["occupancy_map"] = occupancy_map
+            self.logger.info(f"Received occupancy map from {robot_id}")
+            
+            bot = self.robots[robot_id].get("bot")
+            if bot:
+                bot.lidar.set_occupancy_grid(occupancy_map)
+                self.logger.info(f"Updated occupancy map for {robot_id}")
 
         elif payload.startswith("done:"):
             _, job_id = payload.split(":", 1)
