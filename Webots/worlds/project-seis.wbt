@@ -10,8 +10,8 @@ WorldInfo {
   physicsDisableAngularThreshold 0
 }
 Viewpoint {
-  orientation 0.014364606775560002 0.9992081617200449 -0.03710401089143871 0.7392835630416507
-  position -9.370356277310904 -0.22927984438553883 7.878633742418073
+  orientation 0.06831275335801615 0.9831080971649458 -0.16979940228801318 0.7768707152255386
+  position -9.167531286758432 0.7715430109102761 8.05974096701797
   follow "rectangle arena"
 }
 TexturedBackground {
@@ -24,6 +24,7 @@ RectangleArena {
   wallHeight 0.3
 }
 DEF robot_0 Robot {
+  translation -2.2 -2.2 0
   children [
     GPS {
       translation -0.03 0 0.1
@@ -1202,7 +1203,7 @@ Group {
   ]
 }
 DEF robot_1 Robot {
-  translation 0 1 0
+  translation -2.2 -1.8 0
   children [
     GPS {
       translation -0.03 0 0.1
@@ -2317,7 +2318,7 @@ DEF robot_1 Robot {
   supervisor TRUE
 }
 DEF robot_2 Robot {
-  translation 0 2 0
+  translation -2.2 -1.5 0
   children [
     GPS {
       translation -0.03 0 0.1

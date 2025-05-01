@@ -40,7 +40,7 @@ class TurtleBotSM:
     It handles the robot's sensors, motors, and state transitions.
     """
 
-    def __init__(self, name: str, robot: Robot, time_step: float, max_speed: float, robot_id: int, mqtt_thread):
+    def __init__(self, name: str, robot: Robot, time_step: float, max_speed: float, robot_id: int, mqtt_thread, start_position):
         self.name = name
         self.robot = robot
         self.time_step = time_step
@@ -65,7 +65,6 @@ class TurtleBotSM:
 
         # Init alle variables voor de state machine, ik krijg hier echt depressie van hoor
         self._current_action: str = STATE_IDLE
-        self.position = [0.0, 0.0, 0.0]
         self._prev_left_encoder = 0.0
         self._prev_right_encoder = 0.0
         self._is_first_update = True
@@ -93,8 +92,7 @@ class TurtleBotSM:
         self._explore_max_stagnation_iterations = 5
 
         self.velocity_norm = 0.3
-        self.nonMeasuredPosition = [0.0, 0.0, 0.0]
-        self.position = [0.0, float(self.robot_id), 0.0]
+        self.position = start_position
 
         self._move_to_success = False
 

@@ -36,6 +36,12 @@ class Process:
         return f"Process(name={self.name}, pid={self.pid})"
 
     def start_robot(self):
+        print(f"Starting robot {self.robot_id} with PID {self.pid}")
+        robotPositoins = {
+            0: [-2.2, -2.2, 0],
+            1: [-2.2, -1.8, 0],
+            2: [-2.2, -1.5, 0]
+        }
         self.mqtt_client = MQTTController(self.robot_id, self._add_task)
         
         self.bot = TurtleBotSM(
@@ -44,7 +50,8 @@ class Process:
             time_step=self.TIME_STEP,
             max_speed=self.MAX_SPEED,
             robot_id=self.robot_id,
-            mqtt_thread=self.mqtt_client
+            mqtt_thread=self.mqtt_client,
+            start_position=robotPositoins.get(self.robot_id),
         )
         simulation_thread = Thread(target=self.run_simulation)
 
