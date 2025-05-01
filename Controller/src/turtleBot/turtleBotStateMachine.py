@@ -320,7 +320,8 @@ class TurtleBotSM:
             ):
                 self._move_to_success = True
                 print(f"Robot {self.name}: Move to task completed successfully.")
-                if self.mqtt_thread.handle_rack_reservation(self._reservated_racks, reservation=False):
+                
+                if self._reservated_racks and self.mqtt_thread.handle_rack_reservation(self._reservated_racks, reservation=False):
                     self._reservated_racks = set()
                 
             if self._explore_state == EXPLORE_STATE_MOVING_TO_FRONTIER:
@@ -638,7 +639,10 @@ class TurtleBotSM:
                     
                     if len(racks) != 0:
                         print(f'Found racks: {racks}')
-                        reservated: bool = self.mqtt_thread.handle_rack_reservation(racks)
+                        if self._reservated_racks == racks:
+                            reservated = True
+                        else:
+                            reservated: bool = self.mqtt_thread.handle_rack_reservation(racks)
                         if reservated:
                             self._move_to_path = simplified_path
                             self._move_to_path_index = 0

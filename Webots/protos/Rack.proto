@@ -85,6 +85,27 @@ Solid {
         }
       ]
     }
+
+    Transform {
+      translation 0 0 0.10 # Midden tussen 0.05 en 0.15
+      children [
+        Shape {
+          geometry Box { size 1.4 0.04 0.09 } # Iets kleiner dan de opening
+          appearance PBRAppearance { baseColor 0.6 0.3 0 } # Bruine kleur
+        }
+      ]
+    }
+
+    # Vulling tussen de middelste en bovenste plank
+    Transform {
+      translation 0 0 0.20 # Midden tussen 0.15 en 0.25
+      children [
+        Shape {
+          geometry Box { size 1.4 0.04 0.09 } # Iets kleiner dan de opening
+          appearance PBRAppearance { baseColor 0.6 0.3 0 } # Bruine kleur
+        }
+      ]
+    }
   ]
   name IS name
   boundingObject Group {
