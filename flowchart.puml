@@ -1,0 +1,33 @@
+@startuml flowchart
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam linetype ortho
+
+
+
+' FRONTEND
+rectangle "Frontend" as FE #LightBlue {
+  [Send Job] as SendJob
+  [Show jobs] as ShowJobs
+}
+
+' BACKEND
+rectangle "Mqtt" as BE #LightGreen {
+  [Mqtt Webots] as MqttWebots
+  [Mqtt Backend] as MqttBackend
+}
+
+rectangle "Webots" as Webots #LightYellow {
+  [execute_task] as ExecuteTask
+  [executed_task] as ExecutedTask
+}
+
+SendJob --> MqttBackend : post new job
+MqttWebots --> ExecuteTask : execute task
+
+ExecutedTask --> MqttWebots : post job done
+MqttBackend --> ShowJobs : show job donej
+
+
+@enduml
