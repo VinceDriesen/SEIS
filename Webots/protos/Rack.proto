@@ -1,5 +1,3 @@
-#VRML_SIM R2025a utf8
-
 PROTO Rack [
   field SFVec3f translation 0 0 0
   field SFString name "rack"
@@ -82,6 +80,28 @@ Solid {
         Shape {
           geometry Box { size 1.5 0.05 0.01 }
           appearance PBRAppearance { baseColor 0.8 0.1 0.1 }
+        }
+      ]
+    }
+
+    # Blok aan de voorkant (lidar blokker)
+    Transform {
+      translation 0 0 0.15 # Centrale hoogte
+      children [
+        Shape {
+          geometry Box { size 1.5 0.01 0.3 }
+          appearance Appearance {}
+        }
+      ]
+    }
+
+    # Blok aan de achterkant (lidar blokker)
+    Transform {
+      translation 0 0 0.15 # Centrale hoogte
+      children [
+        Shape {
+          geometry Box { size 1.5 0.01 0.3 }
+          appearance Appearance {}
         }
       ]
     }
