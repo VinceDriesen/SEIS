@@ -2,7 +2,7 @@ from typing import Set
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 import numpy as np
-from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass
+from controller import Motor, Robot, PositionSensor, DistanceSensor, Lidar, Compass, GPS
 import math
 from .lidar import LidarFunctions
 from .racks import RackAreaMap
@@ -108,20 +108,20 @@ class TurtleBotSM:
     def _initalizeSub(self):
         print("Initializing special sub!")
         
-        self.position = [0.0, float(self.robot_id), 0.0]
-        compass_val = self.getHeadingFromCompass()
-        if compass_val is not None:
-            self.position[2] = compass_val
-        print(f"Robot {self.name}: Initial estimated position: {self.getEstimatedPosition()}")
+        # self.position = [0.0, float(self.robot_id), 0.0]
+        # compass_val = self.getHeadingFromCompass()
+        # if compass_val is not None:
+            # self.position[2] = compass_val
+        # print(f"Robot {self.name}: Initial estimated position: {self.getEstimatedPosition()}")
         # GPS dingen
-        # gps_values = self.gps.getValues()
-        # if gps_values:
-            # self.position[0] = gps_values[0]
-            # self.position[1] = gps_values[1]
-            # compass_val = self.getHeadingFromCompass()
-            # if compass_val:
-                # self.position[2] = compass_val
-        # print(f"Robot {self.name}: Initial estimated position: {self.getGpsPosition()}")
+        gps_values = self.gps.getValues()
+        if gps_values:
+            self.position[0] = gps_values[0]
+            self.position[1] = gps_values[1]
+            compass_val = self.getHeadingFromCompass()
+            if compass_val:
+                self.position[2] = compass_val
+        print(f"Robot {self.name}: Initial estimated position: {self.getEstimatedPosition()}")
 
     def _enableSensors(self):
         """Enables all sensors."""
@@ -141,7 +141,7 @@ class TurtleBotSM:
         self.lidarMotor2: Motor = self.robot.getDevice("LDS-01_secondary_motor")
 
         self.compass: Compass = self.robot.getDevice("compass")
-        # self.gps: GPS = self.robot.getDevice("gps")
+        self.gps: GPS = self.robot.getDevice("gps")
 
         self.frontDistSens.enable(self.time_step)
         self.rearDistSens.enable(self.time_step)
@@ -151,7 +151,7 @@ class TurtleBotSM:
         self.rightMotorSens.enable(self.time_step)
         self.lidarSens.enable(self.time_step)
         self.compass.enable(self.time_step)
-        # self.gps.enable(self.time_step)
+        self.gps.enable(self.time_step)
 
     def getHeadingFromCompass(self) -> float | None:
         """
@@ -269,11 +269,11 @@ class TurtleBotSM:
         self.position[0] += delta_distance_linear * math.cos(heading_for_odometry)
         self.position[1] += delta_distance_linear * math.sin(heading_for_odometry)
 
-        # compass_heading = self.getHeadingFromCompass()
-        # if compass_heading is not None:
-        #     self.position[2] = compass_heading
-        # else:
-        self.position[2] = self.normAngle(self.position[2] + delta_theta_odometry)
+        compass_heading = self.getHeadingFromCompass()
+        if compass_heading is not None:
+            self.position[2] = compass_heading
+        else:
+            self.position[2] = self.normAngle(self.position[2] + delta_theta_odometry)
 
     def updateTaskExecution(self) -> bool:
         """
@@ -900,4 +900,4 @@ class TurtleBotSM:
         return True
     
     def save_occcupancy_map(self):
-        self.lidar.save_occupancy_map()
+        return self.lidar.save_occupancy_map()

@@ -83,6 +83,11 @@ class MQTTManager(threading.Thread):
             job = RobotJob(job_id=str(uuid.uuid4()), x=x, y=y, created=time.time())
             self.robots[robot_id]["jobs"].append(job)
             self.logger.info(f"New job for {robot_id} at ({x}, {y})")
+         
+        elif payload.startswith("done:exploration_image:"):
+            img_base64 = payload.split("done:exploration_image:")[1]
+            self.robots[robot_id]["occupancy_image"] = img_base64
+            self.logger.info(f"Received occupancy map image from {robot_id}")
 
         elif payload.startswith("done:"):
             _, job_id = payload.split(":", 1)
@@ -212,3 +217,10 @@ class MQTTManager(threading.Thread):
         """Get list of all tracked robot IDs"""
         with self.lock:
             return list(self.robots.keys())
+        
+    def get_occupancy_map(self) -> Optional[str]:
+        """Get base64-encoded occupancy map image"""
+        with self.lock:
+            return self.robots["0"].get("occupancy_image")
+
+

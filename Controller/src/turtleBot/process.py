@@ -89,7 +89,9 @@ class Process:
                                 continue
                             print("Exploration Done")
                             has_explored = True
-                            self.bot.save_occcupancy_map()
+                            img_base64 = self.bot.save_occcupancy_map()
+                            self.mqtt_client.publish_exploration_done(img_base64)
+
 
                     try:
                         new_task = self.tasks.get(block=False)

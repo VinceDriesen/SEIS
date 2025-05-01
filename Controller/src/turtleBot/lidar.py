@@ -1,3 +1,5 @@
+from io import BytesIO
+import base64
 import math
 from controller import Lidar
 import numpy as np
@@ -229,12 +231,10 @@ class OccupancyGrid:
         """
         if log_odds:
             data = self.grid
-            title = 'Log-Odds Occupancy Grid'
             cmap = 'RdBu'
             vmin, vmax = -5, 5
         else:
             data = self.get_probability_grid()
-            title = 'Probability Occupancy Grid'
             cmap = 'viridis'
             vmin, vmax = 0.0, 1.0
 
@@ -252,15 +252,15 @@ class OccupancyGrid:
             vmax=vmax,
             interpolation='nearest'
         )
-        ax.set_title(title)
-        ax.set_xlabel('X (m)')
-        ax.set_ylabel('Y (m)')
-        cbar = fig.colorbar(img, ax=ax)
-        cbar.set_label('Probability' if not log_odds else 'Log-Odds')
+        ax.axis('off')  # Geen labels etc. als je dat wilt
 
-        plt.tight_layout()
-        fig.savefig(filepath, dpi=300)
+        buf = BytesIO()
+        fig.savefig(buf, format='png', dpi=150, bbox_inches='tight', pad_inches=0)
         plt.close(fig)
+
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        return img_base64
 
 
 class LidarFunctions:
@@ -366,4 +366,4 @@ class LidarFunctions:
         return grid_prob.T, extent
 
     def save_occupancy_map(self, filepath: str = 'occupancy_map.png', log_odds: bool = False):
-        self.occupancyGrid.save_occupancy_map(filepath)
+        return self.occupancyGrid.save_occupancy_map(filepath)

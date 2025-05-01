@@ -50,6 +50,12 @@ class MQTTController(threading.Thread):
             self.client.publish(
                 f"robot/{self.robot_id}/jobs", f"done:{x:.2f},{y:.2f}", qos=1
             )
+            
+    def publish_exploration_done(self, img_base64):
+        with self.lock:
+            self.client.publish(
+                f"robot/{self.robot_id}/jobs", f"done:exploration_image:{img_base64}", qos=1
+            )
 
     def publish_location(self, coordinates):
         with self.lock:

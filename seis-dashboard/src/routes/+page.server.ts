@@ -1,10 +1,12 @@
 import type { Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { createJob, getRobotJobLists, getRobots } from '$lib/server/backendClient';
+import { createJob, getRobotJobLists, getRobots, getOccupancyMap } from '$lib/server/backendClient';
 
 export const load = (async () => {
-    const { data: robots } = await getRobots()
+    // Haal robots op
+    const { data: robots } = await getRobots();
 
+    // Verkrijg de jobs voor elke robot
     const jobs = robots ? await Promise.all(robots.map( async (value) => {
         const { data } = await getRobotJobLists(value);
         if (data) {
@@ -13,12 +15,15 @@ export const load = (async () => {
         return null;
     })) : [];
 
+    // Verkrijg de occupancy map voor robot0 (of andere robot indien nodig)
+    const occupancyMap = robots ? await getOccupancyMap() : null;
+
     return {
         robots,
         jobs,
+        occupancyMap,  // Voeg occupancy map toe aan de return data
     };
 }) satisfies PageServerLoad;
-
 
 export const actions = {
     createJob: async ({ request }) => {

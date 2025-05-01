@@ -225,6 +225,35 @@
                     }
                 }
             }
+        },
+        "/api/occupancy-map": {
+            "get": {
+                "operationId": "backend_urls_getOccupancyMap",
+                "summary": "Get the occupancy map",
+                "parameters": [],
+                "responses": {
+                "200": {
+                    "description": "OK",
+                    "content": {
+                    "application/json": {
+                        "schema": {
+                        "$ref": "#/components/schemas/OccupancyMap"
+                        }
+                    }
+                    }
+                },
+                "403": {
+                    "description": "Forbidden",
+                    "content": {
+                    "application/json": {
+                        "schema": {
+                        "$ref": "#/components/schemas/ErrorSchema"
+                        }
+                    }
+                    }
+                }
+                }
+            }
         }
     },
     "components": {

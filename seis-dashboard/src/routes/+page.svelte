@@ -3,6 +3,8 @@
 	import type { PageProps } from "./$types";
 
     let { data, form }: PageProps = $props()
+
+    let occupancyMap = data?.occupancyMap || null;
 </script>
 
 <div class="prose max-w-none flex flex-col md:flex-row gap-4 w-full w-screen">
@@ -40,6 +42,16 @@
     </div>
 
     <div class="flex-1">
-
+        {#if occupancyMap}
+            <!-- Afbeelding van de occupancy map -->
+            <div class="occupancy-map" style="width: 100%; height: 400px; background-color: #e0e0e0; border: 2px solid #333;">
+                <!-- Gebruik de base64-string direct in de src -->
+                <img src={occupancyMap} alt="Occupancy Map" style="width: 100%; height: 100%; object-fit: contain;" />
+            </div>
+        {:else}
+            <p>Loading occupancy map...</p>
+        {/if}
     </div>
+    
+    
 </div>

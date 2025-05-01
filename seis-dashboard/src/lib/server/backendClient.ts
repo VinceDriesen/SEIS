@@ -2,9 +2,10 @@ import type { paths, components } from "$lib/types/schema";
 import { env } from "$env/dynamic/private";
 import createClient from "openapi-fetch";
 
-console.log(env.BASE_URL)
+// console.log(env.BASE_URL, "wieee")
+const base_url = 'http://backend:8000'; 
 
-const client = createClient<paths>({ baseUrl: env.BASE_URL });
+const client = createClient<paths>({ baseUrl: base_url });
 
 export type Job = components['schemas']['RobotJob']
 
@@ -67,3 +68,16 @@ export async function getRobots() {
     const { data, error } = await client.GET('/api/getRobots', {})
     return { data, error }
 }
+
+export const getOccupancyMap = async () => {
+    const { data, error } = await client.GET("/api/occupancy-map", {});
+    if (!error) {
+        // Veronderstel dat de server enkel de base64-gegevens terugstuurt
+        const base64Data = await data.trim('"');
+        
+        // Voeg de juiste prefix toe
+        return `data:image/png;base64,${base64Data}`;
+    }
+    
+    return null;
+};
