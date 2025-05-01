@@ -903,3 +903,6 @@ class TurtleBotSM:
     
     def save_occcupancy_map(self):
         return self.lidar.save_occupancy_map()
+
+    def set_occupancy_map(self, occupancy_map):
+        self.lidar.set_occupancy_grid(occupancy_map)

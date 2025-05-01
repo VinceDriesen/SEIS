@@ -42,7 +42,7 @@ class Process:
             1: [-2.2, -1.8, 0],
             2: [-2.2, -1.5, 0]
         }
-        self.mqtt_client = MQTTController(self.robot_id, self._add_task)
+        self.mqtt_client = MQTTController(self.robot_id, self._add_task, self._update_occupancy_map)
         
         self.bot = TurtleBotSM(
             name=f"exploration_bot",
@@ -130,3 +130,6 @@ class Process:
     def _add_task(self, task):
         """Thread-safe task addition"""
         self.tasks.put(task)
+        
+    def _update_occupancy_map(self, occupancy_map):
+        self.bot.set_occupancy_map(occupancy_map)

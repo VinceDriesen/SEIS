@@ -3,12 +3,13 @@ import time
 import paho.mqtt.client as mqtt
 import threading
 from .turtleBotStateMachine import TASK_MOVE_TO
+import json
 
 MQTT_BROKER = os.getenv("MQTT_BROKER_URL", "localhost")
 
 
 class MQTTController(threading.Thread):
-    def __init__(self, robot_id, add_function: callable):
+    def __init__(self, robot_id, add_function: callable, update_map_func: callable):
         super().__init__(daemon=True)
         self.robot_id = robot_id
         self.client = mqtt.Client()
@@ -16,12 +17,14 @@ class MQTTController(threading.Thread):
         self.client.on_message = self.on_message
         self._last_coordinates = [0, 0]
         self.add_task = add_function
+        self.update_map = update_map_func
         self.lock = threading.Lock()
 
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected to MQTT broker with result code {rc}")
         self.client.subscribe(f"robot/{self.robot_id}/jobs")
         self.client.subscribe(f"robot/{self.robot_id}/racks")
+        self.client.subscribe(f"occupancy_map")
 
     def on_message(self, client, userdata, msg):
         topic = msg.topic
@@ -40,6 +43,10 @@ class MQTTController(threading.Thread):
                         },
                     }
                 )
+            elif payload.startswith("occupancy_map"):
+                _, occupancy_map_json = payload.split(":")
+                occupancy_map = json.loads(occupancy_map_json)
+                self.update_map(occupancy_map)
 
         except Exception as e:
             print(f"Error processing message: {e}")
@@ -59,8 +66,9 @@ class MQTTController(threading.Thread):
             
     def sync_occupancy_map(self, occupancy_map):
         with self.lock:
+            occupancy_map_json = json.dumps(occupancy_map)
             self.client.publish(
-                f"robot/{self.robot_id}/occupancy_map", f"done:occupancy_map:{occupancy_map}", qos=1
+                f"occupancy_map", f"occupancy_map:{occupancy_map_json}", qos=1
             )
 
     def publish_location(self, coordinates):
