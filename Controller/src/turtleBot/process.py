@@ -69,13 +69,13 @@ class Process:
                 robot_is_currently_busy = self.bot.updateTaskExecution()
 
 
-                # Logger for positions
-                current_time = time()
-                if current_time - last_log_time >= log_interval:
-                    position = self.bot.getEstimatedPosition()
-                    print(f"Robot {self.bot.name} - Position: x={position['x_value']:.3f}, y={position['y_value']:.3f}, theta={math.degrees(position['theta_value']):.2f} deg")
-                    last_log_time = current_time
-                ################################### 
+                # # Logger for positions
+                # current_time = time()
+                # if current_time - last_log_time >= log_interval:
+                #     position = self.bot.getEstimatedPosition()
+                #     print(f"Robot {self.bot.name} - Position: x={position['x_value']:.3f}, y={position['y_value']:.3f}, theta={math.degrees(position['theta_value']):.2f} deg")
+                #     last_log_time = current_time
+                # ################################### 
 
                 if not robot_is_currently_busy:
                     if current_task is not None:
@@ -84,7 +84,7 @@ class Process:
                             y = current_task["params"].get("y")
                             self.mqtt_client.publish_done((x, y))
                             current_task = None
-                        if current_task["type"] == TASK_EXPLORE:
+                        elif current_task["type"] == TASK_EXPLORE:
                             if has_explored:
                                 continue
                             print("Exploration Done")
