@@ -26,10 +26,8 @@ partition Process {
                 endif
             endif
         repeat while (exception?) is (No) not (Yes)
-
     stop
 }
-
 
 partition robot {
 
@@ -55,47 +53,6 @@ partition robot {
             end
         endif
     }
-
-    partition taskMoveTo {
-        start
-        if (current_action == TASK_MOVE_TO) then (yes)
-            :move_to_state = MOVE_TO_STATE_PLANNING;
-            :current_action = TASK_MOVE_TO;
-            :return True;
-            end
-        else
-            :return False;
-            end
-        endif
-    }
-
-    partition taskRotateRel {
-        start
-        if (current_action == TASK_ROTATION_REL) then (yes)
-            :current_action = ACTION_ROTATING;
-            :move_to_state = MOVE_TO_STATE_PLANNING;
-            :return True;
-            end
-        else
-            :return False;
-            end
-        endif
-    }
-
-    partition taskMoveRel {
-        start
-        if (current_action == TASK_MOVE_REL) then (yes)
-            :current_action = ACTION_MOVING;
-            :move_to_state = MOVE_TO_STATE_PLANNING;
-            :return True;
-            end
-        else
-            :return False;
-            end
-        endif
-    }
-
-    
 
     partition update_task_execution {
         start
@@ -158,18 +115,17 @@ partition robot {
 
     partition _updateMoveToAction {
         start
-        if (current_action == TASK_MOVE_TO) then (no)
+        if (current_action != TASK_MOVE_TO) then (yes)
             :return False;
             end
         endif
 
         if (move_to_state == MOVE_TO_STATE_PLANNING) then (yes)
-
-            :find_path()
+            :find_path();
             :A* to target;
             :simplify_path();
             :add_buffer();
-
+            
             if (path_found) then (yes)
                 :_move_to_path = simplify_path;
                 :_move_to_state = MOVE_TO_STATE_MOVING;
@@ -192,12 +148,13 @@ partition robot {
     }
 
     partition _updateExploreAction {
-
         start
-        if (current_action == TASK_EXPLORE) then (no)
-            :return False; 
+        if (current_action != TASK_EXPLORE) then (yes)
+            :return False;
             end
-        elseif (explore_state == EXPLORE_STATE_START) then (yes)
+        endif
+
+        if (explore_state == EXPLORE_STATE_START) then (yes)
             :explore_state = EXPLORE_STATE_SCANNING;
             :return True;
             end
@@ -208,37 +165,44 @@ partition robot {
             end
         elseif (explore_state == EXPLORE_STATE_PLANNING) then (yes)
             :plan_path();
-            :select_frontier()
+            :select_frontier();
             :find_best_candidate();
             if (selected_candidate) then (yes)
                 :explore_state = EXPLORE_STATE_MOVING_TO_FRONTIER;
                 :return True;
                 end
+            else (no)
+                :explore_consecutive_pathfinding_failures += 1;
+                if (explore_consecutive_pathfinding_failures >= max) then (yes)
+                    :explore_state = EXPLORE_STATE_STUCK;
+                else (no)
+                    :explore_state = EXPLORE_STATE_SCANNING;
+                endif
+                :return True;
             endif
         elseif (explore_state == EXPLORE_STATE_MOVING_TO_FRONTIER) then (yes)
-            if (current_action == TASK_EXPLORE) then (yes)
-                if (_move_to_success) then (yes)
-                    :explore_count = 0
-                    :explore_state = EXPLORE_STATE_SCANNING;
-                else
-                    :explore_count = explore_count + 1;
-                    if (explore_count > MAX_EXPLORE_COUNT) then (yes)
-                        :explore_state = EXPLORE_STATE_STUCK;
-                    else
-                        :explore_state = EXPLORE_STATE_PLANNING;
-                    endif
+            if (_move_to_success) then (yes)
+                :explore_count = 0;
+                :explore_state = EXPLORE_STATE_SCANNING;
+            else (no)
+                :explore_count += 1;
+                if (explore_count > MAX_EXPLORE_COUNT) then (yes)
+                    :explore_state = EXPLORE_STATE_STUCK;
+                else (no)
+                    :explore_state = EXPLORE_STATE_PLANNING;
                 endif
-
+            endif
             :return True;
             end
-            endif
+        elseif (explore_state == EXPLORE_STATE_STUCK) then (yes)
+            :explore_state = EXPLORE_STATE_FINISHED;
+            :return False;
+            end
+        elseif (explore_state == EXPLORE_STATE_FINISHED) then (yes)
+            :return False;
+            end
         endif
-        end
     }
-
 }
-
-
-
 
 @enduml
