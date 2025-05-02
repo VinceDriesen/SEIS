@@ -66,13 +66,6 @@ export async function getRobots() {
 
 export const getOccupancyMap = async () => {
 	const { data, error } = await client.GET('/api/occupancy-map', {});
-	if (!error) {
-		// Veronderstel dat de server enkel de base64-gegevens terugstuurt
-		const base64Data = data.replace(/^"|"$/g, '');
-
-		// Voeg de juiste prefix toe
-		return `data:image/png;base64,${base64Data}`;
-	}
-
-	return null;
+	if (error || !data) return null;
+	return data;
 };

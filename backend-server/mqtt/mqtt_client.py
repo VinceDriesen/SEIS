@@ -1,3 +1,5 @@
+import base64
+import io
 import json
 import os
 import paho.mqtt.client as mqtt
@@ -8,6 +10,10 @@ from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 import uuid
 from .logic.racks import RackAreaReservation, RackAreaMap
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 @dataclass
 class RobotJob:
@@ -235,8 +241,26 @@ class MQTTManager(threading.Thread):
             return list(self.robots.keys())
         
     def get_occupancy_map(self) -> Optional[str]:
-        """Get base64-encoded occupancy map image"""
+        """
+        Get base64-encoded occupancy map image.
+        """
         with self.lock:
-            return self._occupancy_map
+            occ = self._occupancy_map
 
+        if occ is None:
+            return None
 
+        grid, params = occ
+
+        fig, ax = plt.subplots(figsize=(6, 6))
+        # if you unpacked vmin/vmax above, pass them here
+        ax.imshow(grid.T, origin='lower', cmap='viridis', interpolation='nearest')
+        ax.axis('off')
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+        buf.seek(0)
+
+        b64 = base64.b64encode(buf.read()).decode('ascii')
+        return f"data:image/png;base64,{b64}"

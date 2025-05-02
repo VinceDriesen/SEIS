@@ -126,13 +126,13 @@ def getRobotJobList(request, robot_id: int):
         return 403, {"message": "Could not yet job list from robot"}
     
     
-@api.get("/occupancy-map", response={200: str, 404: ErrorSchema})
+@api.get("/occupancy-map", response={200: str, 403: ErrorSchema})
 def getOccupancyMap(request):
     image = manager.get_occupancy_map()
     if image:
         return 200, image
     else:
-        return 404, {"message": "No occupancy map image available"}
+        return 403, {"message": "No occupancy map image available"}
 
 
 
