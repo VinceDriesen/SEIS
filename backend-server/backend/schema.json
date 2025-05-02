@@ -125,6 +125,19 @@
                 }
             }
         },
+        "/api/robotStream": {
+            "get": {
+                "operationId": "backend_urls_robot_stream",
+                "summary": "Robot Stream",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "description": "SSE endpoint that streams an array of up to three robot positions,\ncalling manager.get_position('0'), ('1'), and ('2') each iteration."
+            }
+        },
         "/api/getRobotStatus": {
             "get": {
                 "operationId": "backend_urls_getRobotStatus",
@@ -203,6 +216,36 @@
                 }
             }
         },
+        "/api/occupancy-map": {
+            "get": {
+                "operationId": "backend_urls_getOccupancyMap",
+                "summary": "Getoccupancymap",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "title": "Response",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorSchema"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/getRobots": {
             "get": {
                 "operationId": "backend_urls_getRobots",
@@ -223,35 +266,6 @@
                             }
                         }
                     }
-                }
-            }
-        },
-        "/api/occupancy-map": {
-            "get": {
-                "operationId": "backend_urls_getOccupancyMap",
-                "summary": "Get the occupancy map",
-                "parameters": [],
-                "responses": {
-                "200": {
-                    "description": "OK",
-                    "content": {
-                    "application/json": {
-                        "schema": {
-                        "$ref": "#/components/schemas/OccupancyMap"
-                        }
-                    }
-                    }
-                },
-                "403": {
-                    "description": "Forbidden",
-                    "content": {
-                    "application/json": {
-                        "schema": {
-                        "$ref": "#/components/schemas/ErrorSchema"
-                        }
-                    }
-                    }
-                }
                 }
             }
         }

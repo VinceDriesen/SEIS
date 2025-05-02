@@ -15,8 +15,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from typing import List, Tuple
+import json
+import time
+from typing import Dict, Generator, List, Tuple
 from django.contrib import admin
+from django.http import StreamingHttpResponse
 from django.urls import path
 from ninja import NinjaAPI, Schema
 from mqtt import MQTTManager, RobotPosition, RobotJob
@@ -54,6 +57,60 @@ def getRobotPos(request, robot_id: int):
     else:
         return 403, {"message": "Could not retrieve robot position"}
 
+
+@api.get("/robotStream", auth=None)
+def robot_stream(request) -> StreamingHttpResponse:
+    """
+    SSE endpoint that streams an array of up to three robot positions,
+    calling manager.get_position('0'), ('1'), and ('2') each iteration.
+    """
+    def event_generator() -> Generator[bytes, None, None]:
+        robot_ids = ["0", "1", "2"]
+
+        # Immediately send whatever we have at startup
+        initial_positions = _gather_positions(robot_ids)
+        yield f"data: {json.dumps(initial_positions)}\n\n".encode("utf-8")
+
+        last_ping = time.time()
+        while True:
+            # send keep‑alive every 15s so intermediate proxies don't drop us
+            if time.time() - last_ping > 15:
+                yield b": ping\n\n"
+                last_ping = time.time()
+
+            # fetch the latest positions
+            positions = _gather_positions(robot_ids)
+            yield f"data: {json.dumps(positions)}\n\n".encode("utf-8")
+
+            # throttle updates (adjust as desired)
+            time.sleep(1)
+
+    return StreamingHttpResponse(
+        event_generator(),
+        content_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+def _gather_positions(robot_ids: List[str]) -> List[Dict]:
+    """
+    Calls manager.get_position for each robot_id, and returns a list
+    of position dicts for those robots that are currently known.
+    """
+    results = []
+    for rid in robot_ids:
+        pos = manager.get_position(rid)
+        if pos:
+            # Assuming pos has attributes .x and .y
+            results.append({
+                "robot_id": int(rid),
+                "x": pos.x,
+                "y": pos.y
+            })
+    return results
 
 @api.get("/getRobotStatus")
 def getRobotStatus(request, robot_id: int):

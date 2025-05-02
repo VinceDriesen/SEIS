@@ -1,3 +1,4 @@
+import json
 import os
 import paho.mqtt.client as mqtt
 import logging
@@ -41,6 +42,7 @@ class MQTTManager(threading.Thread):
             self.robots[robot_id] = {"jobs": [], "position": None}
             
         self.rack_reservator = RackAreaReservation(RackAreaMap())
+        self._occupancy_map = None
 
     def _setup_logging(self):
         logging.basicConfig(
@@ -57,10 +59,13 @@ class MQTTManager(threading.Thread):
     def _on_message(self, client, userdata, msg):
         try:
             topic_parts = msg.topic.split("/")
-            robot_id = topic_parts[1]
-            msg_type = topic_parts[2]
 
             with self.lock:
+                if topic_parts[0] == "occupancy_map":
+                    self._update_occupancy_map(topic_parts[1])
+                
+                robot_id = topic_parts[1]
+                msg_type = topic_parts[2]
                 if robot_id not in self.robots:
                     self.robots[robot_id] = {"jobs": [], "position": None}
 
@@ -161,7 +166,8 @@ class MQTTManager(threading.Thread):
         except ValueError:
             self.logger.error(f"Invalid Free Format: {payload}")
     
-    # TODO: Rest Area x=-3,y=-4
+    def _update_occupancy_map(self, occupancy_map):
+        self._occupancy_map = json.loads(occupancy_map)
 
     def run(self):
         try:
@@ -231,6 +237,6 @@ class MQTTManager(threading.Thread):
     def get_occupancy_map(self) -> Optional[str]:
         """Get base64-encoded occupancy map image"""
         with self.lock:
-            return self.robots["0"].get("occupancy_image")
+            return self._occupancy_map
 
 
